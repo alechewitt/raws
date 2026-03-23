@@ -95,8 +95,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["local->S3, S3->local, S3->S3 sync by size+mtime, --delete flag, 30 tests, E2E verified"]
   },
   {
     "id": "s3-multipart-upload",
@@ -104,7 +104,7 @@
     "verify": [
       { "run": "cargo test -- multipart", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["8MB threshold, 8MB parts, 10 concurrent uploads via Semaphore, CreateMultipartUpload + UploadPart + Complete, 25 tests"]
   }
 ]

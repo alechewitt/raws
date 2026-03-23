@@ -11,6 +11,8 @@ mod ls;
 mod mb;
 mod mv;
 mod rm;
+mod sync;
+mod transfer;
 
 use anyhow::{bail, Context, Result};
 
@@ -479,8 +481,8 @@ async fn handle_rm(args: &[String], ctx: &S3CommandContext) -> Result<()> {
     rm::execute(args, ctx).await
 }
 
-async fn handle_sync(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
-    bail!("s3 sync is not yet implemented")
+async fn handle_sync(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    sync::execute(args, ctx).await
 }
 
 async fn handle_mb(args: &[String], ctx: &S3CommandContext) -> Result<()> {
@@ -633,12 +635,12 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_sync_returns_not_yet_implemented() {
+    fn test_dispatch_sync_no_args_returns_usage_error() {
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result = rt.block_on(dispatch_s3_subcommand("sync", &[], &ctx));
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("s3 sync is not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("s3 sync requires a source and destination"));
     }
 
     #[test]

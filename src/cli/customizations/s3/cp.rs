@@ -87,10 +87,11 @@ pub async fn execute(args: &[String], ctx: &S3CommandContext) -> Result<()> {
     }
 }
 
-/// Upload a local file to S3 using PutObject.
+/// Upload a local file to S3 using PutObject or multipart upload.
 ///
-/// Reads the entire file into memory and sends it as a PUT request to the
-/// appropriate S3 bucket endpoint with virtual-hosted style addressing.
+/// For files smaller than 8 MB, reads the entire file into memory and sends it
+/// as a single PUT request. For files at or above 8 MB, uses the S3 multipart
+/// upload API to upload parts concurrently.
 pub(super) async fn upload_file(local_path: &str, s3_url: &str, ctx: &S3CommandContext) -> Result<()> {
     let (bucket, key) = parse_s3_url(s3_url)?;
 
@@ -106,8 +107,6 @@ pub(super) async fn upload_file(local_path: &str, s3_url: &str, ctx: &S3CommandC
     let file_content = std::fs::read(path)
         .with_context(|| format!("Failed to read file: {}", local_path))?;
 
-    let content_length = file_content.len().to_string();
-
     if ctx.debug {
         eprintln!(
             "[debug] cp upload: {} ({} bytes) -> s3://{}/{}",
@@ -118,41 +117,55 @@ pub(super) async fn upload_file(local_path: &str, s3_url: &str, ctx: &S3CommandC
         );
     }
 
-    // Build the URI path: /{key}
-    // The key needs to have each segment URI-encoded for the path, but we
-    // pass it as a raw path and let the signing handle encoding.
-    let uri_path = format!("/{key}");
+    // Use multipart upload for large files
+    if super::transfer::needs_multipart(file_content.len() as u64) {
+        if ctx.debug {
+            eprintln!(
+                "[debug] using multipart upload for {} ({} bytes >= {} threshold)",
+                local_path,
+                file_content.len(),
+                super::transfer::MULTIPART_THRESHOLD
+            );
+        }
+        super::transfer::multipart_upload(ctx, &bucket, &key, file_content).await?;
+    } else {
+        // Simple PutObject for small files
+        let content_length = file_content.len().to_string();
 
-    // Extra headers for PutObject
-    let extra_headers: Vec<(&str, &str)> = vec![
-        ("content-length", &content_length),
-    ];
+        // Build the URI path: /{key}
+        let uri_path = format!("/{key}");
 
-    // Optionally detect content type from file extension
-    let content_type = guess_content_type(local_path);
-    let mut headers_with_type: Vec<(&str, &str)> = extra_headers;
-    if let Some(ref ct) = content_type {
-        headers_with_type.push(("content-type", ct));
-    }
+        // Extra headers for PutObject
+        let extra_headers: Vec<(&str, &str)> = vec![
+            ("content-length", &content_length),
+        ];
 
-    let response = s3_bucket_api_call(
-        ctx,
-        &bucket,
-        "PUT",
-        &uri_path,
-        &[],
-        Some(&file_content),
-        &headers_with_type,
-    )
-    .await?;
+        // Optionally detect content type from file extension
+        let content_type = guess_content_type(local_path);
+        let mut headers_with_type: Vec<(&str, &str)> = extra_headers;
+        if let Some(ref ct) = content_type {
+            headers_with_type.push(("content-type", ct));
+        }
 
-    if response.status >= 300 {
-        let body = response.body_string();
-        bail!(
-            "PutObject failed (HTTP {}): {}",
-            response.status,
-            extract_s3_error(&body)
-        );
+        let response = s3_bucket_api_call(
+            ctx,
+            &bucket,
+            "PUT",
+            &uri_path,
+            &[],
+            Some(&file_content),
+            &headers_with_type,
+        )
+        .await?;
+
+        if response.status >= 300 {
+            let body = response.body_string();
+            bail!(
+                "PutObject failed (HTTP {}): {}",
+                response.status,
+                extract_s3_error(&body)
+            );
+        }
     }
 
     // Print success message matching AWS CLI format
