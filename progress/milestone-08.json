@@ -1,0 +1,110 @@
+[
+  {
+    "id": "text-output-formatter",
+    "description": "Text output formatter: tab-separated values, lists expanded one item per line",
+    "verify": [
+      { "run": "cargo test -- text_format", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "table-output-formatter",
+    "description": "Table output formatter: ASCII table with box-drawing characters, headers from shape member names",
+    "verify": [
+      { "run": "cargo test -- table_format", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "debug-flag",
+    "description": "--debug flag prints request/response details to stderr",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "error-messages",
+    "description": "Proper error messages for common failures: invalid credentials, no region, unknown service, unknown operation",
+    "verify": [
+      { "run": "cargo test -- error_message", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "help-text-generation",
+    "description": "Help text generation: raws <service> help lists operations, raws <service> <operation> help shows parameters",
+    "verify": [
+      { "run": "cargo run -- sts help 2>&1 | head -10", "expect": "shows STS operations list" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "no-paginate-flag",
+    "description": "--no-paginate flag disables automatic pagination",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "auto-pagination",
+    "description": "Automatic pagination using paginators-1.json: follow next tokens until all pages retrieved",
+    "verify": [
+      { "run": "cargo test -- auto_paginate", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "cli-input-json",
+    "description": "--cli-input-json support: read operation input from a JSON file",
+    "verify": [
+      { "run": "cargo test -- cli_input_json", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "generate-cli-skeleton",
+    "description": "--generate-cli-skeleton output: generate JSON skeleton of operation input shape",
+    "verify": [
+      { "run": "cargo test -- cli_skeleton", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "query-jmespath",
+    "description": "--query flag with JMESPath expression to filter/transform output",
+    "verify": [
+      { "run": "cargo test -- jmespath", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "configure-command",
+    "description": "raws configure command: interactive credential setup writing to ~/.aws/credentials and ~/.aws/config",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "output-format-comparison",
+    "description": "JSON output matches aws CLI exactly: same key ordering, same indentation (4 spaces)",
+    "verify": [
+      { "run": "cargo test -- output_format_match", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]

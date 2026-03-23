@@ -36,3 +36,62 @@ NEXT SESSION PRIORITIES:
 3. Wire up the full CLI pipeline: args -> model -> credentials -> sign -> HTTP -> parse -> output
 4. Get "raws sts get-caller-identity" working end-to-end
 5. Implement service discovery and dynamic CLI dispatch
+
+=== Session 2: Milestones 4-6 Complete (2026-03-23) ===
+
+ACCOMPLISHED:
+- Completed Milestone 4 (HTTP Client and Model Loader): 12/12
+  - Added 25 tests for shape types, operation parsing, metadata parsing, member modifiers
+  - All tests verify against both synthetic JSON and real botocore models (STS, S3, EC2, DynamoDB)
+
+- Completed Milestone 5 (Query Protocol and STS E2E): 12/12
+  - Query protocol serializer: flat members, nested dot notation, list positional notation (11 tests)
+  - Query response parser: XML with resultWrapper -> serde_json::Value (4 tests)
+  - Query error parser: ErrorResponse XML (4 tests)
+  - Operation name mapping: PascalCase <-> kebab-case using heck crate (5 tests)
+  - CLI arg parsing: 11 tests for clap GlobalArgs
+  - Full CLI pipeline in driver.rs: args -> config -> model -> credentials -> signing -> HTTP -> parse -> output
+  - STS get-caller-identity works E2E against real AWS!
+  - 3 pre-existing features confirmed passing (endpoint, discovery, json formatter)
+
+- Completed Milestone 6 (All Four Protocols): 12/12
+  - JSON protocol: X-Amz-Target header, JSON body serialization/parsing (20 tests)
+  - REST-JSON protocol: URI templates, headers, querystring, JSON body (24 tests)
+  - REST-XML protocol: URI templates, headers, XML body, payload members (25 tests)
+  - EC2 query variant: different error XML format (4 tests)
+  - Protocol dispatch in driver.rs for all 5 protocols
+  - Service alias mapping: s3api -> s3 model directory
+  - E2E verified against real AWS:
+    * STS get-caller-identity (query)
+    * DynamoDB list-tables (json)
+    * S3 list-buckets (rest-xml)
+    * Lambda list-functions (rest-json)
+    * EC2 describe-regions (ec2)
+
+TEST RESULTS:
+- 172 tests passing (up from 33)
+- cargo build succeeds
+- cargo clippy: only pre-existing dead_code warnings
+
+DESIGN DECISIONS:
+- Shapes remain as raw serde_json::Value (no typed enum) - working well for all protocols
+- Service alias mapping for s3api -> s3 in driver.rs
+- Each protocol has independent serializer/parser (some code duplication between rest_json and rest_xml for URI template/header handling - could refactor later)
+- Test profile uses credential_process (ada CLI) which raws doesn't support yet. E2E tests use env var credentials.
+- XML parsing uses quick-xml Reader to build XmlNode tree, then recursively maps to serde_json::Value
+
+KNOWN ISSUES:
+- Code duplication between rest_json.rs and rest_xml.rs (URI template, header extraction)
+- Code duplication between query.rs and rest_xml.rs (XML parsing)
+- credential_process not supported (M13 feature)
+- discover_services() unused in main binary (will be used for dynamic service dispatch in M7)
+- 5 pre-existing dead_code warnings from earlier milestones
+
+MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12
+Current milestone: 7 (Full Service Dispatch)
+
+NEXT SESSION PRIORITIES:
+1. M7: Dynamic service discovery and subcommand registration
+2. M7: Dynamic argument parsing from model input shapes
+3. M7: E2E tests across broad sample of services (IAM, EC2, KMS, SNS, SQS, CloudFormation, Route53, CloudWatch, ECS, RDS)
+4. Fix code duplication in protocol modules

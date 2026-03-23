@@ -1,5 +1,5 @@
 {
-  "current_milestone": 7,
+  "current_milestone": 8,
   "milestones": {
     "1": { "total": 7, "passing": 6, "file": "milestone-01.json" },
     "2": { "total": 12, "passing": 12, "file": "milestone-02.json" },
@@ -7,6 +7,7 @@
     "4": { "total": 12, "passing": 12, "file": "milestone-04.json" },
     "5": { "total": 12, "passing": 12, "file": "milestone-05.json" },
     "6": { "total": 12, "passing": 12, "file": "milestone-06.json" },
-    "7": { "total": 12, "passing": 0, "file": "milestone-07.json" }
+    "7": { "total": 12, "passing": 12, "file": "milestone-07.json" },
+    "8": { "total": 12, "passing": 0, "file": "milestone-08.json" }
   }
 }

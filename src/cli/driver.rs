@@ -25,9 +25,16 @@ pub async fn run() -> Result<()> {
     let service = match &args.service {
         Some(s) => s,
         None => {
-            bail!("Usage: raws <service> <operation> [--params...]\n\nRun 'raws --help' for more information.");
+            print_service_help();
+            return Ok(());
         }
     };
+
+    // Handle "raws help" as equivalent to no service
+    if service == "help" {
+        print_service_help();
+        return Ok(());
+    }
 
     let operation = match &args.operation {
         Some(o) => o,
@@ -112,7 +119,11 @@ pub async fn run() -> Result<()> {
     // 6. Resolve endpoint URL
     let endpoint_url = match &args.endpoint_url {
         Some(url) => url.clone(),
-        None => resolver::resolve_endpoint(&service_model.metadata.endpoint_prefix, region)?,
+        None => resolver::resolve_endpoint(
+            &service_model.metadata.endpoint_prefix,
+            region,
+            service_model.metadata.global_endpoint.as_deref(),
+        )?,
     };
 
     if args.debug {
@@ -855,6 +866,113 @@ fn resolve_service_name(service: &str) -> &str {
     }
 }
 
+/// Print a help message listing all available services discovered from the models/ directory.
+fn print_service_help() {
+    println!("raws - AWS CLI reimplementation in Rust\n");
+    println!("Usage: raws <service> <operation> [--params...]\n");
+
+    let models_dir = std::path::Path::new("models");
+    match loader::discover_services(models_dir) {
+        Ok(services) if !services.is_empty() => {
+            println!("Available services ({}):\n", services.len());
+            // Print in columns for readability
+            let col_width = 24;
+            let cols = 3;
+            for chunk in services.chunks(cols) {
+                let line: Vec<String> = chunk
+                    .iter()
+                    .map(|s| format!("  {:<width$}", s, width = col_width))
+                    .collect();
+                println!("{}", line.join(""));
+            }
+            println!();
+        }
+        Ok(_) => {
+            println!("No services found. Ensure the models/ directory is populated.");
+        }
+        Err(_) => {
+            println!("Could not discover services. Ensure the models/ directory exists.");
+        }
+    }
+
+    println!("Global options:");
+    println!("  --region <REGION>       AWS region to use");
+    println!("  --profile <PROFILE>     Named profile to use");
+    println!("  --output <FORMAT>       Output format: json, table, text");
+    println!("  --endpoint-url <URL>    Override endpoint URL");
+    println!("  --debug                 Enable debug output");
+}
+
+/// Information about a single CLI argument derived from a service model input shape.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ArgInfo {
+    /// The CLI flag name in kebab-case, e.g. "--user-name"
+    pub cli_name: String,
+    /// The model member name in PascalCase, e.g. "UserName"
+    pub model_name: String,
+    /// Whether this argument is required by the model
+    pub required: bool,
+    /// The shape type of this argument, e.g. "string", "integer", "list"
+    pub shape_type: String,
+}
+
+/// Inspect an operation's input shape and return a list of CLI arguments
+/// that would correspond to each member of the input shape.
+///
+/// Each member of the input shape becomes a `--kebab-case` CLI flag.
+/// Members listed in the shape's "required" array are marked as required.
+pub fn get_operation_args_info(
+    input_shape_name: &str,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) -> Vec<ArgInfo> {
+    let mut args_info = Vec::new();
+
+    let shape = match shapes.get(input_shape_name) {
+        Some(s) => s,
+        None => return args_info,
+    };
+
+    let members = match shape.get("members").and_then(|m| m.as_object()) {
+        Some(m) => m,
+        None => return args_info,
+    };
+
+    // Collect the required member names into a set
+    let required_set: std::collections::HashSet<&str> = shape
+        .get("required")
+        .and_then(|r| r.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str())
+                .collect()
+        })
+        .unwrap_or_default();
+
+    for (member_name, member_def) in members {
+        // Resolve the shape type for this member
+        let shape_type = member_def
+            .get("shape")
+            .and_then(|s| s.as_str())
+            .and_then(|shape_ref| shapes.get(shape_ref))
+            .and_then(|referred_shape| referred_shape.get("type"))
+            .and_then(|t| t.as_str())
+            .unwrap_or("unknown");
+
+        let cli_name = format!("--{}", model::pascal_to_kebab(member_name));
+
+        args_info.push(ArgInfo {
+            cli_name,
+            model_name: member_name.clone(),
+            required: required_set.contains(member_name.as_str()),
+            shape_type: shape_type.to_string(),
+        });
+    }
+
+    // Sort by CLI name for deterministic output
+    args_info.sort_by(|a, b| a.cli_name.cmp(&b.cli_name));
+    args_info
+}
+
 fn parse_operation_args(args: &[String]) -> Result<serde_json::Value> {
     let mut map = serde_json::Map::new();
 
@@ -942,5 +1060,188 @@ mod tests {
         assert_eq!(percent_encode_query_param("hello world"), "hello%20world");
         assert_eq!(percent_encode_query_param("foo=bar"), "foo%3Dbar");
         assert_eq!(percent_encode_query_param("simple"), "simple");
+    }
+
+    // ---------------------------------------------------------------
+    // Dynamic arg parsing tests
+    // ---------------------------------------------------------------
+
+    /// Helper to build a minimal shapes map for testing get_operation_args_info.
+    fn test_shapes() -> std::collections::HashMap<String, serde_json::Value> {
+        serde_json::from_str::<std::collections::HashMap<String, serde_json::Value>>(r#"{
+            "CreateUserRequest": {
+                "type": "structure",
+                "required": ["UserName"],
+                "members": {
+                    "UserName": { "shape": "userNameType" },
+                    "Path": { "shape": "pathType" },
+                    "PermissionsBoundary": { "shape": "arnType" },
+                    "Tags": { "shape": "tagListType" }
+                }
+            },
+            "GetCallerIdentityRequest": {
+                "type": "structure",
+                "members": {}
+            },
+            "DescribeInstancesRequest": {
+                "type": "structure",
+                "members": {
+                    "InstanceIds": { "shape": "InstanceIdStringList" },
+                    "DryRun": { "shape": "Boolean" },
+                    "MaxResults": { "shape": "Integer" },
+                    "NextToken": { "shape": "String" }
+                }
+            },
+            "userNameType": { "type": "string" },
+            "pathType": { "type": "string" },
+            "arnType": { "type": "string" },
+            "tagListType": { "type": "list", "member": { "shape": "Tag" } },
+            "Tag": { "type": "structure", "members": { "Key": { "shape": "tagKeyType" }, "Value": { "shape": "tagValueType" } } },
+            "tagKeyType": { "type": "string" },
+            "tagValueType": { "type": "string" },
+            "InstanceIdStringList": { "type": "list", "member": { "shape": "String" } },
+            "Boolean": { "type": "boolean" },
+            "Integer": { "type": "integer" },
+            "String": { "type": "string" }
+        }"#).unwrap()
+    }
+
+    #[test]
+    fn test_dynamic_arg_parsing_create_user_has_required() {
+        let shapes = test_shapes();
+        let args = get_operation_args_info("CreateUserRequest", &shapes);
+
+        assert_eq!(args.len(), 4);
+
+        // UserName is required
+        let user_name = args.iter().find(|a| a.model_name == "UserName").unwrap();
+        assert_eq!(user_name.cli_name, "--user-name");
+        assert!(user_name.required);
+        assert_eq!(user_name.shape_type, "string");
+
+        // Path is optional
+        let path = args.iter().find(|a| a.model_name == "Path").unwrap();
+        assert_eq!(path.cli_name, "--path");
+        assert!(!path.required);
+        assert_eq!(path.shape_type, "string");
+
+        // Tags is a list type
+        let tags = args.iter().find(|a| a.model_name == "Tags").unwrap();
+        assert_eq!(tags.cli_name, "--tags");
+        assert!(!tags.required);
+        assert_eq!(tags.shape_type, "list");
+    }
+
+    #[test]
+    fn test_dynamic_arg_parsing_no_required_params() {
+        let shapes = test_shapes();
+        let args = get_operation_args_info("GetCallerIdentityRequest", &shapes);
+
+        // GetCallerIdentity has no members at all
+        assert!(args.is_empty());
+        // Verify none are marked required
+        assert!(args.iter().all(|a| !a.required));
+    }
+
+    #[test]
+    fn test_dynamic_arg_parsing_describe_instances() {
+        let shapes = test_shapes();
+        let args = get_operation_args_info("DescribeInstancesRequest", &shapes);
+
+        assert_eq!(args.len(), 4);
+
+        let dry_run = args.iter().find(|a| a.model_name == "DryRun").unwrap();
+        assert_eq!(dry_run.cli_name, "--dry-run");
+        assert!(!dry_run.required);
+        assert_eq!(dry_run.shape_type, "boolean");
+
+        let max_results = args.iter().find(|a| a.model_name == "MaxResults").unwrap();
+        assert_eq!(max_results.cli_name, "--max-results");
+        assert_eq!(max_results.shape_type, "integer");
+
+        let instance_ids = args.iter().find(|a| a.model_name == "InstanceIds").unwrap();
+        assert_eq!(instance_ids.cli_name, "--instance-ids");
+        assert_eq!(instance_ids.shape_type, "list");
+    }
+
+    #[test]
+    fn test_dynamic_arg_parsing_nonexistent_shape() {
+        let shapes = test_shapes();
+        let args = get_operation_args_info("NonexistentShape", &shapes);
+        assert!(args.is_empty());
+    }
+
+    #[test]
+    fn test_dynamic_arg_parsing_sorted_output() {
+        let shapes = test_shapes();
+        let args = get_operation_args_info("CreateUserRequest", &shapes);
+
+        // Should be sorted by cli_name
+        let cli_names: Vec<&str> = args.iter().map(|a| a.cli_name.as_str()).collect();
+        let mut sorted = cli_names.clone();
+        sorted.sort();
+        assert_eq!(cli_names, sorted, "Args should be sorted by cli_name");
+    }
+
+    #[test]
+    fn test_dynamic_arg_parsing_with_real_sts_model() {
+        let path = std::path::Path::new("models/sts/2011-06-15/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: STS model not copied yet");
+            return;
+        }
+        let model = loader::load_service_model(path).unwrap();
+
+        // GetCallerIdentity has no required input params
+        let gci_input = model.operations["GetCallerIdentity"]
+            .input_shape
+            .as_deref()
+            .unwrap();
+        let args = get_operation_args_info(gci_input, &model.shapes);
+        // GetCallerIdentityRequest has no members in the real model
+        assert!(args.iter().all(|a| !a.required));
+
+        // AssumeRole has required params: RoleArn, RoleSessionName
+        let ar_input = model.operations["AssumeRole"]
+            .input_shape
+            .as_deref()
+            .unwrap();
+        let ar_args = get_operation_args_info(ar_input, &model.shapes);
+
+        let role_arn = ar_args.iter().find(|a| a.model_name == "RoleArn").unwrap();
+        assert_eq!(role_arn.cli_name, "--role-arn");
+        assert!(role_arn.required);
+        assert_eq!(role_arn.shape_type, "string");
+
+        let session_name = ar_args.iter().find(|a| a.model_name == "RoleSessionName").unwrap();
+        assert_eq!(session_name.cli_name, "--role-session-name");
+        assert!(session_name.required);
+    }
+
+    #[test]
+    fn test_dynamic_arg_parsing_with_real_iam_model() {
+        let path = std::path::Path::new("models/iam/2010-05-08/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: IAM model not copied yet");
+            return;
+        }
+        let model = loader::load_service_model(path).unwrap();
+
+        // CreateUser has UserName as required
+        let cu_input = model.operations["CreateUser"]
+            .input_shape
+            .as_deref()
+            .unwrap();
+        let cu_args = get_operation_args_info(cu_input, &model.shapes);
+
+        let user_name = cu_args.iter().find(|a| a.model_name == "UserName").unwrap();
+        assert_eq!(user_name.cli_name, "--user-name");
+        assert!(user_name.required);
+        assert_eq!(user_name.shape_type, "string");
+
+        // Path is optional
+        let path_arg = cu_args.iter().find(|a| a.model_name == "Path").unwrap();
+        assert_eq!(path_arg.cli_name, "--path");
+        assert!(!path_arg.required);
     }
 }
