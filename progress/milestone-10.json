@@ -86,8 +86,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["ls: already had it, cp: recursive upload/download/copy with dir walking, rm: already had it, 12 tests, E2E verified"]
   },
   {
     "id": "s3-sync",

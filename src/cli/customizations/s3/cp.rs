@@ -4,6 +4,11 @@
 //! - Local file -> S3 (upload): `raws s3 cp file.txt s3://bucket/key`
 //! - S3 -> local file (download): `raws s3 cp s3://bucket/key local-file`
 //! - S3 -> S3 (copy): `raws s3 cp s3://src-bucket/key s3://dst-bucket/key`
+//!
+//! With `--recursive`:
+//! - `raws s3 cp s3://bucket/prefix/ local-dir/ --recursive` - download all objects
+//! - `raws s3 cp local-dir/ s3://bucket/prefix/ --recursive` - upload all files
+//! - `raws s3 cp s3://src/prefix/ s3://dst/prefix/ --recursive` - copy all objects
 
 use std::path::Path;
 
@@ -17,8 +22,11 @@ use super::S3CommandContext;
 /// Execute the `s3 cp` command.
 ///
 /// Parses the source and destination arguments, determines the transfer direction,
-/// and dispatches to the appropriate handler.
+/// and dispatches to the appropriate handler. With `--recursive`, operates on all
+/// objects under a prefix or all files in a directory.
 pub async fn execute(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    let recursive = args.iter().any(|a| a == "--recursive");
+
     // Filter out flags to find the two positional arguments (source and destination)
     let positional: Vec<&String> = args.iter().filter(|a| !a.starts_with('-')).collect();
 
@@ -36,23 +44,45 @@ pub async fn execute(args: &[String], ctx: &S3CommandContext) -> Result<()> {
     let src_is_s3 = is_s3_url(source);
     let dst_is_s3 = is_s3_url(destination);
 
-    match (src_is_s3, dst_is_s3) {
-        (false, true) => {
-            // Local -> S3 upload
-            upload_file(source, destination, ctx).await
+    if recursive {
+        match (src_is_s3, dst_is_s3) {
+            (false, true) => {
+                // Local dir -> S3 recursive upload
+                upload_recursive(source, destination, ctx).await
+            }
+            (true, false) => {
+                // S3 -> local dir recursive download
+                download_recursive(source, destination, ctx).await
+            }
+            (true, true) => {
+                // S3 -> S3 recursive copy
+                copy_s3_to_s3_recursive(source, destination, ctx).await
+            }
+            (false, false) => {
+                bail!(
+                    "At least one of the source or destination must be an S3 URL (s3://...)"
+                )
+            }
         }
-        (true, false) => {
-            // S3 -> local download
-            download_file(source, destination, ctx).await
-        }
-        (true, true) => {
-            // S3 -> S3 copy
-            copy_s3_to_s3(source, destination, ctx).await
-        }
-        (false, false) => {
-            bail!(
-                "At least one of the source or destination must be an S3 URL (s3://...)"
-            )
+    } else {
+        match (src_is_s3, dst_is_s3) {
+            (false, true) => {
+                // Local -> S3 upload
+                upload_file(source, destination, ctx).await
+            }
+            (true, false) => {
+                // S3 -> local download
+                download_file(source, destination, ctx).await
+            }
+            (true, true) => {
+                // S3 -> S3 copy
+                copy_s3_to_s3(source, destination, ctx).await
+            }
+            (false, false) => {
+                bail!(
+                    "At least one of the source or destination must be an S3 URL (s3://...)"
+                )
+            }
         }
     }
 }
@@ -277,6 +307,330 @@ pub(super) async fn copy_s3_to_s3(
     );
 
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Recursive operations
+// ---------------------------------------------------------------------------
+
+/// Recursively download all S3 objects under a prefix to a local directory.
+///
+/// Lists all objects with the given prefix using ListObjectsV2 (with pagination),
+/// then downloads each one, preserving directory structure relative to the prefix.
+async fn download_recursive(
+    s3_url: &str,
+    local_dir: &str,
+    ctx: &S3CommandContext,
+) -> Result<()> {
+    let (bucket, prefix) = parse_s3_url(s3_url)?;
+    let local_base = Path::new(local_dir);
+
+    let mut continuation_token: Option<String> = None;
+
+    loop {
+        let mut params: Vec<(&str, &str)> = vec![("list-type", "2")];
+        if !prefix.is_empty() {
+            params.push(("prefix", &prefix));
+        }
+
+        let token_string;
+        if let Some(ref token) = continuation_token {
+            token_string = token.clone();
+            params.push(("continuation-token", &token_string));
+        }
+
+        let response =
+            s3_bucket_api_call(ctx, &bucket, "GET", "/", &params, None, &[]).await?;
+
+        if response.status >= 300 {
+            let body = response.body_string();
+            bail!(
+                "ListObjectsV2 failed (HTTP {}): {}",
+                response.status,
+                extract_s3_error(&body)
+            );
+        }
+
+        let body = response.body_string();
+        let page = parse_list_keys(&body)?;
+
+        for key in &page.keys {
+            // Skip directory markers (keys ending with / that have zero length)
+            if key.ends_with('/') {
+                continue;
+            }
+
+            // Compute the relative path by stripping the prefix
+            let relative = key.strip_prefix(&prefix).unwrap_or(key);
+
+            // Build local output path
+            let output_path = local_base.join(relative);
+
+            // Create parent directories as needed
+            if let Some(parent) = output_path.parent() {
+                std::fs::create_dir_all(parent)
+                    .with_context(|| format!("Failed to create directory: {}", parent.display()))?;
+            }
+
+            // Download the object
+            let s3_obj_url = format!("s3://{}/{}", bucket, key);
+            let output_str = output_path.to_string_lossy().to_string();
+            download_file(&s3_obj_url, &output_str, ctx).await?;
+        }
+
+        if page.is_truncated {
+            if let Some(token) = page.next_continuation_token {
+                continuation_token = Some(token);
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+/// Recursively upload all files in a local directory to S3 under a prefix.
+///
+/// Walks the local directory tree, uploading each file. The S3 key for each file
+/// is constructed as: `prefix + relative_path_from_source_dir`.
+async fn upload_recursive(
+    local_dir: &str,
+    s3_url: &str,
+    ctx: &S3CommandContext,
+) -> Result<()> {
+    let (bucket, prefix) = parse_s3_url(s3_url)?;
+    let local_base = Path::new(local_dir);
+
+    if !local_base.is_dir() {
+        bail!(
+            "Source path '{}' is not a directory. --recursive requires a directory source.",
+            local_dir
+        );
+    }
+
+    // Collect all files in the directory tree
+    let files = collect_files_recursive(local_base)?;
+
+    for file_path in &files {
+        // Compute relative path from the base directory
+        let relative = file_path
+            .strip_prefix(local_base)
+            .with_context(|| {
+                format!(
+                    "Failed to compute relative path for {}",
+                    file_path.display()
+                )
+            })?;
+
+        // Build S3 key: prefix + relative path (using forward slashes)
+        let relative_str = relative
+            .to_str()
+            .ok_or_else(|| anyhow::anyhow!("Non-UTF-8 file path: {}", relative.display()))?;
+        // On Windows, paths use backslashes; normalize to forward slashes for S3 keys
+        let s3_relative = relative_str.replace('\\', "/");
+        let s3_key = format!("{}{}", prefix, s3_relative);
+        let s3_dest = format!("s3://{}/{}", bucket, s3_key);
+
+        let local_str = file_path.to_string_lossy().to_string();
+        upload_file(&local_str, &s3_dest, ctx).await?;
+    }
+
+    Ok(())
+}
+
+/// Collect all files in a directory tree recursively.
+///
+/// Returns a sorted list of file paths (excludes directories).
+fn collect_files_recursive(dir: &Path) -> Result<Vec<std::path::PathBuf>> {
+    let mut files = Vec::new();
+    collect_files_inner(dir, &mut files)?;
+    files.sort();
+    Ok(files)
+}
+
+/// Inner recursive helper for collecting files.
+fn collect_files_inner(dir: &Path, files: &mut Vec<std::path::PathBuf>) -> Result<()> {
+    let entries = std::fs::read_dir(dir)
+        .with_context(|| format!("Failed to read directory: {}", dir.display()))?;
+
+    for entry in entries {
+        let entry = entry
+            .with_context(|| format!("Failed to read directory entry in: {}", dir.display()))?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_files_inner(&path, files)?;
+        } else {
+            files.push(path);
+        }
+    }
+
+    Ok(())
+}
+
+/// Recursively copy all S3 objects from one prefix to another.
+///
+/// Lists all objects under the source prefix, then copies each one to the
+/// destination prefix, preserving the relative key structure.
+async fn copy_s3_to_s3_recursive(
+    src_url: &str,
+    dst_url: &str,
+    ctx: &S3CommandContext,
+) -> Result<()> {
+    let (src_bucket, src_prefix) = parse_s3_url(src_url)?;
+    let (dst_bucket, dst_prefix) = parse_s3_url(dst_url)?;
+
+    let mut continuation_token: Option<String> = None;
+
+    loop {
+        let mut params: Vec<(&str, &str)> = vec![("list-type", "2")];
+        if !src_prefix.is_empty() {
+            params.push(("prefix", &src_prefix));
+        }
+
+        let token_string;
+        if let Some(ref token) = continuation_token {
+            token_string = token.clone();
+            params.push(("continuation-token", &token_string));
+        }
+
+        let response =
+            s3_bucket_api_call(ctx, &src_bucket, "GET", "/", &params, None, &[]).await?;
+
+        if response.status >= 300 {
+            let body = response.body_string();
+            bail!(
+                "ListObjectsV2 failed (HTTP {}): {}",
+                response.status,
+                extract_s3_error(&body)
+            );
+        }
+
+        let body = response.body_string();
+        let page = parse_list_keys(&body)?;
+
+        for key in &page.keys {
+            // Skip directory markers
+            if key.ends_with('/') {
+                continue;
+            }
+
+            // Compute relative key by stripping source prefix
+            let relative = key.strip_prefix(&src_prefix).unwrap_or(key);
+
+            // Build destination key
+            let dst_key = format!("{}{}", dst_prefix, relative);
+            let src_obj_url = format!("s3://{}/{}", src_bucket, key);
+            let dst_obj_url = format!("s3://{}/{}", dst_bucket, dst_key);
+
+            copy_s3_to_s3(&src_obj_url, &dst_obj_url, ctx).await?;
+        }
+
+        if page.is_truncated {
+            if let Some(token) = page.next_continuation_token {
+                continuation_token = Some(token);
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// ListObjectsV2 key parser (shared with recursive operations)
+// ---------------------------------------------------------------------------
+
+/// Minimal parsed result of a ListObjectsV2 response, extracting only keys
+/// and pagination info needed for recursive operations.
+struct ListKeysPage {
+    keys: Vec<String>,
+    is_truncated: bool,
+    next_continuation_token: Option<String>,
+}
+
+/// Parse a ListObjectsV2 XML response, extracting object keys and pagination info.
+fn parse_list_keys(xml_body: &str) -> Result<ListKeysPage> {
+    use quick_xml::events::Event;
+    use quick_xml::Reader;
+
+    let mut reader = Reader::from_str(xml_body);
+    let mut keys = Vec::new();
+    let mut is_truncated = false;
+    let mut next_continuation_token: Option<String> = None;
+
+    let mut in_contents = false;
+    let mut current_tag = String::new();
+    let mut top_level_tag = String::new();
+
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(ref e)) => {
+                let tag = strip_ns(std::str::from_utf8(e.name().as_ref()).unwrap_or(""));
+                match tag.as_str() {
+                    "Contents" => {
+                        in_contents = true;
+                    }
+                    _ => {
+                        if in_contents {
+                            current_tag = tag;
+                        } else {
+                            top_level_tag = tag;
+                        }
+                    }
+                }
+            }
+            Ok(Event::End(ref e)) => {
+                let tag = strip_ns(std::str::from_utf8(e.name().as_ref()).unwrap_or(""));
+                if tag == "Contents" {
+                    in_contents = false;
+                }
+                current_tag.clear();
+                top_level_tag.clear();
+            }
+            Ok(Event::Text(ref e)) => {
+                let text = e.unescape().unwrap_or_default().to_string();
+                if in_contents && current_tag == "Key" {
+                    keys.push(text);
+                } else if !in_contents {
+                    match top_level_tag.as_str() {
+                        "IsTruncated" => {
+                            is_truncated = text == "true";
+                        }
+                        "NextContinuationToken" => {
+                            next_continuation_token = Some(text);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Ok(Event::Eof) => break,
+            Ok(_) => {}
+            Err(e) => bail!("Failed to parse ListObjectsV2 XML response: {}", e),
+        }
+    }
+
+    Ok(ListKeysPage {
+        keys,
+        is_truncated,
+        next_continuation_token,
+    })
+}
+
+/// Strip XML namespace prefix from a tag name.
+fn strip_ns(tag: &str) -> String {
+    if let Some(pos) = tag.rfind('}') {
+        return tag[pos + 1..].to_string();
+    }
+    if let Some(pos) = tag.rfind(':') {
+        return tag[pos + 1..].to_string();
+    }
+    tag.to_string()
 }
 
 /// URL-encode the key portion of an S3 copy source header value.
@@ -828,5 +1182,294 @@ mod tests {
         assert!(!is_s3_url("/tmp/file.txt"));
         assert!(!is_s3_url("https://example.com"));
         assert!(!is_s3_url("S3://bucket")); // case-sensitive
+    }
+
+    // ---------------------------------------------------------------
+    // parse_list_keys tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_parse_list_keys_typical() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <IsTruncated>false</IsTruncated>
+  <Contents>
+    <Key>photos/cat.jpg</Key>
+    <LastModified>2023-01-15T10:30:45.000Z</LastModified>
+    <Size>12345</Size>
+  </Contents>
+  <Contents>
+    <Key>photos/dog.jpg</Key>
+    <LastModified>2023-06-20T14:22:10.000Z</LastModified>
+    <Size>678</Size>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page = parse_list_keys(xml).unwrap();
+        assert_eq!(page.keys.len(), 2);
+        assert_eq!(page.keys[0], "photos/cat.jpg");
+        assert_eq!(page.keys[1], "photos/dog.jpg");
+        assert!(!page.is_truncated);
+        assert!(page.next_continuation_token.is_none());
+    }
+
+    #[test]
+    fn test_parse_list_keys_truncated() {
+        let xml = r#"<ListBucketResult>
+  <IsTruncated>true</IsTruncated>
+  <NextContinuationToken>abc123token</NextContinuationToken>
+  <Contents>
+    <Key>file1.txt</Key>
+    <LastModified>2023-01-15T10:30:45.000Z</LastModified>
+    <Size>100</Size>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page = parse_list_keys(xml).unwrap();
+        assert!(page.is_truncated);
+        assert_eq!(page.next_continuation_token, Some("abc123token".to_string()));
+        assert_eq!(page.keys.len(), 1);
+        assert_eq!(page.keys[0], "file1.txt");
+    }
+
+    #[test]
+    fn test_parse_list_keys_empty() {
+        let xml = r#"<ListBucketResult>
+  <IsTruncated>false</IsTruncated>
+</ListBucketResult>"#;
+
+        let page = parse_list_keys(xml).unwrap();
+        assert_eq!(page.keys.len(), 0);
+        assert!(!page.is_truncated);
+    }
+
+    #[test]
+    fn test_parse_list_keys_with_namespace() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <IsTruncated>false</IsTruncated>
+  <Contents>
+    <Key>test.txt</Key>
+    <LastModified>2023-01-01T00:00:00.000Z</LastModified>
+    <Size>42</Size>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page = parse_list_keys(xml).unwrap();
+        assert_eq!(page.keys.len(), 1);
+        assert_eq!(page.keys[0], "test.txt");
+    }
+
+    // ---------------------------------------------------------------
+    // strip_ns tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_strip_ns_with_braces() {
+        assert_eq!(
+            strip_ns("{http://s3.amazonaws.com/doc/2006-03-01/}Key"),
+            "Key"
+        );
+    }
+
+    #[test]
+    fn test_strip_ns_with_colon() {
+        assert_eq!(strip_ns("s3:Key"), "Key");
+    }
+
+    #[test]
+    fn test_strip_ns_no_namespace() {
+        assert_eq!(strip_ns("Key"), "Key");
+    }
+
+    // ---------------------------------------------------------------
+    // collect_files_recursive tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_collect_files_recursive_basic() {
+        // Create a temp directory structure for testing
+        let temp_dir = std::env::temp_dir().join("raws_test_collect_files");
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        std::fs::create_dir_all(temp_dir.join("sub")).unwrap();
+        std::fs::write(temp_dir.join("a.txt"), "hello").unwrap();
+        std::fs::write(temp_dir.join("b.txt"), "world").unwrap();
+        std::fs::write(temp_dir.join("sub/c.txt"), "nested").unwrap();
+
+        let files = collect_files_recursive(&temp_dir).unwrap();
+
+        // Files should be sorted
+        assert_eq!(files.len(), 3);
+        assert!(files[0].ends_with("a.txt"));
+        assert!(files[1].ends_with("b.txt"));
+        assert!(files[2].ends_with("c.txt"));
+
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_collect_files_recursive_empty_dir() {
+        let temp_dir = std::env::temp_dir().join("raws_test_collect_files_empty");
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        std::fs::create_dir_all(&temp_dir).unwrap();
+
+        let files = collect_files_recursive(&temp_dir).unwrap();
+        assert!(files.is_empty());
+
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_collect_files_recursive_nested_dirs() {
+        let temp_dir = std::env::temp_dir().join("raws_test_collect_files_nested");
+        let _ = std::fs::remove_dir_all(&temp_dir);
+        std::fs::create_dir_all(temp_dir.join("a/b/c")).unwrap();
+        std::fs::write(temp_dir.join("a/b/c/deep.txt"), "deep").unwrap();
+        std::fs::write(temp_dir.join("a/top.txt"), "top").unwrap();
+
+        let files = collect_files_recursive(&temp_dir).unwrap();
+        assert_eq!(files.len(), 2);
+        // Sorted: a/b/c/deep.txt comes before a/top.txt
+        assert!(files[0].ends_with("deep.txt"));
+        assert!(files[1].ends_with("top.txt"));
+
+        // Cleanup
+        let _ = std::fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_collect_files_recursive_nonexistent_dir() {
+        let result = collect_files_recursive(Path::new("/tmp/raws_nonexistent_dir_xyzzy"));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Failed to read directory"));
+    }
+
+    // ---------------------------------------------------------------
+    // recursive cp validation tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_cp_recursive_upload_nonexistent_dir_errors() {
+        let ctx = super::super::S3CommandContext {
+            region: "us-east-1".to_string(),
+            credentials: crate::core::credentials::Credentials {
+                access_key_id: "AKIAIOSFODNN7EXAMPLE".to_string(),
+                secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+                session_token: None,
+            },
+            endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
+            output_format: "json".to_string(),
+            debug: false,
+        };
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let args = vec![
+            "/tmp/raws_nonexistent_dir_xyzzy/".to_string(),
+            "s3://bucket/prefix/".to_string(),
+            "--recursive".to_string(),
+        ];
+        let result = rt.block_on(execute(&args, &ctx));
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("is not a directory"),
+        );
+    }
+
+    #[test]
+    fn test_cp_recursive_both_local_errors() {
+        let ctx = super::super::S3CommandContext {
+            region: "us-east-1".to_string(),
+            credentials: crate::core::credentials::Credentials {
+                access_key_id: "AKIAIOSFODNN7EXAMPLE".to_string(),
+                secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+                session_token: None,
+            },
+            endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
+            output_format: "json".to_string(),
+            debug: false,
+        };
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let args = vec![
+            "dir1/".to_string(),
+            "dir2/".to_string(),
+            "--recursive".to_string(),
+        ];
+        let result = rt.block_on(execute(&args, &ctx));
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("At least one of the source or destination must be an S3 URL"),
+        );
+    }
+
+    #[test]
+    fn test_cp_recursive_no_positional_errors() {
+        let ctx = super::super::S3CommandContext {
+            region: "us-east-1".to_string(),
+            credentials: crate::core::credentials::Credentials {
+                access_key_id: "AKIAIOSFODNN7EXAMPLE".to_string(),
+                secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+                session_token: None,
+            },
+            endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
+            output_format: "json".to_string(),
+            debug: false,
+        };
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let args = vec!["--recursive".to_string()];
+        let result = rt.block_on(execute(&args, &ctx));
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("requires a source and destination"),
+        );
+    }
+
+    #[test]
+    fn test_cp_recursive_upload_file_not_dir_errors() {
+        // A file (not a directory) should fail for recursive upload
+        let temp_file = std::env::temp_dir().join("raws_test_cp_recursive_file.txt");
+        std::fs::write(&temp_file, "hello").unwrap();
+
+        let ctx = super::super::S3CommandContext {
+            region: "us-east-1".to_string(),
+            credentials: crate::core::credentials::Credentials {
+                access_key_id: "AKIAIOSFODNN7EXAMPLE".to_string(),
+                secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+                session_token: None,
+            },
+            endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
+            output_format: "json".to_string(),
+            debug: false,
+        };
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let args = vec![
+            temp_file.to_string_lossy().to_string(),
+            "s3://bucket/prefix/".to_string(),
+            "--recursive".to_string(),
+        ];
+        let result = rt.block_on(execute(&args, &ctx));
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("is not a directory"),
+        );
+
+        // Cleanup
+        let _ = std::fs::remove_file(&temp_file);
     }
 }
