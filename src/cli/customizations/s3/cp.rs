@@ -2,8 +2,8 @@
 //!
 //! Handles `raws s3 cp <source> <destination>`:
 //! - Local file -> S3 (upload): `raws s3 cp file.txt s3://bucket/key`
-//! - S3 -> local file (download): not yet implemented
-//! - S3 -> S3 (copy): not yet implemented
+//! - S3 -> local file (download): `raws s3 cp s3://bucket/key local-file`
+//! - S3 -> S3 (copy): `raws s3 cp s3://src-bucket/key s3://dst-bucket/key`
 
 use std::path::Path;
 
@@ -43,11 +43,11 @@ pub async fn execute(args: &[String], ctx: &S3CommandContext) -> Result<()> {
         }
         (true, false) => {
             // S3 -> local download
-            bail!("s3 cp download (S3 to local) is not yet implemented")
+            download_file(source, destination, ctx).await
         }
         (true, true) => {
             // S3 -> S3 copy
-            bail!("s3 cp S3-to-S3 copy is not yet implemented")
+            copy_s3_to_s3(source, destination, ctx).await
         }
         (false, false) => {
             bail!(
@@ -129,6 +129,169 @@ async fn upload_file(local_path: &str, s3_url: &str, ctx: &S3CommandContext) -> 
     println!("upload: {} to s3://{}/{}", local_path, bucket, key);
 
     Ok(())
+}
+
+/// Download a file from S3 using GetObject.
+///
+/// Sends a GET request to the S3 bucket endpoint and writes the response body
+/// to the local file path. If `local_path` is an existing directory, the
+/// filename portion of the S3 key is used as the output file name.
+async fn download_file(s3_url: &str, local_path: &str, ctx: &S3CommandContext) -> Result<()> {
+    let (bucket, key) = parse_s3_url(s3_url)?;
+
+    if key.is_empty() {
+        bail!(
+            "S3 source must include a key (e.g., s3://bucket/key), got: {}",
+            s3_url
+        );
+    }
+
+    // If the local path is an existing directory, append the key's filename
+    let output_path = {
+        let p = Path::new(local_path);
+        if p.is_dir() {
+            let filename = Path::new(&key)
+                .file_name()
+                .ok_or_else(|| anyhow::anyhow!("S3 key '{}' has no filename component", key))?;
+            p.join(filename)
+        } else {
+            p.to_path_buf()
+        }
+    };
+
+    if ctx.debug {
+        eprintln!(
+            "[debug] cp download: s3://{}/{} -> {}",
+            bucket,
+            key,
+            output_path.display()
+        );
+    }
+
+    // Build the URI path: /{key}
+    let uri_path = format!("/{key}");
+
+    let response = s3_bucket_api_call(
+        ctx,
+        &bucket,
+        "GET",
+        &uri_path,
+        &[],
+        None,
+        &[],
+    )
+    .await?;
+
+    if response.status >= 300 {
+        let body = response.body_string();
+        bail!(
+            "GetObject failed (HTTP {}): {}",
+            response.status,
+            extract_s3_error(&body)
+        );
+    }
+
+    // Write the response body to the local file
+    std::fs::write(&output_path, &response.body)
+        .with_context(|| format!("Failed to write file: {}", output_path.display()))?;
+
+    // Print success message matching AWS CLI format
+    println!("download: s3://{}/{} to {}", bucket, key, output_path.display());
+
+    Ok(())
+}
+
+/// Copy an object from one S3 location to another using server-side CopyObject.
+///
+/// Sends a PUT request to the destination bucket with the `x-amz-copy-source`
+/// header pointing to the source bucket/key. The copy happens entirely
+/// server-side - no data is transferred through the client.
+async fn copy_s3_to_s3(
+    src_url: &str,
+    dst_url: &str,
+    ctx: &S3CommandContext,
+) -> Result<()> {
+    let (src_bucket, src_key) = parse_s3_url(src_url)?;
+    let (dst_bucket, dst_key) = parse_s3_url(dst_url)?;
+
+    if src_key.is_empty() {
+        bail!(
+            "S3 source must include a key (e.g., s3://bucket/key), got: {}",
+            src_url
+        );
+    }
+
+    if dst_key.is_empty() {
+        bail!(
+            "S3 destination must include a key (e.g., s3://bucket/key), got: {}",
+            dst_url
+        );
+    }
+
+    if ctx.debug {
+        eprintln!(
+            "[debug] cp s3-to-s3: s3://{}/{} -> s3://{}/{}",
+            src_bucket, src_key, dst_bucket, dst_key
+        );
+    }
+
+    // Build the URI path for the destination: /{dst_key}
+    let uri_path = format!("/{dst_key}");
+
+    // Build the copy source header: /{src_bucket}/{src_key}
+    // The key must be URL-encoded for the header value
+    let copy_source = format!(
+        "/{}/{}",
+        src_bucket,
+        url_encode_copy_source(&src_key)
+    );
+
+    let extra_headers: Vec<(&str, &str)> = vec![
+        ("x-amz-copy-source", &copy_source),
+    ];
+
+    let response = s3_bucket_api_call(
+        ctx,
+        &dst_bucket,
+        "PUT",
+        &uri_path,
+        &[],
+        None,
+        &extra_headers,
+    )
+    .await?;
+
+    if response.status >= 300 {
+        let body = response.body_string();
+        bail!(
+            "CopyObject failed (HTTP {}): {}",
+            response.status,
+            extract_s3_error(&body)
+        );
+    }
+
+    // Print success message matching AWS CLI format
+    println!(
+        "copy: s3://{}/{} to s3://{}/{}",
+        src_bucket, src_key, dst_bucket, dst_key
+    );
+
+    Ok(())
+}
+
+/// URL-encode the key portion of an S3 copy source header value.
+///
+/// Encodes characters that are not unreserved per RFC 3986, but preserves
+/// forward slashes since they are part of the key path structure.
+fn url_encode_copy_source(key: &str) -> String {
+    use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+    const ENCODE_SET: &AsciiSet = &NON_ALPHANUMERIC
+        .remove(b'-')
+        .remove(b'_')
+        .remove(b'.')
+        .remove(b'~')
+        .remove(b'/');
+    utf8_percent_encode(key, ENCODE_SET).to_string()
 }
 
 /// Guess the Content-Type of a file based on its extension.
@@ -437,8 +600,12 @@ mod tests {
         );
     }
 
+    // ---------------------------------------------------------------
+    // download_file validation tests
+    // ---------------------------------------------------------------
+
     #[test]
-    fn test_cp_s3_to_local_not_yet_implemented() {
+    fn test_cp_download_missing_key_errors() {
         let ctx = super::super::S3CommandContext {
             region: "us-east-1".to_string(),
             credentials: crate::core::credentials::Credentials {
@@ -453,7 +620,7 @@ mod tests {
 
         let rt = tokio::runtime::Runtime::new().unwrap();
         let args = vec![
-            "s3://bucket/key.txt".to_string(),
+            "s3://bucket".to_string(),
             "local.txt".to_string(),
         ];
         let result = rt.block_on(execute(&args, &ctx));
@@ -462,12 +629,45 @@ mod tests {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("download (S3 to local) is not yet implemented"),
+                .contains("S3 source must include a key"),
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // copy_s3_to_s3 validation tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_cp_s3_to_s3_missing_src_key_errors() {
+        let ctx = super::super::S3CommandContext {
+            region: "us-east-1".to_string(),
+            credentials: crate::core::credentials::Credentials {
+                access_key_id: "AKIAIOSFODNN7EXAMPLE".to_string(),
+                secret_access_key: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+                session_token: None,
+            },
+            endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
+            output_format: "json".to_string(),
+            debug: false,
+        };
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let args = vec![
+            "s3://src-bucket".to_string(),
+            "s3://dst-bucket/key.txt".to_string(),
+        ];
+        let result = rt.block_on(execute(&args, &ctx));
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("S3 source must include a key"),
         );
     }
 
     #[test]
-    fn test_cp_s3_to_s3_not_yet_implemented() {
+    fn test_cp_s3_to_s3_missing_dst_key_errors() {
         let ctx = super::super::S3CommandContext {
             region: "us-east-1".to_string(),
             credentials: crate::core::credentials::Credentials {
@@ -483,7 +683,7 @@ mod tests {
         let rt = tokio::runtime::Runtime::new().unwrap();
         let args = vec![
             "s3://src-bucket/key.txt".to_string(),
-            "s3://dst-bucket/key.txt".to_string(),
+            "s3://dst-bucket".to_string(),
         ];
         let result = rt.block_on(execute(&args, &ctx));
         assert!(result.is_err());
@@ -491,8 +691,38 @@ mod tests {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("S3-to-S3 copy is not yet implemented"),
+                .contains("S3 destination must include a key"),
         );
+    }
+
+    // ---------------------------------------------------------------
+    // url_encode_copy_source tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_url_encode_copy_source_simple() {
+        assert_eq!(url_encode_copy_source("key.txt"), "key.txt");
+    }
+
+    #[test]
+    fn test_url_encode_copy_source_with_slashes() {
+        assert_eq!(url_encode_copy_source("path/to/key.txt"), "path/to/key.txt");
+    }
+
+    #[test]
+    fn test_url_encode_copy_source_with_spaces() {
+        assert_eq!(url_encode_copy_source("my file.txt"), "my%20file.txt");
+    }
+
+    #[test]
+    fn test_url_encode_copy_source_with_special_chars() {
+        assert_eq!(url_encode_copy_source("key+name"), "key%2Bname");
+    }
+
+    #[test]
+    fn test_url_encode_copy_source_preserves_unreserved() {
+        // Unreserved chars: alphanumeric, - _ . ~
+        assert_eq!(url_encode_copy_source("a-b_c.d~e"), "a-b_c.d~e");
     }
 
     #[test]

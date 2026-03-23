@@ -41,8 +41,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["GetObject via s3_bucket_api_call, directory destination handling, E2E verified"]
   },
   {
     "id": "s3-cp-s3-to-s3",
@@ -50,8 +50,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["CopyObject via x-amz-copy-source header, URL-encoded source key, E2E verified"]
   },
   {
     "id": "s3-mv",
