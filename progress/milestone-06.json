@@ -1,0 +1,110 @@
+[
+  {
+    "id": "json-protocol-serializer",
+    "description": "JSON protocol serializer: X-Amz-Target header, JSON body from input value + shape definitions",
+    "verify": [
+      { "run": "cargo test -- json_protocol_serialize", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "json-protocol-parser",
+    "description": "JSON protocol response parser: JSON body -> serde_json::Value using shape definitions",
+    "verify": [
+      { "run": "cargo test -- json_protocol_parse", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "json-protocol-error-parser",
+    "description": "JSON protocol error parsing: __type and message fields from JSON error response",
+    "verify": [
+      { "run": "cargo test -- json_protocol_error", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "rest-json-protocol-serializer",
+    "description": "REST-JSON protocol serializer: URI templates, headers, querystring, JSON body for remaining members",
+    "verify": [
+      { "run": "cargo test -- rest_json_serialize", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "rest-json-protocol-parser",
+    "description": "REST-JSON protocol response parser: headers + JSON body -> serde_json::Value",
+    "verify": [
+      { "run": "cargo test -- rest_json_parse", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "rest-xml-protocol-serializer",
+    "description": "REST-XML protocol serializer: URI templates, headers, querystring, XML body for remaining members",
+    "verify": [
+      { "run": "cargo test -- rest_xml_serialize", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "rest-xml-protocol-parser",
+    "description": "REST-XML protocol response parser: headers + XML body -> serde_json::Value using shape definitions",
+    "verify": [
+      { "run": "cargo test -- rest_xml_parse", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "ec2-query-variant",
+    "description": "EC2 query protocol variant: same as query but with different error XML format (<Response><Errors><Error>...)",
+    "verify": [
+      { "run": "cargo test -- ec2_query", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "protocol-dispatch",
+    "description": "Protocol dispatch in driver: select serializer/parser based on metadata.protocol (query, json, rest-json, rest-xml, ec2)",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "dynamodb-list-tables-e2e",
+    "description": "E2E: raws dynamodb list-tables --region us-east-1 works with JSON protocol against real AWS",
+    "verify": [
+      { "run": "cargo run -- dynamodb list-tables --region us-east-1", "expect": "returns JSON with TableNames" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3api-list-buckets-e2e",
+    "description": "E2E: raws s3api list-buckets works with REST-XML protocol against real AWS",
+    "verify": [
+      { "run": "cargo run -- s3api list-buckets", "expect": "returns JSON with Buckets array" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "lambda-list-functions-e2e",
+    "description": "E2E: raws lambda list-functions --region us-east-1 works with REST-JSON protocol against real AWS",
+    "verify": [
+      { "run": "cargo run -- lambda list-functions --region us-east-1", "expect": "returns JSON with Functions array" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]

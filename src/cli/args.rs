@@ -33,3 +33,131 @@ pub struct GlobalArgs {
     #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
     pub args: Vec<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_global_args_region() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "--region", "us-east-1", "sts", "get-caller-identity",
+        ])
+        .unwrap();
+        assert_eq!(args.region, Some("us-east-1".to_string()));
+        assert_eq!(args.service, Some("sts".to_string()));
+        assert_eq!(args.operation, Some("get-caller-identity".to_string()));
+    }
+
+    #[test]
+    fn test_global_args_profile() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "--profile", "my-profile", "s3", "list-buckets",
+        ])
+        .unwrap();
+        assert_eq!(args.profile, Some("my-profile".to_string()));
+        assert_eq!(args.service, Some("s3".to_string()));
+        assert_eq!(args.operation, Some("list-buckets".to_string()));
+    }
+
+    #[test]
+    fn test_global_args_output() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "--output", "table", "ec2", "describe-instances",
+        ])
+        .unwrap();
+        assert_eq!(args.output, "table");
+    }
+
+    #[test]
+    fn test_global_args_output_default() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "sts", "get-caller-identity",
+        ])
+        .unwrap();
+        assert_eq!(args.output, "json");
+    }
+
+    #[test]
+    fn test_global_args_debug() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "--debug", "sts", "get-caller-identity",
+        ])
+        .unwrap();
+        assert!(args.debug);
+    }
+
+    #[test]
+    fn test_global_args_debug_default_false() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "sts", "get-caller-identity",
+        ])
+        .unwrap();
+        assert!(!args.debug);
+    }
+
+    #[test]
+    fn test_global_args_all_combined() {
+        let args = GlobalArgs::try_parse_from([
+            "raws",
+            "--region", "eu-west-1",
+            "--profile", "prod",
+            "--output", "text",
+            "--debug",
+            "sts",
+            "get-caller-identity",
+        ])
+        .unwrap();
+        assert_eq!(args.region, Some("eu-west-1".to_string()));
+        assert_eq!(args.profile, Some("prod".to_string()));
+        assert_eq!(args.output, "text");
+        assert!(args.debug);
+        assert_eq!(args.service, Some("sts".to_string()));
+        assert_eq!(args.operation, Some("get-caller-identity".to_string()));
+    }
+
+    #[test]
+    fn test_global_args_no_service_or_operation() {
+        let args = GlobalArgs::try_parse_from(["raws"]).unwrap();
+        assert!(args.service.is_none());
+        assert!(args.operation.is_none());
+    }
+
+    #[test]
+    fn test_global_args_endpoint_url() {
+        let args = GlobalArgs::try_parse_from([
+            "raws",
+            "--endpoint-url", "http://localhost:4566",
+            "sts",
+            "get-caller-identity",
+        ])
+        .unwrap();
+        assert_eq!(
+            args.endpoint_url,
+            Some("http://localhost:4566".to_string())
+        );
+    }
+
+    #[test]
+    fn test_global_args_trailing_operation_args() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "iam", "create-user", "--user-name", "alice",
+        ])
+        .unwrap();
+        assert_eq!(args.service, Some("iam".to_string()));
+        assert_eq!(args.operation, Some("create-user".to_string()));
+        assert_eq!(args.args, vec!["--user-name", "alice"]);
+    }
+
+    #[test]
+    fn test_global_args_region_after_service() {
+        // Global args can appear after service/operation
+        let args = GlobalArgs::try_parse_from([
+            "raws", "sts", "get-caller-identity", "--region", "us-west-2",
+        ])
+        .unwrap();
+        assert_eq!(args.region, Some("us-west-2".to_string()));
+        assert_eq!(args.service, Some("sts".to_string()));
+        assert_eq!(args.operation, Some("get-caller-identity".to_string()));
+    }
+}
