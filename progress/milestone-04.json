@@ -32,8 +32,8 @@
     "verify": [
       { "run": "cargo test -- shape_type", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": ["Session 1: Shapes stored as raw serde_json::Value. Dedicated shape type tests needed."]
+    "passes": true,
+    "notes": ["Session 1: Shapes stored as raw serde_json::Value. Dedicated shape type tests needed.", "Session 2: 6 tests covering all 11 shape types with synthetic + real S3/EC2 models"]
   },
   {
     "id": "operation-parsing",
@@ -41,8 +41,8 @@
     "verify": [
       { "run": "cargo test -- operation_parsing", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": ["Session 1: Operations parsed in model loader, but no dedicated test with filter 'operation_parsing' yet"]
+    "passes": true,
+    "notes": ["Session 1: Operations parsed in model loader, but no dedicated test with filter 'operation_parsing' yet", "Session 2: 5 tests covering POST/GET/DELETE, input/output/errors, resultWrapper, real STS/S3"]
   },
   {
     "id": "service-metadata-parsing",
@@ -50,8 +50,8 @@
     "verify": [
       { "run": "cargo test -- metadata_parsing", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": ["Session 1: Metadata parsed in model loader, verified via load_sts test, but no dedicated 'metadata_parsing' filter test"]
+    "passes": true,
+    "notes": ["Session 1: Metadata parsed in model loader, verified via load_sts test, but no dedicated 'metadata_parsing' filter test", "Session 2: 5 tests covering all metadata fields, optional fields, real STS/DynamoDB/S3"]
   },
   {
     "id": "model-loader-from-file",
@@ -104,7 +104,7 @@
     "verify": [
       { "run": "cargo test -- member_modifier", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": ["Session 1: Member modifiers available in raw shape JSON but no dedicated parsing/test yet"]
+    "passes": true,
+    "notes": ["Session 1: Member modifiers available in raw shape JSON but no dedicated parsing/test yet", "Session 2: 9 tests covering required, location, locationName, streaming, real S3 model"]
   }
 ]

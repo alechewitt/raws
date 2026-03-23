@@ -323,4 +323,590 @@ mod tests {
         assert!(services.contains(&"sts".to_string()));
         assert!(services.contains(&"s3".to_string()));
     }
+
+    // ---------------------------------------------------------------
+    // Synthetic model JSON covering all shape types and member modifiers
+    // ---------------------------------------------------------------
+
+    fn synthetic_model_json() -> &'static str {
+        r#"{
+            "version": "2.0",
+            "metadata": {
+                "apiVersion": "2023-01-01",
+                "endpointPrefix": "synth",
+                "protocol": "json",
+                "serviceId": "Synth",
+                "signatureVersion": "v4",
+                "targetPrefix": "SynthService_20230101",
+                "jsonVersion": "1.1"
+            },
+            "operations": {
+                "DoSomething": {
+                    "name": "DoSomething",
+                    "http": { "method": "POST", "requestUri": "/do-something" },
+                    "input": { "shape": "DoSomethingInput" },
+                    "output": { "shape": "DoSomethingOutput", "resultWrapper": "DoSomethingResult" },
+                    "errors": [
+                        { "shape": "ValidationException" },
+                        { "shape": "ResourceNotFoundException" }
+                    ],
+                    "documentation": "Performs the DoSomething action."
+                },
+                "GetItem": {
+                    "name": "GetItem",
+                    "http": { "method": "GET", "requestUri": "/items/{ItemId}" },
+                    "input": { "shape": "GetItemInput" },
+                    "output": { "shape": "GetItemOutput" }
+                },
+                "DeleteItem": {
+                    "name": "DeleteItem",
+                    "http": { "method": "DELETE", "requestUri": "/items/{ItemId}" }
+                }
+            },
+            "shapes": {
+                "DoSomethingInput": {
+                    "type": "structure",
+                    "required": ["Name", "Count"],
+                    "members": {
+                        "Name": {
+                            "shape": "StringType",
+                            "location": "header",
+                            "locationName": "x-synth-name"
+                        },
+                        "Count": {
+                            "shape": "IntegerType"
+                        },
+                        "Token": {
+                            "shape": "StringType",
+                            "location": "querystring",
+                            "locationName": "token"
+                        },
+                        "Body": {
+                            "shape": "BlobType",
+                            "streaming": true
+                        }
+                    }
+                },
+                "DoSomethingOutput": {
+                    "type": "structure",
+                    "members": {
+                        "Id": { "shape": "StringType" },
+                        "Active": { "shape": "BooleanType" },
+                        "Score": { "shape": "DoubleType" },
+                        "Rating": { "shape": "FloatType" },
+                        "CreatedAt": { "shape": "TimestampType" },
+                        "Tags": { "shape": "TagMap" },
+                        "Items": { "shape": "StringList" },
+                        "Size": { "shape": "LongType" }
+                    }
+                },
+                "GetItemInput": {
+                    "type": "structure",
+                    "required": ["ItemId"],
+                    "members": {
+                        "ItemId": {
+                            "shape": "StringType",
+                            "location": "uri",
+                            "locationName": "ItemId"
+                        }
+                    }
+                },
+                "GetItemOutput": {
+                    "type": "structure",
+                    "members": {
+                        "Data": { "shape": "BlobType" }
+                    }
+                },
+                "ValidationException": {
+                    "type": "structure",
+                    "members": {
+                        "Message": { "shape": "StringType" }
+                    }
+                },
+                "ResourceNotFoundException": {
+                    "type": "structure",
+                    "members": {
+                        "Message": { "shape": "StringType" }
+                    }
+                },
+                "StringType": { "type": "string" },
+                "IntegerType": { "type": "integer" },
+                "LongType": { "type": "long" },
+                "FloatType": { "type": "float" },
+                "DoubleType": { "type": "double" },
+                "BooleanType": { "type": "boolean" },
+                "TimestampType": { "type": "timestamp" },
+                "BlobType": { "type": "blob" },
+                "StringList": {
+                    "type": "list",
+                    "member": { "shape": "StringType" }
+                },
+                "TagMap": {
+                    "type": "map",
+                    "key": { "shape": "StringType" },
+                    "value": { "shape": "StringType" }
+                }
+            }
+        }"#
+    }
+
+    // ---------------------------------------------------------------
+    // Feature 1: shape_type — verify all shape types are stored and
+    //            their "type" field can be read back.
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_shape_type_all_types_in_synthetic_model() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+
+        // Every expected shape type mapped to at least one shape name
+        let expected: Vec<(&str, &str)> = vec![
+            ("StringType", "string"),
+            ("IntegerType", "integer"),
+            ("LongType", "long"),
+            ("FloatType", "float"),
+            ("DoubleType", "double"),
+            ("BooleanType", "boolean"),
+            ("TimestampType", "timestamp"),
+            ("BlobType", "blob"),
+            ("StringList", "list"),
+            ("TagMap", "map"),
+            ("DoSomethingInput", "structure"),
+        ];
+
+        for (shape_name, expected_type) in &expected {
+            let shape = model
+                .shapes
+                .get(*shape_name)
+                .unwrap_or_else(|| panic!("Shape '{}' not found", shape_name));
+            let actual_type = shape
+                .get("type")
+                .and_then(|v| v.as_str())
+                .unwrap_or_else(|| panic!("Shape '{}' missing 'type' field", shape_name));
+            assert_eq!(
+                actual_type, *expected_type,
+                "Shape '{}' has type '{}', expected '{}'",
+                shape_name, actual_type, expected_type
+            );
+        }
+    }
+
+    #[test]
+    fn test_shape_type_list_has_member() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let list_shape = &model.shapes["StringList"];
+        assert_eq!(list_shape["type"].as_str().unwrap(), "list");
+        let member_ref = list_shape
+            .get("member")
+            .and_then(|m| m.get("shape"))
+            .and_then(|s| s.as_str())
+            .unwrap();
+        assert_eq!(member_ref, "StringType");
+    }
+
+    #[test]
+    fn test_shape_type_map_has_key_and_value() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let map_shape = &model.shapes["TagMap"];
+        assert_eq!(map_shape["type"].as_str().unwrap(), "map");
+        let key_ref = map_shape["key"]["shape"].as_str().unwrap();
+        let val_ref = map_shape["value"]["shape"].as_str().unwrap();
+        assert_eq!(key_ref, "StringType");
+        assert_eq!(val_ref, "StringType");
+    }
+
+    #[test]
+    fn test_shape_type_structure_has_members() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let structure = &model.shapes["DoSomethingInput"];
+        assert_eq!(structure["type"].as_str().unwrap(), "structure");
+        let members = structure["members"].as_object().unwrap();
+        assert!(members.contains_key("Name"));
+        assert!(members.contains_key("Count"));
+        assert!(members.contains_key("Token"));
+        assert!(members.contains_key("Body"));
+    }
+
+    #[test]
+    fn test_shape_type_real_s3_model() {
+        let path = Path::new("models/s3/2006-03-01/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: S3 model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+
+        // S3 has blob, boolean, integer, list, long, map, string, structure, timestamp
+        let expected_types: Vec<&str> = vec![
+            "blob", "boolean", "integer", "list", "long", "map", "string", "structure", "timestamp",
+        ];
+
+        let actual_types: std::collections::BTreeSet<String> = model
+            .shapes
+            .values()
+            .filter_map(|v| v.get("type").and_then(|t| t.as_str()).map(|s| s.to_string()))
+            .collect();
+
+        for t in &expected_types {
+            assert!(
+                actual_types.contains(*t),
+                "S3 model missing expected shape type '{}'",
+                t
+            );
+        }
+    }
+
+    #[test]
+    fn test_shape_type_real_ec2_model_includes_float_double() {
+        let path = Path::new("models/ec2/2016-11-15/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: EC2 model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+
+        let actual_types: std::collections::BTreeSet<String> = model
+            .shapes
+            .values()
+            .filter_map(|v| v.get("type").and_then(|t| t.as_str()).map(|s| s.to_string()))
+            .collect();
+
+        assert!(actual_types.contains("float"), "EC2 model missing 'float' type");
+        assert!(actual_types.contains("double"), "EC2 model missing 'double' type");
+    }
+
+    // ---------------------------------------------------------------
+    // Feature 2: operation_parsing — verify operation definitions
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_operation_parsing_synthetic_do_something() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        assert_eq!(model.operations.len(), 3);
+
+        let op = &model.operations["DoSomething"];
+        assert_eq!(op.name, "DoSomething");
+        assert_eq!(op.http_method, "POST");
+        assert_eq!(op.http_request_uri, "/do-something");
+        assert_eq!(op.input_shape.as_deref(), Some("DoSomethingInput"));
+        assert_eq!(op.output_shape.as_deref(), Some("DoSomethingOutput"));
+        assert_eq!(op.result_wrapper.as_deref(), Some("DoSomethingResult"));
+        assert_eq!(op.errors.len(), 2);
+        assert!(op.errors.contains(&"ValidationException".to_string()));
+        assert!(op.errors.contains(&"ResourceNotFoundException".to_string()));
+        assert_eq!(
+            op.documentation.as_deref(),
+            Some("Performs the DoSomething action.")
+        );
+    }
+
+    #[test]
+    fn test_operation_parsing_synthetic_get_item() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+
+        let op = &model.operations["GetItem"];
+        assert_eq!(op.name, "GetItem");
+        assert_eq!(op.http_method, "GET");
+        assert_eq!(op.http_request_uri, "/items/{ItemId}");
+        assert_eq!(op.input_shape.as_deref(), Some("GetItemInput"));
+        assert_eq!(op.output_shape.as_deref(), Some("GetItemOutput"));
+        assert!(op.result_wrapper.is_none());
+        assert!(op.errors.is_empty());
+    }
+
+    #[test]
+    fn test_operation_parsing_synthetic_delete_no_io() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+
+        let op = &model.operations["DeleteItem"];
+        assert_eq!(op.name, "DeleteItem");
+        assert_eq!(op.http_method, "DELETE");
+        assert_eq!(op.http_request_uri, "/items/{ItemId}");
+        assert!(op.input_shape.is_none());
+        assert!(op.output_shape.is_none());
+        assert!(op.result_wrapper.is_none());
+        assert!(op.errors.is_empty());
+        assert!(op.documentation.is_none());
+    }
+
+    #[test]
+    fn test_operation_parsing_real_sts() {
+        let path = Path::new("models/sts/2011-06-15/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: STS model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+
+        // GetCallerIdentity
+        let gci = &model.operations["GetCallerIdentity"];
+        assert_eq!(gci.http_method, "POST");
+        assert_eq!(gci.http_request_uri, "/");
+        assert!(gci.input_shape.is_some());
+        assert!(gci.output_shape.is_some());
+
+        // AssumeRole has errors
+        let ar = &model.operations["AssumeRole"];
+        assert_eq!(ar.http_method, "POST");
+        assert!(!ar.errors.is_empty(), "AssumeRole should have errors");
+        assert!(
+            ar.errors.contains(&"MalformedPolicyDocumentException".to_string()),
+            "AssumeRole errors should include MalformedPolicyDocumentException"
+        );
+    }
+
+    #[test]
+    fn test_operation_parsing_real_s3() {
+        let path = Path::new("models/s3/2006-03-01/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: S3 model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+
+        // PutObject uses PUT
+        let put = &model.operations["PutObject"];
+        assert_eq!(put.http_method, "PUT");
+        assert!(put.http_request_uri.contains("{Key+}"));
+
+        // ListBuckets uses GET
+        let list = &model.operations["ListBuckets"];
+        assert_eq!(list.http_method, "GET");
+    }
+
+    // ---------------------------------------------------------------
+    // Feature 3: metadata_parsing — verify service metadata fields
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_metadata_parsing_synthetic() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+
+        assert_eq!(model.metadata.api_version, "2023-01-01");
+        assert_eq!(model.metadata.protocol, "json");
+        assert_eq!(model.metadata.endpoint_prefix, "synth");
+        assert_eq!(model.metadata.service_id, "Synth");
+        assert_eq!(model.metadata.signature_version, "v4");
+        assert_eq!(
+            model.metadata.target_prefix.as_deref(),
+            Some("SynthService_20230101")
+        );
+        assert_eq!(model.metadata.json_version.as_deref(), Some("1.1"));
+    }
+
+    #[test]
+    fn test_metadata_parsing_no_optional_fields() {
+        let json = r#"{
+            "version": "2.0",
+            "metadata": {
+                "apiVersion": "2024-01-01",
+                "endpointPrefix": "bare",
+                "protocol": "query",
+                "serviceId": "Bare",
+                "signatureVersion": "v4"
+            },
+            "operations": {},
+            "shapes": {}
+        }"#;
+        let model = parse_service_model(json).unwrap();
+
+        assert_eq!(model.metadata.api_version, "2024-01-01");
+        assert_eq!(model.metadata.protocol, "query");
+        assert_eq!(model.metadata.endpoint_prefix, "bare");
+        assert_eq!(model.metadata.service_id, "Bare");
+        assert_eq!(model.metadata.signature_version, "v4");
+        assert!(model.metadata.target_prefix.is_none());
+        assert!(model.metadata.json_version.is_none());
+        assert!(model.metadata.global_endpoint.is_none());
+    }
+
+    #[test]
+    fn test_metadata_parsing_real_sts() {
+        let path = Path::new("models/sts/2011-06-15/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: STS model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+        assert_eq!(model.metadata.api_version, "2011-06-15");
+        assert_eq!(model.metadata.protocol, "query");
+        assert_eq!(model.metadata.endpoint_prefix, "sts");
+        assert_eq!(model.metadata.service_id, "STS");
+        assert_eq!(model.metadata.signature_version, "v4");
+        assert!(model.metadata.target_prefix.is_none());
+        assert!(model.metadata.json_version.is_none());
+        assert_eq!(
+            model.metadata.global_endpoint.as_deref(),
+            Some("sts.amazonaws.com")
+        );
+    }
+
+    #[test]
+    fn test_metadata_parsing_real_dynamodb() {
+        let path = Path::new("models/dynamodb/2012-08-10/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: DynamoDB model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+        assert_eq!(model.metadata.api_version, "2012-08-10");
+        assert_eq!(model.metadata.protocol, "json");
+        assert_eq!(model.metadata.endpoint_prefix, "dynamodb");
+        assert_eq!(model.metadata.service_id, "DynamoDB");
+        assert_eq!(model.metadata.signature_version, "v4");
+        assert_eq!(
+            model.metadata.target_prefix.as_deref(),
+            Some("DynamoDB_20120810")
+        );
+        assert_eq!(model.metadata.json_version.as_deref(), Some("1.0"));
+    }
+
+    #[test]
+    fn test_metadata_parsing_real_s3() {
+        let path = Path::new("models/s3/2006-03-01/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: S3 model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+        assert_eq!(model.metadata.api_version, "2006-03-01");
+        assert_eq!(model.metadata.protocol, "rest-xml");
+        assert_eq!(model.metadata.endpoint_prefix, "s3");
+        assert_eq!(model.metadata.service_id, "S3");
+        assert_eq!(model.metadata.signature_version, "s3");
+    }
+
+    // ---------------------------------------------------------------
+    // Feature 4: member_modifier — required, location, locationName,
+    //            streaming modifiers on structure members
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_member_modifier_required_list() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let shape = &model.shapes["DoSomethingInput"];
+
+        let required = shape["required"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_str().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(required, vec!["Name", "Count"]);
+    }
+
+    #[test]
+    fn test_member_modifier_location_header() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let shape = &model.shapes["DoSomethingInput"];
+        let name_member = &shape["members"]["Name"];
+
+        assert_eq!(name_member["location"].as_str().unwrap(), "header");
+        assert_eq!(
+            name_member["locationName"].as_str().unwrap(),
+            "x-synth-name"
+        );
+    }
+
+    #[test]
+    fn test_member_modifier_location_querystring() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let shape = &model.shapes["DoSomethingInput"];
+        let token_member = &shape["members"]["Token"];
+
+        assert_eq!(token_member["location"].as_str().unwrap(), "querystring");
+        assert_eq!(token_member["locationName"].as_str().unwrap(), "token");
+    }
+
+    #[test]
+    fn test_member_modifier_location_uri() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let shape = &model.shapes["GetItemInput"];
+        let id_member = &shape["members"]["ItemId"];
+
+        assert_eq!(id_member["location"].as_str().unwrap(), "uri");
+        assert_eq!(id_member["locationName"].as_str().unwrap(), "ItemId");
+    }
+
+    #[test]
+    fn test_member_modifier_streaming() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let shape = &model.shapes["DoSomethingInput"];
+        let body_member = &shape["members"]["Body"];
+
+        assert_eq!(body_member["streaming"].as_bool().unwrap(), true);
+    }
+
+    #[test]
+    fn test_member_modifier_no_required_field() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let shape = &model.shapes["DoSomethingOutput"];
+        // DoSomethingOutput has no required list
+        assert!(shape.get("required").is_none());
+    }
+
+    #[test]
+    fn test_member_modifier_member_without_location() {
+        let model = parse_service_model(synthetic_model_json()).unwrap();
+        let shape = &model.shapes["DoSomethingInput"];
+        let count_member = &shape["members"]["Count"];
+
+        // Count has no location or locationName
+        assert!(count_member.get("location").is_none());
+        assert!(count_member.get("locationName").is_none());
+        // But it does have a shape reference
+        assert_eq!(count_member["shape"].as_str().unwrap(), "IntegerType");
+    }
+
+    #[test]
+    fn test_member_modifier_real_s3_header_and_uri() {
+        let path = Path::new("models/s3/2006-03-01/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: S3 model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+
+        // AbortMultipartUploadRequest has Bucket (uri), Key (uri), UploadId (querystring)
+        let shape = &model.shapes["AbortMultipartUploadRequest"];
+        let members = shape["members"].as_object().unwrap();
+
+        let bucket = &members["Bucket"];
+        assert_eq!(bucket["location"].as_str().unwrap(), "uri");
+        assert_eq!(bucket["locationName"].as_str().unwrap(), "Bucket");
+
+        let key = &members["Key"];
+        assert_eq!(key["location"].as_str().unwrap(), "uri");
+        assert_eq!(key["locationName"].as_str().unwrap(), "Key");
+
+        let upload_id = &members["UploadId"];
+        assert_eq!(upload_id["location"].as_str().unwrap(), "querystring");
+        assert_eq!(upload_id["locationName"].as_str().unwrap(), "uploadId");
+
+        // Required list
+        let required = shape["required"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|v| v.as_str().unwrap())
+            .collect::<Vec<_>>();
+        assert!(required.contains(&"Bucket"));
+        assert!(required.contains(&"Key"));
+        assert!(required.contains(&"UploadId"));
+    }
+
+    #[test]
+    fn test_member_modifier_real_s3_streaming() {
+        let path = Path::new("models/s3/2006-03-01/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: S3 model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+
+        // PutObjectRequest has a Body member with streaming: true
+        let shape = &model.shapes["PutObjectRequest"];
+        let body = &shape["members"]["Body"];
+        assert_eq!(body.get("streaming").and_then(|v| v.as_bool()), Some(true));
+    }
 }
