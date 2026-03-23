@@ -5,8 +5,8 @@
     "verify": [
       { "run": "cargo test -- text_format", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["15 tests, matches AWS CLI output for STS/DynamoDB/S3"]
   },
   {
     "id": "table-output-formatter",
@@ -14,8 +14,8 @@
     "verify": [
       { "run": "cargo test -- table_format", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["20 tests, vertical and horizontal tables, similar structure to AWS CLI"]
   },
   {
     "id": "debug-flag",
