@@ -86,8 +86,8 @@
     "verify": [
       { "run": "cargo test -- jmespath", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["25 tests, hand-rolled evaluator, supports field/index/flatten/filter/wildcard/pipe/multi-select"]
   },
   {
     "id": "configure-command",

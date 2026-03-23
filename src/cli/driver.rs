@@ -4,6 +4,7 @@ use std::path::Path;
 
 use crate::cli::args::GlobalArgs;
 use crate::cli::formatter;
+use crate::cli::jmespath;
 use crate::core::auth::sigv4::{self, SigningParams};
 use crate::core::config::provider::ConfigProvider;
 use crate::core::credentials::chain::ChainCredentialProvider;
@@ -244,8 +245,16 @@ pub async fn run() -> Result<()> {
         .await?
     };
 
-    // 9. Format and print output
-    let formatted = formatter::format_output(&response_value, output_format)?;
+    // 9. Apply --query JMESPath filter if provided
+    let final_value = if let Some(ref query_expr) = args.query {
+        jmespath::evaluate(query_expr, &response_value)
+            .with_context(|| format!("Failed to evaluate --query expression: {}", query_expr))?
+    } else {
+        response_value
+    };
+
+    // 10. Format and print output
+    let formatted = formatter::format_output(&final_value, output_format)?;
     println!("{formatted}");
 
     Ok(())

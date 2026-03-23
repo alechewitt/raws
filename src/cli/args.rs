@@ -23,6 +23,10 @@ pub struct GlobalArgs {
     #[arg(long, global = true)]
     pub no_paginate: bool,
 
+    /// JMESPath query to filter/transform output
+    #[arg(long, global = true)]
+    pub query: Option<String>,
+
     /// Override endpoint URL
     #[arg(long, global = true)]
     pub endpoint_url: Option<String>,
