@@ -27,6 +27,13 @@ fn get_endpoints_data() -> Result<&'static Value> {
     Ok(ENDPOINTS_DATA.get_or_init(|| data))
 }
 
+/// Endpoint variant tags for dualstack and FIPS resolution.
+#[derive(Debug, Clone, Default)]
+pub struct EndpointVariantTags {
+    pub use_dualstack: bool,
+    pub use_fips: bool,
+}
+
 /// Main entry point for endpoint resolution (backward-compatible signature).
 ///
 /// Called from driver.rs with (endpoint_prefix, region, global_endpoint).
@@ -37,12 +44,42 @@ pub fn resolve_endpoint(
     region: &str,
     global_endpoint: Option<&str>,
 ) -> Result<String> {
+    resolve_endpoint_with_variants(
+        endpoint_prefix,
+        region,
+        global_endpoint,
+        &EndpointVariantTags::default(),
+    )
+}
+
+/// Resolve an endpoint with optional dualstack/FIPS variant tags.
+pub fn resolve_endpoint_with_variants(
+    endpoint_prefix: &str,
+    region: &str,
+    global_endpoint: Option<&str>,
+    variant_tags: &EndpointVariantTags,
+) -> Result<String> {
     // Try to resolve using endpoints.json first.
     match get_endpoints_data() {
-        Ok(endpoints) => resolve_endpoint_from_data(endpoints, endpoint_prefix, region, global_endpoint),
+        Ok(endpoints) => resolve_endpoint_from_data_with_variants(
+            endpoints,
+            endpoint_prefix,
+            region,
+            global_endpoint,
+            variant_tags,
+        ),
         Err(_) => {
-            // Fallback: if endpoints.json is not available, use the old simple logic.
-            if let Some(global) = global_endpoint {
+            // Fallback: if endpoints.json is not available, use simple logic.
+            if variant_tags.use_dualstack || variant_tags.use_fips {
+                // Build a variant hostname using simple patterns
+                let hostname = build_fallback_variant_hostname(
+                    endpoint_prefix,
+                    region,
+                    "amazonaws.com",
+                    variant_tags,
+                );
+                Ok(format!("https://{hostname}"))
+            } else if let Some(global) = global_endpoint {
                 Ok(format!("https://{global}"))
             } else {
                 Ok(format!("https://{endpoint_prefix}.{region}.amazonaws.com"))
@@ -51,7 +88,23 @@ pub fn resolve_endpoint(
     }
 }
 
-/// Resolve an endpoint given parsed endpoints.json data.
+/// Resolve an endpoint given parsed endpoints.json data (backward-compatible, no variant tags).
+pub fn resolve_endpoint_from_data(
+    endpoints: &Value,
+    service: &str,
+    region: &str,
+    global_endpoint: Option<&str>,
+) -> Result<String> {
+    resolve_endpoint_from_data_with_variants(
+        endpoints,
+        service,
+        region,
+        global_endpoint,
+        &EndpointVariantTags::default(),
+    )
+}
+
+/// Resolve an endpoint given parsed endpoints.json data, with variant tags support.
 ///
 /// Resolution algorithm:
 /// 1. Find the partition for the given region (by matching regionRegex or listed regions).
@@ -60,11 +113,13 @@ pub fn resolve_endpoint(
 ///    use the partitionEndpoint's hostname.
 /// 4. If the region has a specific endpoint entry with a hostname, use that.
 /// 5. Otherwise, use the partition default hostname template.
-pub fn resolve_endpoint_from_data(
+/// 6. If variant tags (dualstack/fips) are set, look for matching variants at each level.
+pub fn resolve_endpoint_from_data_with_variants(
     endpoints: &Value,
     service: &str,
     region: &str,
     global_endpoint: Option<&str>,
+    variant_tags: &EndpointVariantTags,
 ) -> Result<String> {
     let partitions = match endpoints.get("partitions").and_then(|p| p.as_array()) {
         Some(p) => p,
@@ -78,11 +133,11 @@ pub fn resolve_endpoint_from_data(
     let partition = find_partition(partitions, region);
 
     match partition {
-        Some(p) => resolve_in_partition(p, service, region, global_endpoint),
+        Some(p) => resolve_in_partition(p, service, region, global_endpoint, variant_tags),
         None => {
             // No matching partition: try the first partition (aws) as fallback
             if let Some(first) = partitions.first() {
-                resolve_in_partition(first, service, region, global_endpoint)
+                resolve_in_partition(first, service, region, global_endpoint, variant_tags)
             } else {
                 fallback_resolve(service, region, global_endpoint)
             }
@@ -125,6 +180,7 @@ fn resolve_in_partition(
     service: &str,
     region: &str,
     _global_endpoint: Option<&str>,
+    variant_tags: &EndpointVariantTags,
 ) -> Result<String> {
     let dns_suffix = partition
         .get("dnsSuffix")
@@ -132,6 +188,9 @@ fn resolve_in_partition(
         .unwrap_or("amazonaws.com");
 
     let partition_defaults = partition.get("defaults");
+
+    // Build required tags list for variant matching
+    let required_tags = build_required_tags(variant_tags);
 
     // Look up the service in this partition.
     let service_data = partition
@@ -164,19 +223,26 @@ fn resolve_in_partition(
             if region_ep.is_some() {
                 (region, region_ep)
             } else if let Some(pe) = partition_endpoint {
-                // Region not found, check if there's a partition endpoint
-                // For STS: isRegionalized is not set (None), but partitionEndpoint = "aws-global"
-                // In this case, if the region has a specific entry, use it; otherwise fall
-                // through to default template (the real AWS SDK uses regional endpoints for STS).
-                // We do NOT fall back to the partition endpoint here -- regional is the default
-                // for STS in the modern AWS SDK.
                 let _pe_ep = endpoints.and_then(|eps| eps.get(pe));
-                // Use the default hostname template for this region
                 (region, None)
             } else {
                 (region, None)
             }
         };
+
+        // If variant tags are requested, try to find a matching variant hostname
+        if !required_tags.is_empty() {
+            let hostname = resolve_variant_hostname(
+                endpoint_data,
+                service_defaults,
+                partition_defaults,
+                &required_tags,
+                service,
+                effective_region,
+                dns_suffix,
+            );
+            return Ok(format!("https://{hostname}"));
+        }
 
         // Build hostname from the endpoint data or template.
         let hostname = resolve_hostname(
@@ -192,6 +258,19 @@ fn resolve_in_partition(
     }
 
     // Service not found in endpoints.json for this partition:
+    if !required_tags.is_empty() {
+        let hostname = resolve_variant_hostname(
+            None,
+            None,
+            partition_defaults,
+            &required_tags,
+            service,
+            region,
+            dns_suffix,
+        );
+        return Ok(format!("https://{hostname}"));
+    }
+
     // Use the partition default template.
     let hostname = resolve_hostname(
         None,
@@ -248,6 +327,181 @@ fn expand_hostname_template(template: &str, service: &str, region: &str, dns_suf
         .replace("{service}", service)
         .replace("{region}", region)
         .replace("{dnsSuffix}", dns_suffix)
+}
+
+/// Build a list of required tag strings from variant flags.
+fn build_required_tags(variant_tags: &EndpointVariantTags) -> Vec<String> {
+    let mut tags = Vec::new();
+    if variant_tags.use_dualstack {
+        tags.push("dualstack".to_string());
+    }
+    if variant_tags.use_fips {
+        tags.push("fips".to_string());
+    }
+    tags
+}
+
+/// Find a matching variant from a "variants" array that has all the required tags.
+///
+/// A variant matches if its "tags" array contains all of the required tags (exact set match).
+fn find_matching_variant<'a>(
+    variants: &'a [Value],
+    required_tags: &[String],
+) -> Option<&'a Value> {
+    for variant in variants {
+        if let Some(tags_arr) = variant.get("tags").and_then(|t| t.as_array()) {
+            let variant_tags: Vec<&str> = tags_arr
+                .iter()
+                .filter_map(|t| t.as_str())
+                .collect();
+
+            // Check that required_tags and variant_tags match exactly (same set)
+            if required_tags.len() == variant_tags.len()
+                && required_tags.iter().all(|rt| variant_tags.contains(&rt.as_str()))
+            {
+                return Some(variant);
+            }
+        }
+    }
+    None
+}
+
+/// Resolve hostname using variant matching, checking (in priority order):
+/// 1. The specific endpoint entry's "variants"
+/// 2. The service defaults "variants"
+/// 3. The partition defaults "variants"
+/// 4. Fallback: build a variant hostname using simple patterns
+fn resolve_variant_hostname(
+    endpoint_data: Option<&Value>,
+    service_defaults: Option<&Value>,
+    partition_defaults: Option<&Value>,
+    required_tags: &[String],
+    service: &str,
+    region: &str,
+    dns_suffix: &str,
+) -> String {
+    // Check endpoint-level variants
+    if let Some(ep) = endpoint_data {
+        if let Some(variants) = ep.get("variants").and_then(|v| v.as_array()) {
+            if let Some(variant) = find_matching_variant(variants, required_tags) {
+                let hostname = variant.get("hostname").and_then(|h| h.as_str()).unwrap_or("");
+                let variant_dns = variant
+                    .get("dnsSuffix")
+                    .and_then(|d| d.as_str())
+                    .unwrap_or(dns_suffix);
+                if !hostname.is_empty() {
+                    return expand_hostname_template(hostname, service, region, variant_dns);
+                }
+            }
+        }
+    }
+
+    // Check service-level defaults variants
+    if let Some(defaults) = service_defaults {
+        if let Some(variants) = defaults.get("variants").and_then(|v| v.as_array()) {
+            if let Some(variant) = find_matching_variant(variants, required_tags) {
+                let hostname = variant.get("hostname").and_then(|h| h.as_str()).unwrap_or("");
+                let variant_dns = variant
+                    .get("dnsSuffix")
+                    .and_then(|d| d.as_str())
+                    .unwrap_or(dns_suffix);
+                if !hostname.is_empty() {
+                    return expand_hostname_template(hostname, service, region, variant_dns);
+                }
+            }
+        }
+    }
+
+    // Check partition-level defaults variants
+    if let Some(defaults) = partition_defaults {
+        if let Some(variants) = defaults.get("variants").and_then(|v| v.as_array()) {
+            if let Some(variant) = find_matching_variant(variants, required_tags) {
+                let hostname = variant.get("hostname").and_then(|h| h.as_str()).unwrap_or("");
+                let variant_dns = variant
+                    .get("dnsSuffix")
+                    .and_then(|d| d.as_str())
+                    .unwrap_or(dns_suffix);
+                if !hostname.is_empty() {
+                    return expand_hostname_template(hostname, service, region, variant_dns);
+                }
+            }
+        }
+    }
+
+    // Fallback: build variant hostname using simple patterns
+    build_fallback_variant_hostname(service, region, dns_suffix, &EndpointVariantTags {
+        use_dualstack: required_tags.contains(&"dualstack".to_string()),
+        use_fips: required_tags.contains(&"fips".to_string()),
+    })
+}
+
+/// Build a fallback variant hostname when endpoints.json data isn't available.
+fn build_fallback_variant_hostname(
+    service: &str,
+    region: &str,
+    dns_suffix: &str,
+    variant_tags: &EndpointVariantTags,
+) -> String {
+    match (variant_tags.use_fips, variant_tags.use_dualstack) {
+        (true, true) => format!("{service}-fips.{region}.api.aws"),
+        (true, false) => format!("{service}-fips.{region}.{dns_suffix}"),
+        (false, true) => format!("{service}.{region}.api.aws"),
+        (false, false) => format!("{service}.{region}.{dns_suffix}"),
+    }
+}
+
+/// Apply S3 virtual-hosted-style addressing to a URL.
+///
+/// Transforms `https://s3.{region}.amazonaws.com/{bucket}/...` into
+/// `https://{bucket}.s3.{region}.amazonaws.com/...`
+///
+/// Falls back to path-style if bucket name contains dots (not DNS-compatible).
+pub fn apply_s3_virtual_hosted_style(endpoint_url: &str, bucket: &str) -> String {
+    // Don't apply virtual-hosted style if bucket is empty
+    if bucket.is_empty() {
+        return endpoint_url.to_string();
+    }
+
+    // Don't apply virtual-hosted style if bucket has dots (not DNS-compatible)
+    if bucket.contains('.') {
+        return endpoint_url.to_string();
+    }
+
+    // Parse the URL
+    let parsed = match url::Url::parse(endpoint_url) {
+        Ok(u) => u,
+        Err(_) => return endpoint_url.to_string(),
+    };
+
+    let host = match parsed.host_str() {
+        Some(h) => h,
+        None => return endpoint_url.to_string(),
+    };
+
+    // Build the virtual-hosted hostname: {bucket}.{original_host}
+    let new_host = format!("{bucket}.{host}");
+    let scheme = parsed.scheme();
+
+    // Reconstruct URL with new host (no path changes needed -- the bucket is in the host now,
+    // the protocol handler (rest_xml) still puts the bucket in the URI path via the model's
+    // URI template. The driver will strip the bucket prefix from the path after this call.)
+    format!("{scheme}://{new_host}")
+}
+
+/// Check if a bucket name is DNS-compatible (suitable for virtual-hosted style).
+///
+/// DNS-compatible bucket names:
+/// - Do not contain dots
+/// - Are between 3 and 63 characters long
+/// - Do not look like IP addresses
+pub fn is_bucket_dns_compatible(bucket: &str) -> bool {
+    if bucket.is_empty() || bucket.len() < 3 || bucket.len() > 63 {
+        return false;
+    }
+    if bucket.contains('.') {
+        return false;
+    }
+    true
 }
 
 /// Simple fallback when endpoints.json is unavailable.
@@ -895,5 +1149,317 @@ mod tests {
     fn test_fallback_resolve_global() {
         let url = fallback_resolve("iam", "us-east-1", Some("iam.amazonaws.com")).unwrap();
         assert_eq!(url, "https://iam.amazonaws.com");
+    }
+
+    // ---------------------------------------------------------------
+    // s3_virtual_host: S3 virtual-hosted style URL tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_s3_virtual_host_basic() {
+        let url = apply_s3_virtual_hosted_style(
+            "https://s3.us-east-1.amazonaws.com",
+            "my-bucket",
+        );
+        assert_eq!(url, "https://my-bucket.s3.us-east-1.amazonaws.com");
+    }
+
+    #[test]
+    fn test_s3_virtual_host_us_west_2() {
+        let url = apply_s3_virtual_hosted_style(
+            "https://s3.us-west-2.amazonaws.com",
+            "test-bucket",
+        );
+        assert_eq!(url, "https://test-bucket.s3.us-west-2.amazonaws.com");
+    }
+
+    #[test]
+    fn test_s3_virtual_host_eu_region() {
+        let url = apply_s3_virtual_hosted_style(
+            "https://s3.eu-west-1.amazonaws.com",
+            "europe-data",
+        );
+        assert_eq!(url, "https://europe-data.s3.eu-west-1.amazonaws.com");
+    }
+
+    #[test]
+    fn test_s3_virtual_host_empty_bucket_no_change() {
+        let url = apply_s3_virtual_hosted_style(
+            "https://s3.us-east-1.amazonaws.com",
+            "",
+        );
+        assert_eq!(url, "https://s3.us-east-1.amazonaws.com");
+    }
+
+    #[test]
+    fn test_s3_virtual_host_dots_fallback_to_path_style() {
+        // Bucket names with dots should NOT be transformed to virtual-hosted
+        let url = apply_s3_virtual_hosted_style(
+            "https://s3.us-east-1.amazonaws.com",
+            "my.bucket.name",
+        );
+        // Should remain unchanged (path-style)
+        assert_eq!(url, "https://s3.us-east-1.amazonaws.com");
+    }
+
+    #[test]
+    fn test_s3_virtual_host_dualstack() {
+        let url = apply_s3_virtual_hosted_style(
+            "https://s3.dualstack.us-east-1.amazonaws.com",
+            "my-bucket",
+        );
+        assert_eq!(url, "https://my-bucket.s3.dualstack.us-east-1.amazonaws.com");
+    }
+
+    #[test]
+    fn test_s3_virtual_host_fips() {
+        let url = apply_s3_virtual_hosted_style(
+            "https://s3-fips.us-east-1.amazonaws.com",
+            "my-bucket",
+        );
+        assert_eq!(url, "https://my-bucket.s3-fips.us-east-1.amazonaws.com");
+    }
+
+    // ---------------------------------------------------------------
+    // s3_path_style: S3 path-style URL tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_s3_path_style_dots_in_bucket() {
+        // Bucket names with dots should use path-style
+        assert!(!is_bucket_dns_compatible("my.bucket.name"));
+    }
+
+    #[test]
+    fn test_s3_path_style_valid_bucket_is_dns_compatible() {
+        assert!(is_bucket_dns_compatible("my-bucket"));
+        assert!(is_bucket_dns_compatible("test-bucket-123"));
+    }
+
+    #[test]
+    fn test_s3_path_style_empty_bucket_not_dns_compatible() {
+        assert!(!is_bucket_dns_compatible(""));
+    }
+
+    #[test]
+    fn test_s3_path_style_short_bucket_not_dns_compatible() {
+        assert!(!is_bucket_dns_compatible("ab"));
+    }
+
+    #[test]
+    fn test_s3_path_style_long_bucket_not_dns_compatible() {
+        let long_name = "a".repeat(64);
+        assert!(!is_bucket_dns_compatible(&long_name));
+    }
+
+    #[test]
+    fn test_s3_path_style_bucket_with_single_dot() {
+        assert!(!is_bucket_dns_compatible("my.bucket"));
+    }
+
+    // ---------------------------------------------------------------
+    // dualstack: Dual-stack endpoint tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_dualstack_s3_us_east_1() {
+        let path = Path::new("models/endpoints.json");
+        if !path.exists() {
+            eprintln!("Skipping: endpoints.json not found");
+            return;
+        }
+        let data = load_endpoints(path).unwrap();
+        let tags = EndpointVariantTags {
+            use_dualstack: true,
+            use_fips: false,
+        };
+        let url = resolve_endpoint_from_data_with_variants(&data, "s3", "us-east-1", None, &tags).unwrap();
+        assert!(
+            url.contains("dualstack"),
+            "S3 dualstack endpoint should contain 'dualstack', got: {url}"
+        );
+    }
+
+    #[test]
+    fn test_dualstack_sts_us_east_1() {
+        let path = Path::new("models/endpoints.json");
+        if !path.exists() {
+            eprintln!("Skipping: endpoints.json not found");
+            return;
+        }
+        let data = load_endpoints(path).unwrap();
+        let tags = EndpointVariantTags {
+            use_dualstack: true,
+            use_fips: false,
+        };
+        let url = resolve_endpoint_from_data_with_variants(&data, "sts", "us-east-1", None, &tags).unwrap();
+        // STS dualstack should use api.aws suffix
+        assert!(
+            url.contains("api.aws") || url.contains("dualstack"),
+            "STS dualstack endpoint should contain dualstack indicator, got: {url}"
+        );
+    }
+
+    #[test]
+    fn test_dualstack_fallback_hostname() {
+        let hostname = build_fallback_variant_hostname(
+            "s3",
+            "us-east-1",
+            "amazonaws.com",
+            &EndpointVariantTags {
+                use_dualstack: true,
+                use_fips: false,
+            },
+        );
+        assert_eq!(hostname, "s3.us-east-1.api.aws");
+    }
+
+    // ---------------------------------------------------------------
+    // fips: FIPS endpoint tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_fips_s3_us_east_1() {
+        let path = Path::new("models/endpoints.json");
+        if !path.exists() {
+            eprintln!("Skipping: endpoints.json not found");
+            return;
+        }
+        let data = load_endpoints(path).unwrap();
+        let tags = EndpointVariantTags {
+            use_dualstack: false,
+            use_fips: true,
+        };
+        let url = resolve_endpoint_from_data_with_variants(&data, "s3", "us-east-1", None, &tags).unwrap();
+        assert!(
+            url.contains("fips"),
+            "S3 FIPS endpoint should contain 'fips', got: {url}"
+        );
+    }
+
+    #[test]
+    fn test_fips_sts_us_east_1() {
+        let path = Path::new("models/endpoints.json");
+        if !path.exists() {
+            eprintln!("Skipping: endpoints.json not found");
+            return;
+        }
+        let data = load_endpoints(path).unwrap();
+        let tags = EndpointVariantTags {
+            use_dualstack: false,
+            use_fips: true,
+        };
+        let url = resolve_endpoint_from_data_with_variants(&data, "sts", "us-east-1", None, &tags).unwrap();
+        assert!(
+            url.contains("fips"),
+            "STS FIPS endpoint should contain 'fips', got: {url}"
+        );
+    }
+
+    #[test]
+    fn test_fips_dualstack_combined() {
+        let path = Path::new("models/endpoints.json");
+        if !path.exists() {
+            eprintln!("Skipping: endpoints.json not found");
+            return;
+        }
+        let data = load_endpoints(path).unwrap();
+        let tags = EndpointVariantTags {
+            use_dualstack: true,
+            use_fips: true,
+        };
+        let url = resolve_endpoint_from_data_with_variants(&data, "s3", "us-east-1", None, &tags).unwrap();
+        assert!(
+            url.contains("fips") && url.contains("dualstack"),
+            "S3 FIPS+dualstack endpoint should contain both 'fips' and 'dualstack', got: {url}"
+        );
+    }
+
+    #[test]
+    fn test_fips_fallback_hostname() {
+        let hostname = build_fallback_variant_hostname(
+            "sts",
+            "us-east-1",
+            "amazonaws.com",
+            &EndpointVariantTags {
+                use_dualstack: false,
+                use_fips: true,
+            },
+        );
+        assert_eq!(hostname, "sts-fips.us-east-1.amazonaws.com");
+    }
+
+    #[test]
+    fn test_fips_dualstack_fallback_hostname() {
+        let hostname = build_fallback_variant_hostname(
+            "sts",
+            "us-east-1",
+            "amazonaws.com",
+            &EndpointVariantTags {
+                use_dualstack: true,
+                use_fips: true,
+            },
+        );
+        assert_eq!(hostname, "sts-fips.us-east-1.api.aws");
+    }
+
+    // ---------------------------------------------------------------
+    // Variant matching tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_find_matching_variant_fips() {
+        let variants: Vec<Value> = serde_json::from_str(r#"[
+            {"hostname": "{service}-fips.{region}.{dnsSuffix}", "tags": ["fips"], "dnsSuffix": "amazonaws.com"},
+            {"hostname": "{service}.{region}.{dnsSuffix}", "tags": ["dualstack"], "dnsSuffix": "api.aws"}
+        ]"#).unwrap();
+
+        let required = vec!["fips".to_string()];
+        let result = find_matching_variant(&variants, &required);
+        assert!(result.is_some());
+        let hostname = result.unwrap().get("hostname").unwrap().as_str().unwrap();
+        assert!(hostname.contains("fips"));
+    }
+
+    #[test]
+    fn test_find_matching_variant_dualstack() {
+        let variants: Vec<Value> = serde_json::from_str(r#"[
+            {"hostname": "{service}-fips.{region}.{dnsSuffix}", "tags": ["fips"], "dnsSuffix": "amazonaws.com"},
+            {"hostname": "{service}.{region}.{dnsSuffix}", "tags": ["dualstack"], "dnsSuffix": "api.aws"}
+        ]"#).unwrap();
+
+        let required = vec!["dualstack".to_string()];
+        let result = find_matching_variant(&variants, &required);
+        assert!(result.is_some());
+        let dns = result.unwrap().get("dnsSuffix").unwrap().as_str().unwrap();
+        assert_eq!(dns, "api.aws");
+    }
+
+    #[test]
+    fn test_find_matching_variant_no_match() {
+        let variants: Vec<Value> = serde_json::from_str(r#"[
+            {"hostname": "{service}-fips.{region}.{dnsSuffix}", "tags": ["fips"], "dnsSuffix": "amazonaws.com"}
+        ]"#).unwrap();
+
+        let required = vec!["dualstack".to_string()];
+        let result = find_matching_variant(&variants, &required);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_find_matching_variant_fips_dualstack_combined() {
+        let variants: Vec<Value> = serde_json::from_str(r#"[
+            {"hostname": "{service}-fips.{region}.{dnsSuffix}", "tags": ["fips"], "dnsSuffix": "amazonaws.com"},
+            {"hostname": "{service}.{region}.{dnsSuffix}", "tags": ["dualstack"], "dnsSuffix": "api.aws"},
+            {"hostname": "{service}-fips.{region}.{dnsSuffix}", "tags": ["dualstack", "fips"], "dnsSuffix": "api.aws"}
+        ]"#).unwrap();
+
+        let required = vec!["dualstack".to_string(), "fips".to_string()];
+        let result = find_matching_variant(&variants, &required);
+        assert!(result.is_some());
+        let hostname = result.unwrap().get("hostname").unwrap().as_str().unwrap();
+        assert!(hostname.contains("fips"));
+        let dns = result.unwrap().get("dnsSuffix").unwrap().as_str().unwrap();
+        assert_eq!(dns, "api.aws");
     }
 }

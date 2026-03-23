@@ -23,6 +23,14 @@ pub struct GlobalArgs {
     #[arg(long, global = true)]
     pub no_paginate: bool,
 
+    /// Use dual-stack (IPv4/IPv6) endpoints
+    #[arg(long, global = true)]
+    pub use_dualstack_endpoint: bool,
+
+    /// Use FIPS-compliant endpoints
+    #[arg(long, global = true)]
+    pub use_fips_endpoint: bool,
+
     /// JMESPath query to filter/transform output
     #[arg(long, global = true)]
     pub query: Option<String>,
@@ -167,5 +175,49 @@ mod tests {
         assert_eq!(args.region, Some("us-west-2".to_string()));
         assert_eq!(args.service, Some("sts".to_string()));
         assert_eq!(args.operation, Some("get-caller-identity".to_string()));
+    }
+
+    #[test]
+    fn test_global_args_use_dualstack_endpoint() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "--use-dualstack-endpoint", "s3api", "list-buckets",
+        ])
+        .unwrap();
+        assert!(args.use_dualstack_endpoint);
+        assert!(!args.use_fips_endpoint);
+    }
+
+    #[test]
+    fn test_global_args_use_fips_endpoint() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "--use-fips-endpoint", "sts", "get-caller-identity",
+        ])
+        .unwrap();
+        assert!(args.use_fips_endpoint);
+        assert!(!args.use_dualstack_endpoint);
+    }
+
+    #[test]
+    fn test_global_args_dualstack_and_fips_combined() {
+        let args = GlobalArgs::try_parse_from([
+            "raws",
+            "--use-dualstack-endpoint",
+            "--use-fips-endpoint",
+            "s3api",
+            "list-buckets",
+        ])
+        .unwrap();
+        assert!(args.use_dualstack_endpoint);
+        assert!(args.use_fips_endpoint);
+    }
+
+    #[test]
+    fn test_global_args_dualstack_default_false() {
+        let args = GlobalArgs::try_parse_from([
+            "raws", "sts", "get-caller-identity",
+        ])
+        .unwrap();
+        assert!(!args.use_dualstack_endpoint);
+        assert!(!args.use_fips_endpoint);
     }
 }

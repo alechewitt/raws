@@ -157,15 +157,29 @@ pub async fn run() -> Result<()> {
         eprintln!("[debug] credentials resolved: access_key={}...", &creds.access_key_id[..8.min(creds.access_key_id.len())]);
     }
 
-    // 6. Resolve endpoint URL
-    let endpoint_url = match &args.endpoint_url {
+    // 6. Resolve endpoint URL (with dualstack/FIPS variant support)
+    let variant_tags = resolver::EndpointVariantTags {
+        use_dualstack: args.use_dualstack_endpoint,
+        use_fips: args.use_fips_endpoint,
+    };
+    let mut endpoint_url = match &args.endpoint_url {
         Some(url) => url.clone(),
-        None => resolver::resolve_endpoint(
+        None => resolver::resolve_endpoint_with_variants(
             &service_model.metadata.endpoint_prefix,
             region,
             service_model.metadata.global_endpoint.as_deref(),
+            &variant_tags,
         )?,
     };
+
+    // Apply S3 virtual-hosted style addressing for bucket operations
+    if model_service == "s3" && args.endpoint_url.is_none() {
+        if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
+            if resolver::is_bucket_dns_compatible(bucket) {
+                endpoint_url = resolver::apply_s3_virtual_hosted_style(&endpoint_url, bucket);
+            }
+        }
+    }
 
     if args.debug {
         eprintln!("[debug] endpoint: {endpoint_url}");
@@ -827,11 +841,19 @@ async fn dispatch_rest_xml_protocol(
         .host_str()
         .ok_or_else(|| anyhow::anyhow!("No host in endpoint URL: {endpoint_url}"))?;
 
+    // For S3 virtual-hosted style: if the bucket is in the hostname, strip the
+    // leading /{bucket} from the resolved URI since the bucket is no longer in the path.
+    let effective_uri = if model.metadata.endpoint_prefix == "s3" {
+        strip_s3_bucket_prefix_if_virtual_hosted(host, &resolved_uri, input)
+    } else {
+        resolved_uri.clone()
+    };
+
     let mut full_url = format!(
         "{}://{}{}",
         parsed_base.scheme(),
         parsed_base.host_str().unwrap_or(""),
-        resolved_uri
+        effective_uri
     );
 
     // Append query parameters
@@ -852,6 +874,7 @@ async fn dispatch_rest_xml_protocol(
 
     if debug {
         eprintln!("[debug] resolved URI: {resolved_uri}");
+        eprintln!("[debug] effective URI: {effective_uri}");
         eprintln!("[debug] full URL: {full_url}");
         if let Some(ref body) = body_xml {
             eprintln!("[debug] request body: {body}");
@@ -957,6 +980,40 @@ fn percent_encode_query_param(input: &str) -> String {
     utf8_percent_encode(input, QS_ENCODE_SET).to_string()
 }
 
+/// Strip the leading `/{bucket}` prefix from an S3 URI when virtual-hosted style is active.
+///
+/// Virtual-hosted style means the hostname looks like `{bucket}.s3.{region}.amazonaws.com`.
+/// In that case, the model's URI template resolves to `/{bucket}/...` but the bucket portion
+/// should not be in the path (it's in the hostname).
+fn strip_s3_bucket_prefix_if_virtual_hosted(
+    host: &str,
+    resolved_uri: &str,
+    input: &serde_json::Value,
+) -> String {
+    let bucket = match input.get("Bucket").and_then(|b| b.as_str()) {
+        Some(b) if !b.is_empty() => b,
+        _ => return resolved_uri.to_string(),
+    };
+
+    // Check if the host starts with "{bucket}." -- indicates virtual-hosted style
+    let bucket_prefix = format!("{bucket}.");
+    if !host.starts_with(&bucket_prefix) {
+        return resolved_uri.to_string();
+    }
+
+    // Strip the leading /{bucket} from the URI path
+    let path_prefix = format!("/{bucket}");
+    if let Some(rest) = resolved_uri.strip_prefix(&path_prefix) {
+        if rest.is_empty() {
+            "/".to_string()
+        } else {
+            rest.to_string()
+        }
+    } else {
+        resolved_uri.to_string()
+    }
+}
+
 /// Parse operation-specific CLI arguments (--key value pairs) into a JSON object.
 /// Map CLI service names to model directory names.
 /// The AWS CLI uses "s3api" for the S3 API service, but the model lives in models/s3/.
@@ -997,12 +1054,14 @@ fn print_service_help() {
     }
 
     println!("Global options:");
-    println!("  --region <REGION>       AWS region to use");
-    println!("  --profile <PROFILE>     Named profile to use");
-    println!("  --output <FORMAT>       Output format: json, table, text");
-    println!("  --endpoint-url <URL>    Override endpoint URL");
-    println!("  --debug                 Enable debug output");
-    println!("  --no-paginate           Disable automatic pagination");
+    println!("  --region <REGION>            AWS region to use");
+    println!("  --profile <PROFILE>          Named profile to use");
+    println!("  --output <FORMAT>            Output format: json, table, text");
+    println!("  --endpoint-url <URL>         Override endpoint URL");
+    println!("  --debug                      Enable debug output");
+    println!("  --no-paginate                Disable automatic pagination");
+    println!("  --use-dualstack-endpoint     Use dual-stack (IPv4/IPv6) endpoints");
+    println!("  --use-fips-endpoint          Use FIPS-compliant endpoints");
 }
 
 /// Print a list of all available operations for a service.
@@ -2230,5 +2289,65 @@ mod tests {
         // Verify it parses back
         let reparsed: serde_json::Value = serde_json::from_str(&formatted).unwrap();
         assert_eq!(reparsed["Name"], serde_json::json!(""));
+    }
+
+    // ---------------------------------------------------------------
+    // S3 virtual-hosted style URI stripping tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_strip_s3_bucket_prefix_virtual_hosted() {
+        let input = serde_json::json!({"Bucket": "my-bucket"});
+        let result = strip_s3_bucket_prefix_if_virtual_hosted(
+            "my-bucket.s3.us-east-1.amazonaws.com",
+            "/my-bucket/key.txt",
+            &input,
+        );
+        assert_eq!(result, "/key.txt");
+    }
+
+    #[test]
+    fn test_strip_s3_bucket_prefix_virtual_hosted_root() {
+        let input = serde_json::json!({"Bucket": "my-bucket"});
+        let result = strip_s3_bucket_prefix_if_virtual_hosted(
+            "my-bucket.s3.us-east-1.amazonaws.com",
+            "/my-bucket",
+            &input,
+        );
+        assert_eq!(result, "/");
+    }
+
+    #[test]
+    fn test_strip_s3_bucket_prefix_path_style_no_change() {
+        let input = serde_json::json!({"Bucket": "my-bucket"});
+        let result = strip_s3_bucket_prefix_if_virtual_hosted(
+            "s3.us-east-1.amazonaws.com",
+            "/my-bucket/key.txt",
+            &input,
+        );
+        // Not virtual-hosted (host doesn't start with bucket), so no stripping
+        assert_eq!(result, "/my-bucket/key.txt");
+    }
+
+    #[test]
+    fn test_strip_s3_bucket_prefix_no_bucket_in_input() {
+        let input = serde_json::json!({});
+        let result = strip_s3_bucket_prefix_if_virtual_hosted(
+            "s3.us-east-1.amazonaws.com",
+            "/",
+            &input,
+        );
+        assert_eq!(result, "/");
+    }
+
+    #[test]
+    fn test_strip_s3_bucket_prefix_query_string_preserved() {
+        let input = serde_json::json!({"Bucket": "my-bucket"});
+        let result = strip_s3_bucket_prefix_if_virtual_hosted(
+            "my-bucket.s3.us-east-1.amazonaws.com",
+            "/my-bucket?tagging",
+            &input,
+        );
+        assert_eq!(result, "?tagging");
     }
 }

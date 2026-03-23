@@ -1,0 +1,110 @@
+[
+  {
+    "id": "s3-command-framework",
+    "description": "S3 high-level command framework: dispatch raws s3 <subcommand> to customization handlers",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-ls-buckets",
+    "description": "raws s3 ls - list all S3 buckets (no path argument)",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-ls-objects",
+    "description": "raws s3 ls s3://bucket/prefix - list objects in a bucket with optional prefix",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-cp-upload",
+    "description": "raws s3 cp local-file s3://bucket/key - upload a file to S3",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-cp-download",
+    "description": "raws s3 cp s3://bucket/key local-file - download a file from S3",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-cp-s3-to-s3",
+    "description": "raws s3 cp s3://src-bucket/key s3://dst-bucket/key - copy between S3 locations",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-mv",
+    "description": "raws s3 mv - move (copy + delete source) for local<->S3 and S3<->S3",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-rm",
+    "description": "raws s3 rm s3://bucket/key [--recursive] - delete S3 objects",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-mb-rb",
+    "description": "raws s3 mb/rb s3://bucket - create and remove S3 buckets",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-recursive-flag",
+    "description": "--recursive flag for s3 ls, cp, rm operations",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-sync",
+    "description": "raws s3 sync - sync directories with S3 (by size + modification time, --delete flag)",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-multipart-upload",
+    "description": "Multipart upload for files > 8MB: split into parts, upload concurrently",
+    "verify": [
+      { "run": "cargo test -- multipart", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]

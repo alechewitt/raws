@@ -50,8 +50,8 @@
     "verify": [
       { "run": "cargo test -- s3_virtual_host", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["7 tests, DNS-compatible bucket names get virtual-hosted style, bucket prefix stripped from URI"]
   },
   {
     "id": "s3-path-style",
@@ -59,8 +59,8 @@
     "verify": [
       { "run": "cargo test -- s3_path_style", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["6 tests, buckets with dots or non-DNS-compatible names use path-style"]
   },
   {
     "id": "dual-stack-endpoints",
@@ -68,8 +68,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Flag added to GlobalArgs, resolver uses variants from endpoints.json"]
   },
   {
     "id": "fips-endpoints",
@@ -77,8 +77,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Flag added to GlobalArgs, resolver uses variants from endpoints.json, combinable with dualstack"]
   },
   {
     "id": "endpoint-url-override",
