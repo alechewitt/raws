@@ -53,10 +53,16 @@ while true; do
     echo ""
 
     claude --dangerously-skip-permissions \
-           --print "$(cat "$PROMPT_FILE")" &> "$LOGFILE" || true
+           --print "$(cat "$PROMPT_FILE")" &> "$LOGFILE"
 
-    echo "Finished: $(date)"
+    EXIT_CODE=$?
+    echo "Finished: $(date) (exit code: $EXIT_CODE)"
     echo "---"
+
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo "Claude exited with non-zero code $EXIT_CODE. Stopping."
+        exit $EXIT_CODE
+    fi
 
     SESSION=$((SESSION + 1))
 done
