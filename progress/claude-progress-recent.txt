@@ -10,32 +10,29 @@ ACCOMPLISHED:
 
 MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=7/12, M5=0/12
 
-NEXT: Wire up full pipeline, implement query protocol, get STS get-caller-identity working E2E
-
-=== Session 2: Milestones 4-6 Complete (2026-03-23) ===
+=== Session 2: Milestones 4-7 Complete (2026-03-23) ===
 
 ACCOMPLISHED:
-- Completed Milestone 4 (HTTP Client and Model Loader): 12/12
-  - 25 tests for shape types, operation parsing, metadata parsing, member modifiers
-
-- Completed Milestone 5 (Query Protocol and STS E2E): 12/12
-  - Query protocol serializer/parser (19 tests)
-  - Operation name mapping (5 tests), CLI arg parsing (11 tests)
-  - Full CLI pipeline: args -> config -> model -> credentials -> signing -> HTTP -> parse -> output
+- Completed M4 (HTTP Client and Model Loader): 12/12 - 25 tests for shapes/ops/metadata/members
+- Completed M5 (Query Protocol and STS E2E): 12/12
+  - Query serializer/parser, operation name mapping, CLI arg parsing, full pipeline
   - STS get-caller-identity works E2E against real AWS
+- Completed M6 (All Four Protocols): 12/12
+  - JSON (20 tests), REST-JSON (24 tests), REST-XML (25 tests), EC2 variant (4 tests)
+  - Protocol dispatch for all 5 protocols, s3api->s3 alias
+  - E2E: STS, DynamoDB, S3, Lambda, EC2 all working
+- Completed M7 (Full Service Dispatch): 12/12
+  - Dynamic service discovery (416 services in help), dynamic arg parsing (7 tests)
+  - Global endpoint support for IAM, Route53, STS
+  - E2E verified: 12 services across all protocols
 
-- Completed Milestone 6 (All Four Protocols): 12/12
-  - JSON protocol (20 tests), REST-JSON (24 tests), REST-XML (25 tests), EC2 variant (4 tests)
-  - Protocol dispatch for all 5 protocols, s3api -> s3 alias
-  - E2E: STS, DynamoDB, S3, Lambda, EC2 all working against real AWS
-
-TEST RESULTS: 172 tests passing
-MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12
-Current milestone: 7 (Full Service Dispatch)
+TEST RESULTS: 181 tests passing
+MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12
+Current milestone: 8 (CLI Polish)
 
 KNOWN ISSUES:
-- Code duplication between rest_json/rest_xml (URI template, header extraction)
+- Code duplication between protocol modules (URI template, XML parsing)
 - credential_process not supported (M13)
-- 5 pre-existing dead_code warnings
+- smithy-rpc-v2-cbor protocol not supported (CloudWatch etc.)
 
-NEXT: M7 - Dynamic service discovery, dynamic arg parsing, broad E2E testing
+NEXT: M8 - Text/table formatters, help text, --query JMESPath, pagination, configure command
