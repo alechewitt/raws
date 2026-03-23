@@ -14,8 +14,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["s3_api_call helper, ListBuckets XML parsing, local timezone conversion, 16 tests, E2E verified matches aws s3 ls"]
   },
   {
     "id": "s3-ls-objects",

@@ -6,15 +6,20 @@
 //!
 //! The real AWS CLI implements these in `awscli/customizations/s3/`.
 
+mod ls;
+
 use anyhow::{bail, Context, Result};
 
 use crate::cli::args::GlobalArgs;
+use crate::core::auth::sigv4::{self, SigningParams};
 use crate::core::config::provider::ConfigProvider;
 use crate::core::credentials::chain::ChainCredentialProvider;
 use crate::core::credentials::env::EnvCredentialProvider;
 use crate::core::credentials::profile::ProfileCredentialProvider;
 use crate::core::credentials::{CredentialProvider, Credentials};
 use crate::core::endpoint::resolver;
+use crate::core::http::client::HttpClient;
+use crate::core::http::request::{HttpRequest, HttpResponse};
 
 /// The set of recognized S3 high-level subcommands.
 const S3_SUBCOMMANDS: &[&str] = &["ls", "cp", "mv", "rm", "sync", "mb", "rb"];
@@ -176,11 +181,118 @@ fn print_s3_help() {
 }
 
 // ---------------------------------------------------------------------------
-// Stub subcommand handlers (to be implemented in subsequent milestones)
+// Shared S3 API call helper
 // ---------------------------------------------------------------------------
 
-async fn handle_ls(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
-    bail!("s3 ls is not yet implemented")
+/// Make a low-level S3 API call.
+///
+/// Builds an HTTP request to the S3 endpoint, signs it with SigV4, sends it,
+/// and returns the raw response. This helper is reused by all S3 high-level
+/// commands (ls, cp, mv, rm, sync, mb, rb).
+///
+/// # Arguments
+/// * `ctx` - The S3 command context (credentials, region, endpoint, etc.)
+/// * `method` - HTTP method (GET, PUT, DELETE, HEAD, POST)
+/// * `uri_path` - The URI path (e.g., `/`, `/my-bucket`, `/my-bucket/key`)
+/// * `query_params` - Query string parameters as key-value pairs
+/// * `body` - Optional request body
+/// * `extra_headers` - Additional headers to include in the request
+pub async fn s3_api_call(
+    ctx: &S3CommandContext,
+    method: &str,
+    uri_path: &str,
+    query_params: &[(&str, &str)],
+    body: Option<&[u8]>,
+    extra_headers: &[(&str, &str)],
+) -> Result<HttpResponse> {
+    // Build the full URL
+    let base_url = ctx.endpoint_url.trim_end_matches('/');
+    let query_string = if query_params.is_empty() {
+        String::new()
+    } else {
+        let qs = query_params
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<_>>()
+            .join("&");
+        format!("?{}", qs)
+    };
+    let full_url = format!("{}{}{}", base_url, uri_path, query_string);
+
+    // Extract host from the endpoint URL
+    let host = url::Url::parse(base_url)
+        .context("Invalid S3 endpoint URL")?
+        .host_str()
+        .unwrap_or("")
+        .to_string();
+
+    // Build headers for signing
+    let body_bytes = body.unwrap_or(b"");
+    let mut headers: Vec<(String, String)> = vec![
+        ("host".to_string(), host),
+    ];
+    for (k, v) in extra_headers {
+        headers.push((k.to_string(), v.to_string()));
+    }
+
+    // Sign the request
+    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+    let signing_params = SigningParams::from_credentials(
+        &ctx.credentials,
+        &ctx.region,
+        "s3",
+        &datetime,
+    );
+
+    let qs_for_signing = if query_params.is_empty() {
+        String::new()
+    } else {
+        query_params
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<_>>()
+            .join("&")
+    };
+
+    sigv4::sign_request(
+        method,
+        uri_path,
+        &qs_for_signing,
+        &mut headers,
+        body_bytes,
+        &signing_params,
+    )?;
+
+    // Build the HTTP request
+    let mut request = HttpRequest::new(method, &full_url);
+    for (k, v) in &headers {
+        request.add_header(k, v);
+    }
+    if !body_bytes.is_empty() {
+        request.body = body_bytes.to_vec();
+    }
+
+    if ctx.debug {
+        eprintln!("[debug] S3 API call: {} {}", method, full_url);
+    }
+
+    // Send the request
+    let client = HttpClient::new()?;
+    let response = client.send(&request).await?;
+
+    if ctx.debug {
+        eprintln!("[debug] S3 response status: {}", response.status);
+    }
+
+    Ok(response)
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand handlers
+// ---------------------------------------------------------------------------
+
+async fn handle_ls(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    ls::execute(args, ctx).await
 }
 
 async fn handle_cp(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
@@ -304,14 +416,16 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_ls_returns_not_yet_implemented() {
+    fn test_dispatch_ls_with_path_returns_not_yet_implemented() {
+        // ls with a path arg should fail as not yet implemented
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
-        let result = rt.block_on(dispatch_s3_subcommand("ls", &[], &ctx));
+        let args = vec!["s3://my-bucket/".to_string()];
+        let result = rt.block_on(dispatch_s3_subcommand("ls", &args, &ctx));
         assert!(result.is_err());
         assert!(
-            result.unwrap_err().to_string().contains("s3 ls is not yet implemented"),
-            "Should indicate ls is not yet implemented"
+            result.unwrap_err().to_string().contains("s3 ls with path argument is not yet implemented"),
+            "Should indicate ls with path is not yet implemented"
         );
     }
 
