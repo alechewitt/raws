@@ -1,0 +1,978 @@
+<project_specification>
+  <project_name>raws - AWS CLI Reimplementation in Rust</project_name>
+
+  <overview>
+    Build a complete reimplementation of the AWS CLI v2 in Rust, including a reimplementation of
+    botocore (the low-level AWS SDK). The project is called "raws" and produces a binary also called
+    "raws" that is a full drop-in replacement for the "aws" CLI.
+
+    The goal is FULL PARITY with the AWS CLI. This means supporting ALL ~418 AWS services and
+    replicating the behavior of the "aws" command exactly. The approach to achieving this is:
+
+    1. Build the core infrastructure (signing, credentials, 4 protocol implementations, endpoint
+       resolution, config loading) — this is the hard part and is done by hand.
+    2. Load the REAL botocore JSON service model files at runtime, exactly like the Python CLI does.
+       The models describe every operation, its parameters, and its response shapes. The CLI
+       interprets these models dynamically using serde_json::Value — no code generation needed.
+       Since all AWS services use one of 4 protocols, a correct model loader + protocol layer
+       automatically supports all 418 services with zero per-service code.
+    3. Copy the actual botocore service model files (the same JSON files used by the Python AWS
+       CLI) into the models/ directory. These are ~100MB of JSON covering every AWS service.
+    4. Build the CLI driver that dynamically discovers all services from models/ and exposes them
+       as subcommands, exactly like "aws <service> <operation>".
+    5. Implement the same customizations the Python CLI has (S3 high-level commands, configure,
+       cloudformation deploy, etc.) — these are hand-written on top of the core infrastructure.
+
+    The real botocore model files live at:
+      $AWS_CLI_SRC/botocore/data/
+    (AWS_CLI_SRC is defined in .env — load it before running any commands)
+
+    This directory contains ~418 service subdirectories, each with:
+      - service-2.json (API model: operations, shapes, metadata)
+      - paginators-1.json (pagination config)
+      - waiters-2.json (polling waiters, not all services have this)
+      - endpoint-rule-set-1.json (endpoint resolution rules)
+      - completions-1.json (shell completions data)
+
+    It also contains global files:
+      - endpoints.json (~40K lines, maps services+regions to endpoint URLs)
+      - partitions.json (AWS partition definitions: aws, aws-cn, aws-us-gov)
+
+    The binary must support every command the real AWS CLI supports:
+      raws <any-service> <any-operation> [--params...]
+      raws s3 cp/mv/sync/ls/rm/mb/rb          (high-level S3 commands)
+      raws configure                           (interactive credential setup)
+      raws --output json|table|text|yaml
+      raws --region <region>
+      raws --profile <profile>
+      raws --query <jmespath-expression>
+      raws --debug
+  </overview>
+
+  <reference_codebase>
+    The Python AWS CLI codebase is your authoritative reference. When in doubt about
+    behavior, read the Python source to understand what the real CLI does.
+
+    Location: $AWS_CLI_SRC/../  (the aws-cli repo root; AWS_CLI_SRC points to the awscli/ subdirectory)
+
+    Key files and directories:
+      awscli/clidriver.py              — Main CLI driver (command dispatch, arg parsing)
+      awscli/commands.py               — Base command classes
+      awscli/formatter.py              — Output formatting (json, table, text)
+      awscli/handlers.py               — Event handlers for the CLI lifecycle
+      awscli/customizations/           — All ~60 service customizations
+      awscli/customizations/s3/        — High-level S3 commands (cp, mv, sync, ls, rm)
+      awscli/customizations/configure/ — "aws configure" implementation
+      awscli/botocore/                 — Vendored botocore (the low-level SDK)
+      awscli/botocore/serialize.py     — Protocol serializers (query, json, rest-json, rest-xml)
+      awscli/botocore/parsers.py       — Protocol response parsers
+      awscli/botocore/auth.py          — SigV4 signing implementation
+      awscli/botocore/credentials.py   — Credential provider chain
+      awscli/botocore/configloader.py  — Config/credentials file loading
+      awscli/botocore/loaders.py       — Service model file loading
+      awscli/botocore/client.py        — Service client construction
+      awscli/botocore/endpoint.py      — Endpoint resolution
+      awscli/botocore/paginate.py      — Pagination
+      awscli/botocore/waiter.py        — Waiters
+      awscli/botocore/retries/         — Retry strategies
+      awscli/botocore/model.py         — Service model types (Shape, Operation, etc.)
+      awscli/s3transfer/               — Vendored s3transfer (managed S3 transfers)
+  </reference_codebase>
+
+  <environment_variables>
+    The project uses a .env file (not committed to git) for machine-specific configuration.
+    Copy .env.example to .env and fill in the values before starting work.
+
+    Required variables:
+    - AWS_CLI_SRC: Path to the awscli/ subdirectory of the aws-cli repo checkout.
+      Used to copy botocore service model files and as a reference for the Python implementation.
+      Example: /home/user/aws-cli/awscli
+    - RAWS_TEST_ACCOUNT: AWS account ID to use for end-to-end testing.
+    - RAW_TEST_PROFILE: AWS CLI profile name configured with credentials for the test account.
+
+    Load the .env file before running commands:
+      source .env
+    Or export them in your shell. init.sh should source .env automatically.
+  </environment_variables>
+
+  <technology_stack>
+    <language>Rust (stable toolchain, latest edition 2024 or 2021)</language>
+    <build_system>Cargo (single crate, no workspace needed)</build_system>
+    <async_runtime>tokio (multi-threaded)</async_runtime>
+    <http_client>reqwest (with rustls-tls feature, NOT native-tls)</http_client>
+    <cli_parsing>clap (derive macros) for global args; dynamic arg parsing from models for service operations</cli_parsing>
+    <serialization>serde + serde_json, quick-xml + serde</serialization>
+    <crypto>ring (for HMAC-SHA256, SHA256 used in SigV4)</crypto>
+    <time>chrono (for timestamp formatting in signing)</time>
+    <config_parsing>Hand-rolled INI parser for ~/.aws/config and ~/.aws/credentials</config_parsing>
+    <runtime_model_interpretation>
+      Service models (service-2.json) are loaded at runtime as serde_json::Value.
+      Requests are serialized dynamically based on the model's shape definitions.
+      Responses are deserialized the same way. No code generation — this is exactly
+      how the Python botocore works, and it means all 418 services work automatically.
+    </runtime_model_interpretation>
+    <testing>
+      - Unit tests: inline #[cfg(test)] modules and cargo test
+      - Integration tests: tests/ directory
+      - CLI integration tests: run the compiled binary with std::process::Command
+      - Known-answer tests: SigV4 test vectors from AWS documentation
+    </testing>
+  </technology_stack>
+
+  <project_layout>
+    This is a single Rust crate — one Cargo.toml, one binary.
+
+    raws/
+    ├── Cargo.toml                     # Single crate definition
+    ├── init.sh                        # Environment setup script
+    ├── prompt/                        # Agent prompts and project spec
+    │   ├── spec.txt                   # Full project specification
+    │   ├── initializer_prompt.md      # Prompt for first session (project setup)
+    │   ├── coding_prompt.md           # Prompt for coding sessions
+    │   ├── .env                       # Environment variables (not committed)
+    │   └── .env.example               # Template for .env
+    ├── progress/                      # All progress tracking
+    │   ├── summary.json               # Current milestone + per-milestone pass counts
+    │   ├── milestone-01.json          # Features for milestone 1
+    │   ├── milestone-02.json          # Features for milestone 2
+    │   ├── ...                        # Created as milestones are reached
+    │   ├── claude-progress.txt        # Full session history (append-only)
+    │   └── claude-progress-recent.txt # Last 5 sessions only (read at startup)
+    ├── models/                        # JSON service model files (copied from botocore)
+    │   ├── endpoints.json             # Global endpoint resolution data (~40K lines)
+    │   ├── partitions.json            # AWS partition definitions
+    │   ├── sts/                       # ~418 service directories, each with:
+    │   │   └── 2011-06-15/            #   an API version subdirectory containing:
+    │   │       ├── service-2.json     #     API model (operations, shapes, metadata)
+    │   │       ├── paginators-1.json  #     pagination config
+    │   │       ├── waiters-2.json     #     polling waiters (optional, not all services)
+    │   │       └── endpoint-rule-set-1.json  # endpoint rules
+    │   ├── s3/
+    │   │   └── 2006-03-01/
+    │   │       └── ...
+    │   ├── iam/
+    │   ├── ec2/
+    │   ├── dynamodb/
+    │   └── ... (all ~418 services from botocore/data/)
+    │
+    ├── src/
+    │   ├── main.rs                    # Entry point: parse args, dispatch
+    │   │
+    │   ├── core/                      # Low-level SDK (equivalent of botocore)
+    │   │   ├── mod.rs
+    │   │   ├── config/
+    │   │   │   ├── mod.rs
+    │   │   │   ├── loader.rs          # INI file parser for ~/.aws/config, ~/.aws/credentials
+    │   │   │   └── provider.rs        # Config value resolution chain (env > profile > default)
+    │   │   ├── credentials/
+    │   │   │   ├── mod.rs             # Credentials struct + CredentialProvider trait
+    │   │   │   ├── chain.rs           # ChainProvider tries providers in order
+    │   │   │   ├── env.rs             # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_SESSION_TOKEN
+    │   │   │   ├── profile.rs         # Read from ~/.aws/credentials [profile]
+    │   │   │   └── imds.rs            # EC2 instance metadata (can be stubbed initially)
+    │   │   ├── auth/
+    │   │   │   ├── mod.rs
+    │   │   │   └── sigv4.rs           # SigV4 request signing
+    │   │   ├── endpoint/
+    │   │   │   ├── mod.rs
+    │   │   │   └── resolver.rs        # Endpoint resolution (service + region -> URL)
+    │   │   ├── http/
+    │   │   │   ├── mod.rs
+    │   │   │   ├── client.rs          # Async HTTP client (wraps reqwest)
+    │   │   │   └── request.rs         # Request/Response types
+    │   │   ├── protocol/
+    │   │   │   ├── mod.rs
+    │   │   │   ├── json.rs            # AWS JSON 1.0/1.1 protocol (DynamoDB)
+    │   │   │   ├── query.rs           # EC2/Query protocol (EC2, STS, IAM)
+    │   │   │   ├── rest_json.rs       # REST-JSON protocol
+    │   │   │   └── rest_xml.rs        # REST-XML protocol (S3)
+    │   │   ├── model/
+    │   │   │   ├── mod.rs             # ServiceModel, Shape, Operation types
+    │   │   │   └── loader.rs          # Load and parse service-2.json at runtime
+    │   │   ├── retry.rs               # Simple exponential backoff retry
+    │   │   ├── paginate.rs            # Pagination support
+    │   │   ├── waiter.rs              # Waiter support
+    │   │   └── error.rs               # Error types
+    │   │
+    │   ├── cli/                       # CLI layer
+    │   │   ├── mod.rs
+    │   │   ├── driver.rs              # CLI driver: parse args -> dispatch to service command
+    │   │   ├── args.rs                # Global arguments (--region, --profile, --output, etc.)
+    │   │   ├── formatter/
+    │   │   │   ├── mod.rs
+    │   │   │   ├── json.rs            # --output json
+    │   │   │   ├── table.rs           # --output table
+    │   │   │   └── text.rs            # --output text
+    │   │   ├── commands/
+    │   │   │   ├── mod.rs
+    │   │   │   ├── service.rs         # Dynamic service command dispatch (all ~418 services)
+    │   │   │   └── configure.rs       # "raws configure" interactive command
+    │   │   └── customizations/        # Hand-written commands matching awscli/customizations/
+    │   │       ├── mod.rs
+    │   │       ├── s3/                # High-level S3 commands + transfer logic
+    │   │       │   ├── mod.rs
+    │   │       │   ├── ls.rs          # raws s3 ls
+    │   │       │   ├── cp.rs          # raws s3 cp
+    │   │       │   ├── mv.rs          # raws s3 mv
+    │   │       │   ├── sync.rs        # raws s3 sync
+    │   │       │   ├── rm.rs          # raws s3 rm
+    │   │       │   ├── mb.rs          # raws s3 mb / rb
+    │   │       │   ├── transfer.rs    # Multipart upload/download, concurrent parts
+    │   │       │   └── config.rs      # Transfer thresholds and concurrency settings
+    │   │       ├── cloudformation/    # deploy, package commands
+    │   │       ├── ec2/               # wait, bundleinstance, etc.
+    │   │       ├── ecs/               # execute-command
+    │   │       ├── eks/               # get-token, update-kubeconfig
+    │   │       ├── emr/               # create-cluster, add-steps
+    │   │       ├── logs/              # tail
+    │   │       ├── dynamodb/          # wizard, select
+    │   │       └── ...                # See awscli/customizations/ for full list
+    │   │
+    │   └── tests/                     # Integration tests
+    │       └── cli_integration.rs     # Run the binary with std::process::Command
+    │
+    └── tests/                         # Cargo integration tests directory
+        └── integration.rs
+  </project_layout>
+
+  <runtime_model_interpretation>
+    This project uses runtime model interpretation, NOT code generation. This is the same
+    approach used by the Python botocore library. Here's how it works:
+
+    1. At startup, the CLI scans the models/ directory to discover available services.
+    2. When a user invokes "raws sts get-caller-identity":
+       a. Load models/sts/2011-06-15/service-2.json into a serde_json::Value
+       b. Parse it into a ServiceModel struct (operations, shapes, metadata)
+       c. Look up the "GetCallerIdentity" operation
+       d. Parse CLI arguments based on the operation's input shape definition
+       e. Build a serde_json::Value (or HashMap) from the parsed arguments
+       f. Pass the value to the protocol serializer which uses the shape definitions
+          to produce the correct HTTP request (form-encoded, JSON, XML, etc.)
+       g. Sign, send, receive response
+       h. Pass the response to the protocol parser which uses the output shape
+          definitions to produce a serde_json::Value
+       i. Format and print the result
+
+    The key data types:
+    - ServiceModel: parsed from service-2.json, contains metadata, operations, shapes
+    - Shape: enum of structure/string/integer/list/map/etc. with type-specific metadata
+    - Operation: input shape ref, output shape ref, HTTP method/URI, errors
+    - serde_json::Value: the universal intermediate representation for request/response data
+
+    Why this works:
+    - The CLI boundary is always strings (user types args, output is text)
+    - All type validation is done against the model at runtime
+    - All serialization/deserialization is driven by shape definitions
+    - No per-service Rust code is needed — the same generic code handles every service
+    - This is exactly how Python botocore works, and it's proven at scale
+  </runtime_model_interpretation>
+
+  <service_model_format>
+    Service models are JSON files that describe AWS service APIs. The model loader
+    must parse these at runtime to drive request serialization and response parsing.
+
+    <service_2_json>
+      The main model file. Structure:
+
+      {
+        "version": "2.0",
+        "metadata": {
+          "apiVersion": "2011-06-15",
+          "endpointPrefix": "sts",
+          "globalEndpoint": "sts.amazonaws.com",
+          "protocol": "query",
+          "serviceAbbreviation": "AWS STS",
+          "serviceFullName": "AWS Security Token Service",
+          "serviceId": "STS",
+          "signatureVersion": "v4",
+          "uid": "sts-2011-06-15"
+        },
+        "operations": {
+          "GetCallerIdentity": {
+            "name": "GetCallerIdentity",
+            "http": { "method": "POST", "requestUri": "/" },
+            "input": { "shape": "GetCallerIdentityRequest" },
+            "output": {
+              "shape": "GetCallerIdentityResponse",
+              "resultWrapper": "GetCallerIdentityResult"
+            }
+          }
+        },
+        "shapes": {
+          "GetCallerIdentityRequest": {
+            "type": "structure",
+            "members": {}
+          },
+          "GetCallerIdentityResponse": {
+            "type": "structure",
+            "members": {
+              "UserId": { "shape": "userIdType" },
+              "Account": { "shape": "accountType" },
+              "Arn": { "shape": "arnType" }
+            }
+          },
+          "userIdType": { "type": "string" },
+          "accountType": { "type": "string" },
+          "arnType": { "type": "string" }
+        }
+      }
+
+      Shape types to handle:
+      - "structure" -> serde_json::Value::Object (fields from "members")
+      - "string" -> Value::String (may have "enum" list for validation)
+      - "integer" / "long" -> Value::Number
+      - "float" / "double" -> Value::Number
+      - "boolean" -> Value::Bool
+      - "timestamp" -> Value::String (formatted per protocol)
+      - "blob" -> base64 encoded Value::String
+      - "list" -> Value::Array (has "member" with shape ref)
+      - "map" -> Value::Object (has "key" and "value" with shape refs)
+
+      Member modifiers:
+      - "required": [...] on a structure shape lists required members
+      - "location": "header" / "querystring" / "uri" -> where to put the value
+      - "locationName": "x-amz-foo" -> the actual header/query/xml name
+      - "streaming": true -> the member is a streaming body (for S3 GetObject etc.)
+
+      Protocol types (from metadata.protocol):
+      - "query" -> Query/form-encoded POST body (STS, IAM, EC2, AutoScaling)
+      - "json" -> AWS JSON protocol with X-Amz-Target header (DynamoDB, SWF)
+      - "rest-json" -> REST with JSON body (Lambda, API Gateway)
+      - "rest-xml" -> REST with XML body (S3, Route53, CloudFront)
+    </service_2_json>
+
+    <paginators_1_json>
+      Defines how to paginate list operations:
+
+      {
+        "pagination": {
+          "ListBuckets": {
+            "result_key": "Buckets"
+          },
+          "ListObjectsV2": {
+            "input_token": "ContinuationToken",
+            "output_token": "NextContinuationToken",
+            "limit_key": "MaxKeys",
+            "result_key": "Contents"
+          }
+        }
+      }
+    </paginators_1_json>
+
+    <waiters_2_json>
+      Defines polling waiters:
+
+      {
+        "version": 2,
+        "waiters": {
+          "BucketExists": {
+            "delay": 5,
+            "maxAttempts": 20,
+            "operation": "HeadBucket",
+            "acceptors": [
+              { "expected": 200, "matcher": "status", "state": "success" },
+              { "expected": 404, "matcher": "status", "state": "retry" }
+            ]
+          }
+        }
+      }
+    </waiters_2_json>
+  </service_model_format>
+
+  <protocols_detail>
+    Each protocol defines how to serialize a request and deserialize a response.
+    The serializers work with serde_json::Value and the model's shape definitions
+    to produce the correct wire format.
+
+    <query_protocol>
+      Used by: STS, IAM, EC2, AutoScaling, ELB, CloudWatch, SNS, SQS
+
+      Request serialization:
+      - HTTP method: POST
+      - Content-Type: application/x-www-form-urlencoded
+      - Body is form-encoded: Action=GetCallerIdentity&Version=2011-06-15
+      - Nested structures use dot notation: Filter.1.Name=instance-id&Filter.1.Value.1=i-123
+      - Lists use positional notation: InstanceId.1=i-123&InstanceId.2=i-456
+
+      Response parsing:
+      - Response is XML
+      - Wrapped in <{OperationName}Response><{OperationName}Result>...</>...</>
+      - Parse XML, map element names to shape member names
+      - Error responses: <ErrorResponse><Error><Code>...</Code><Message>...</Message></Error></ErrorResponse>
+
+      EC2 variant:
+      - Same as query but error format differs slightly
+      - Uses <Response><Errors><Error>... format
+    </query_protocol>
+
+    <json_protocol>
+      Used by: DynamoDB, KMS, CloudTrail, CodeCommit
+
+      Request serialization:
+      - HTTP method: POST
+      - Content-Type: application/x-amz-json-1.0 (or 1.1, from metadata.jsonVersion)
+      - Header: X-Amz-Target: DynamoDB_20120810.ListTables
+        (format: metadata.targetPrefix + "." + operation.name)
+      - Body: JSON serialization of input value
+
+      Response parsing:
+      - Body is JSON, deserialize directly to serde_json::Value
+      - Error responses: {"__type": "ResourceNotFoundException", "message": "..."}
+    </json_protocol>
+
+    <rest_json_protocol>
+      Used by: Lambda, API Gateway, Kinesis
+
+      Request serialization:
+      - HTTP method from operation.http.method
+      - URI template from operation.http.requestUri (e.g., /2015-03-31/functions/{FunctionName})
+      - Members with location=uri go into the URL path
+      - Members with location=querystring go into query params
+      - Members with location=header go into HTTP headers
+      - Remaining members go into JSON body
+      - If operation has no body members, no body is sent
+
+      Response parsing:
+      - Members with location=header come from response headers
+      - Members with location=statusCode come from HTTP status
+      - Remaining members parsed from JSON body
+      - Streaming members: response body is the raw stream
+    </rest_json_protocol>
+
+    <rest_xml_protocol>
+      Used by: S3, Route53, CloudFront
+
+      Request serialization:
+      - HTTP method from operation.http.method
+      - URI template from operation.http.requestUri
+      - Members with location=uri/querystring/header same as rest-json
+      - Remaining non-streaming members serialized as XML body
+      - XML uses locationName for element names (or member name if not specified)
+      - S3 uses virtual-hosted style: {bucket}.s3.{region}.amazonaws.com
+
+      Response parsing:
+      - Headers and status code same as rest-json
+      - Body parsed as XML
+      - Error responses: <Error><Code>NoSuchBucket</Code><Message>...</Message></Error>
+
+      S3 specifics:
+      - Uses "s3" signature version (variant of SigV4 with different payload handling)
+      - Unsigned payload for PutObject: x-amz-content-sha256: UNSIGNED-PAYLOAD
+      - Virtual hosted bucket addressing by default
+    </rest_xml_protocol>
+  </protocols_detail>
+
+  <sigv4_signing>
+    All AWS API calls must be signed with Signature Version 4.
+
+    Algorithm:
+    1. Create a canonical request:
+       HTTPMethod\n
+       CanonicalURI\n
+       CanonicalQueryString\n
+       CanonicalHeaders\n
+       SignedHeaders\n
+       HashedPayload
+
+       - CanonicalURI: URI-encode each path segment
+       - CanonicalQueryString: sort query params by name, URI-encode keys and values
+       - CanonicalHeaders: lowercase header names, trim values, sort by name, one per line
+         ending with \n. Must include "host" and "x-amz-date". Include "x-amz-security-token"
+         if using session credentials.
+       - SignedHeaders: semicolon-delimited list of header names from CanonicalHeaders
+       - HashedPayload: SHA256 hex digest of the request body (or "UNSIGNED-PAYLOAD" for S3)
+
+    2. Create string to sign:
+       AWS4-HMAC-SHA256\n
+       Timestamp\n              (ISO 8601 basic: 20230101T000000Z)
+       Scope\n                  (20230101/us-east-1/sts/aws4_request)
+       Hash(CanonicalRequest)   (SHA256 hex)
+
+    3. Calculate signing key:
+       kDate    = HMAC-SHA256("AWS4" + SecretKey, Date)      (Date = "20230101")
+       kRegion  = HMAC-SHA256(kDate, Region)
+       kService = HMAC-SHA256(kRegion, Service)
+       kSigning = HMAC-SHA256(kService, "aws4_request")
+
+    4. Calculate signature:
+       signature = HexEncode(HMAC-SHA256(kSigning, StringToSign))
+
+    5. Add Authorization header:
+       Authorization: AWS4-HMAC-SHA256
+         Credential={AccessKey}/{Scope},
+         SignedHeaders={SignedHeaders},
+         Signature={signature}
+
+    Also add these headers before signing:
+    - Host: service.region.amazonaws.com
+    - X-Amz-Date: 20230101T000000Z
+    - X-Amz-Security-Token: {session_token} (only if present)
+    - X-Amz-Content-Sha256: {payload_hash} (required for S3)
+
+    The signing key can be cached per date+region+service since it only depends on those.
+
+    TEST VECTORS: Use the AWS SigV4 test suite from the AWS documentation to verify your
+    signing implementation. At minimum, verify that signing an STS GetCallerIdentity request
+    with known credentials produces the expected Authorization header.
+  </sigv4_signing>
+
+  <credentials>
+    The credential provider chain tries these sources in order:
+
+    1. Environment variables:
+       - AWS_ACCESS_KEY_ID
+       - AWS_SECRET_ACCESS_KEY
+       - AWS_SESSION_TOKEN (optional)
+
+    2. Shared credentials file (~/.aws/credentials):
+       [default]
+       aws_access_key_id = AKIA...
+       aws_secret_access_key = secret...
+
+       [my-profile]
+       aws_access_key_id = AKIA...
+       aws_secret_access_key = secret...
+
+       The profile is selected by --profile CLI arg or AWS_PROFILE env var.
+
+    3. Config file (~/.aws/config):
+       [default]
+       region = us-east-1
+       output = json
+
+       [profile my-profile]
+       region = eu-west-1
+       role_arn = arn:aws:iam::123456789012:role/MyRole
+       source_profile = default
+
+       Note: profile sections in config use "profile " prefix except for [default].
+
+    4. EC2 Instance Metadata Service (IMDS) - can be stubbed initially.
+
+    Credentials struct:
+      - access_key_id: String
+      - secret_access_key: String
+      - session_token: Option<String>
+
+    The CredentialProvider trait:
+      async fn resolve(&self) -> Result<Credentials, CredentialError>
+  </credentials>
+
+  <endpoint_resolution>
+    The real AWS CLI uses two mechanisms for endpoint resolution:
+
+    1. endpoints.json — A ~40K-line JSON file that maps (partition, service, region) to
+       endpoint URLs. This file is in models/endpoints.json (copied from botocore/data/).
+       It handles all the special cases: global services, dual-stack, FIPS, S3 virtual-hosted, etc.
+
+    2. endpoint-rule-set-1.json — Per-service rule engine (newer mechanism). Each service
+       directory may contain this file with rules for resolving endpoints.
+
+    For the initial implementation, use a simple fallback strategy:
+    - Default: https://{endpointPrefix}.{region}.amazonaws.com
+      (endpointPrefix comes from the service model's metadata)
+    - Parse endpoints.json for the accurate mapping — it covers special cases like:
+      * S3: https://{bucket}.s3.{region}.amazonaws.com (virtual-hosted)
+        or https://s3.{region}.amazonaws.com/{bucket} (path-style)
+      * STS global: https://sts.amazonaws.com
+      * IAM global: https://iam.amazonaws.com
+      * Partition-specific: *.amazonaws.com.cn for China, etc.
+    - Full endpoint-rule-set-1.json engine can come in later milestones.
+
+    The endpoints.json format:
+    {
+      "partitions": [
+        {
+          "partition": "aws",
+          "defaults": {
+            "hostname": "{service}.{region}.{dnsSuffix}",
+            "protocols": ["https"],
+            ...
+          },
+          "dnsSuffix": "amazonaws.com",
+          "regionRegex": "^(us|eu|ap|sa|ca|me|af|il)\\-\\w+\\-\\d+$",
+          "regions": { "us-east-1": { "description": "US East (N. Virginia)" }, ... },
+          "services": {
+            "s3": {
+              "defaults": { "protocols": ["http", "https"], "signatureVersions": ["s3"] },
+              "endpoints": { "us-east-1": { "hostname": "s3.us-east-1.amazonaws.com" }, ... }
+            },
+            ...
+          }
+        }
+      ]
+    }
+  </endpoint_resolution>
+
+  <cli_driver>
+    The CLI binary works as follows:
+
+    1. Parse global arguments: --region, --profile, --output (json|table|text), --debug
+    2. First positional arg is the service name (e.g., "sts", "s3api", "s3")
+    3. Second positional arg is the operation name (e.g., "get-caller-identity")
+    4. Remaining args are operation parameters (e.g., --bucket my-bucket)
+
+    For auto-generated service commands (ALL ~418 services):
+    - At startup, discover all service model directories in models/
+    - Each service directory becomes a subcommand (e.g., "raws sts", "raws ec2", "raws lambda")
+    - The service name is derived from the directory name (kebab-case as-is)
+    - Load the service model on demand when that service is invoked
+    - Find the operation matching the kebab-case command name
+    - Parse operation arguments dynamically from the model's input shape
+      (each member becomes --kebab-case-name, required members are required args)
+    - Serialize using the service's protocol (determined by metadata.protocol)
+    - Sign the request
+    - Send via HTTP client
+    - Deserialize the response
+    - Format output (json/table/text)
+
+    This dynamic approach means ALL services work automatically once the core
+    infrastructure (protocols, signing, model loading) is correct — no per-service code needed.
+
+    For custom commands (s3 cp, s3 ls, s3 sync, configure, cloudformation deploy, etc.):
+    - These are hand-written commands that use the core infrastructure internally
+    - They override or extend the auto-generated service commands
+    - "raws s3" is a custom namespace (the auto-generated S3 API commands live under "raws s3api")
+    - "raws s3 cp" uses the transfer logic in cli/customizations/s3/transfer.rs
+    - "raws configure" interactively prompts for credentials and writes config files
+    - See awscli/customizations/ in the Python CLI for the full list of ~60 customizations
+
+    Operation name mapping:
+    - CLI uses kebab-case: get-caller-identity, list-buckets, describe-instances
+    - Model uses PascalCase: GetCallerIdentity, ListBuckets, DescribeInstances
+    - Convert by splitting on uppercase boundaries and joining with hyphens
+
+    Parameter name mapping:
+    - CLI uses --kebab-case: --bucket-name, --instance-ids
+    - Model uses PascalCase for member names: BucketName, InstanceIds
+    - Same conversion as operation names
+
+    Output formatting:
+    - JSON (default): pretty-printed JSON with 4-space indent
+    - Table: ASCII table with headers from shape member names
+    - Text: tab-separated values, one row per item
+  </cli_driver>
+
+  <output_formatting>
+    <json_format>
+      Pretty-print the response using serde_json with 4-space indentation.
+      This is the default and simplest format.
+
+      Example (raws sts get-caller-identity --output json):
+      {
+          "UserId": "AIDAEXAMPLE",
+          "Account": "123456789012",
+          "Arn": "arn:aws:iam::123456789012:user/alice"
+      }
+    </json_format>
+
+    <text_format>
+      Tab-separated values. Top-level keys become columns.
+      Lists are expanded one item per line.
+
+      Example (raws sts get-caller-identity --output text):
+      AIDAEXAMPLE    123456789012    arn:aws:iam::123456789012:user/alice
+    </text_format>
+
+    <table_format>
+      ASCII table with box-drawing characters.
+
+      Example (raws sts get-caller-identity --output table):
+      -------------------------------------------------------
+      |              GetCallerIdentity                       |
+      +----------+--------------+---------------------------+
+      | UserId   | Account      | Arn                       |
+      +----------+--------------+---------------------------+
+      | AIDAEX.. | 123456789012 | arn:aws:iam::123456...    |
+      +----------+--------------+---------------------------+
+    </table_format>
+  </output_formatting>
+
+  <s3_high_level_commands>
+    The "raws s3" subcommand provides high-level file operations:
+
+    raws s3 ls [s3://bucket[/prefix]]
+    - No args: list all buckets
+    - With bucket: list objects in bucket with optional prefix
+    - --recursive: list all objects recursively
+
+    raws s3 cp <source> <dest> [--recursive]
+    - Local to S3: raws s3 cp file.txt s3://bucket/key
+    - S3 to local: raws s3 cp s3://bucket/key file.txt
+    - S3 to S3: raws s3 cp s3://src-bucket/key s3://dst-bucket/key
+    - Uses multipart upload for files > 8MB (configurable threshold)
+
+    raws s3 mv <source> <dest>
+    - Same as cp but deletes the source after successful copy
+
+    raws s3 rm s3://bucket/key [--recursive]
+    - Delete object(s)
+
+    raws s3 sync <source> <dest>
+    - Sync directory to/from S3
+    - Only copies changed files (by size and last modified time)
+    - --delete: remove files in dest that don't exist in source
+
+    raws s3 mb s3://bucket-name
+    - Create bucket
+
+    raws s3 rb s3://bucket-name [--force]
+    - Remove bucket (--force empties it first)
+
+    These commands use the transfer logic in cli/customizations/s3/ which manages:
+    - Multipart uploads (split large files into parts, upload concurrently)
+    - Multipart downloads (range GETs for large files)
+    - Progress reporting
+    - Retry logic per part
+  </s3_high_level_commands>
+
+  <milestones>
+    Development should proceed in this order. Each milestone builds on the previous.
+
+    <milestone number="1" name="Project Skeleton and Model Import">
+      - Create Cargo.toml with all dependencies
+      - Create src/ directory with module stubs that compile
+      - Copy ALL botocore service model files from:
+        $AWS_CLI_SRC/botocore/data/
+        into the models/ directory (all ~418 service dirs + endpoints.json + partitions.json)
+      - "cargo build" succeeds
+      - "cargo test" succeeds (no tests yet is fine)
+    </milestone>
+
+    <milestone number="2" name="Config and Credentials">
+      - INI file parser that reads ~/.aws/credentials and ~/.aws/config
+      - Environment variable credential provider
+      - Profile credential provider
+      - Credential chain that tries env then profile
+      - Config provider (region, output format)
+      - Unit tests for INI parsing and credential resolution
+    </milestone>
+
+    <milestone number="3" name="SigV4 Signing">
+      - Implement the SigV4 signing algorithm in core/auth/sigv4.rs
+      - Create canonical request, string to sign, signing key, signature
+      - Add Authorization header to request
+      - Unit tests with known test vectors
+      - Test: sign a hardcoded STS request and verify the signature matches
+    </milestone>
+
+    <milestone number="4" name="HTTP Client and Model Loader">
+      - HTTP client wrapper around reqwest
+      - Request/Response types
+      - Model loader: parse service-2.json into ServiceModel struct
+      - Test loading the real STS, S3, DynamoDB, and EC2 models
+      - Verify all shape types, operations, and metadata are parsed correctly
+    </milestone>
+
+    <milestone number="5" name="Query Protocol and STS End-to-End">
+      - Query protocol serializer (serde_json::Value + shape -> form-encoded body)
+      - Query protocol response parser (XML -> serde_json::Value)
+      - Error parsing for query protocol
+      - Wire up: CLI args -> model loading -> credentials -> signing -> HTTP -> parse response
+      - "cargo run -- sts get-caller-identity" works against real AWS
+      - JSON output formatter works
+      - This is the first end-to-end proof that the full stack works
+    </milestone>
+
+    <milestone number="6" name="All Four Protocols">
+      - JSON protocol serializer/parser (DynamoDB, KMS, etc.)
+      - REST-JSON protocol serializer/parser (Lambda, API Gateway, etc.)
+      - REST-XML protocol serializer/parser (S3, Route53, CloudFront)
+      - EC2 query variant (slightly different error format)
+      - S3-specific signing (UNSIGNED-PAYLOAD, virtual hosted buckets)
+      - Verify end-to-end with at least one service per protocol:
+        * query: "raws sts get-caller-identity"
+        * json: "raws dynamodb list-tables"
+        * rest-xml: "raws s3api list-buckets"
+        * rest-json: "raws lambda list-functions" (or similar)
+    </milestone>
+
+    <milestone number="7" name="Full Service Dispatch">
+      - Dynamic service discovery: scan models/ dir, register all services as subcommands
+      - Dynamic argument parsing from model input shapes
+      - "raws <any-service> <any-operation>" works for any service
+      - Verify with a broad sample: STS, S3, EC2, IAM, DynamoDB, Lambda, CloudFormation,
+        SNS, SQS, KMS, CloudWatch, Route53, ECS, EKS, RDS
+    </milestone>
+
+    <milestone number="8" name="CLI Polish">
+      - Text and table output formatters
+      - "raws configure" command (interactive credential setup)
+      - --debug flag (prints request/response details to stderr)
+      - Proper error messages for common failures (invalid credentials, no region, etc.)
+      - Help text generation from model documentation strings
+      - --query (JMESPath) support (use jmespath crate or hand-roll basics)
+      - --no-paginate / auto-pagination using paginators-1.json
+      - --cli-input-json / --cli-input-yaml support
+      - --generate-cli-skeleton support
+    </milestone>
+
+    <milestone number="9" name="Endpoint Resolution">
+      - Parse endpoints.json for accurate endpoint mapping
+      - Handle all partitions (aws, aws-cn, aws-us-gov, aws-iso, aws-iso-b)
+      - Handle global services (IAM, STS global, Route53, CloudFront)
+      - Handle S3 virtual-hosted and path-style addressing
+      - Dual-stack endpoint support
+      - FIPS endpoint support
+      - --endpoint-url override flag
+    </milestone>
+
+    <milestone number="10" name="S3 High-Level Commands">
+      - S3 transfer logic in cli/customizations/s3/transfer.rs: upload, download, multipart
+      - raws s3 ls
+      - raws s3 cp (local->S3, S3->local, S3->S3)
+      - raws s3 mv
+      - raws s3 rm
+      - raws s3 sync (by size + modification time, --delete flag)
+      - raws s3 mb / rb
+      - Progress bar output
+      - --recursive flag
+      - --exclude / --include filters
+    </milestone>
+
+    <milestone number="11" name="Robustness">
+      - Retry logic with exponential backoff and jitter
+      - Adaptive retry mode (matches AWS CLI default)
+      - Pagination support (auto-paginate using paginators-1.json)
+      - Waiter support (using waiters-2.json)
+      - Connection timeouts and request timeouts
+      - Graceful error handling for network failures
+      - Signing key caching per date/region/service
+    </milestone>
+
+    <milestone number="12" name="Customizations Parity">
+      - Implement the same customizations as awscli/customizations/:
+        * cloudformation: deploy, package commands
+        * ec2: wait, bundle-instance, etc.
+        * ecs: execute-command
+        * eks: get-token, update-kubeconfig
+        * emr: create-cluster, add-steps, ssh
+        * logs: tail
+        * codeartifact: login
+        * codedeploy: push
+        * datapipeline: list-runs, get-pipeline-definition
+        * configure: get, set, list, import, export-credentials, sso
+        * history: show, list
+        * sso: login, logout
+      - Each customization should match the behavior of the Python original
+      - Prioritize the most commonly used customizations first
+    </milestone>
+
+    <milestone number="13" name="Full Compatibility">
+      - YAML output format (--output yaml, --output yaml-stream)
+      - Shell completion (bash, zsh, fish)
+      - Assume-role credential provider (role_arn + source_profile in config)
+      - SSO credential provider
+      - Web identity token credential provider
+      - credential_process support
+      - AWS_CA_BUNDLE / --ca-bundle support
+      - Proxy support (HTTP_PROXY, HTTPS_PROXY)
+      - Response streaming for applicable operations
+      - Binary output handling (for S3 GetObject body, etc.)
+      - Exit code parity with the real AWS CLI
+    </milestone>
+  </milestones>
+
+  <success_criteria>
+    <correctness>
+      - SigV4 signatures match AWS test vectors
+      - ALL ~418 services' operations work against real AWS endpoints
+      - Credential chain resolves correctly from env, profile file, and config file
+      - All four protocols correctly serialize/deserialize for every service
+      - Error responses are parsed and displayed clearly
+      - Pagination works correctly for all services with paginators
+      - Waiters work correctly for all services with waiters
+    </correctness>
+
+    <compatibility>
+      The ultimate test: for any command, "raws ..." should produce identical output to "aws ...".
+      - "raws sts get-caller-identity" output matches "aws sts get-caller-identity"
+      - "raws s3 ls" output matches "aws s3 ls"
+      - "raws ec2 describe-instances" output matches "aws ec2 describe-instances"
+      - Same CLI flag names as the real AWS CLI for ALL services
+      - Same exit codes (0 for success, non-zero for error)
+      - Same environment variable names (AWS_REGION, AWS_PROFILE, etc.)
+      - Same config file format and locations
+      - Same --query JMESPath behavior
+      - Same output formats (json, text, table, yaml)
+    </compatibility>
+
+    <code_quality>
+      - "cargo build" with zero warnings
+      - "cargo clippy" with zero warnings
+      - "cargo test" all tests pass
+      - Clean module separation within the single crate
+      - No unwrap() in production code paths (use proper error handling with anyhow)
+    </code_quality>
+
+    <performance>
+      - Cold start under 100ms for simple commands
+      - Multipart S3 uploads use concurrent part uploads
+      - Signing key caching per date/region/service
+      - Lazy service model loading (only load the model for the invoked service)
+    </performance>
+  </success_criteria>
+
+  <testing>
+    Testing uses the AWS account and profile defined in .env. Always source .env
+    before running end-to-end tests.
+
+    <unit_tests>
+      Run with: cargo test
+      - SigV4 signing: known-answer tests with hardcoded inputs and expected signatures
+      - INI parsing: test with sample config/credentials file content
+      - Protocol serialization: test each protocol (query, json, rest-json, rest-xml)
+        with known inputs and verify the wire format
+      - Protocol parsing: test response parsing with sample XML/JSON responses
+      - Model loading: test parsing real service-2.json files (STS, S3, DynamoDB, EC2)
+      - Endpoint resolution: test service+region -> URL mapping
+    </unit_tests>
+
+    <end_to_end_tests>
+      These tests hit real AWS endpoints using the test account credentials.
+      Run with: AWS_PROFILE=$RAW_TEST_PROFILE cargo run -- <command>
+
+      Verification commands (run these and compare output with the real AWS CLI):
+      - cargo run -- sts get-caller-identity --profile $RAW_TEST_PROFILE
+        Expected: returns Account=$RAWS_TEST_ACCOUNT
+      - cargo run -- s3api list-buckets --profile $RAW_TEST_PROFILE
+      - cargo run -- s3 ls --profile $RAW_TEST_PROFILE
+      - cargo run -- iam get-user --profile $RAW_TEST_PROFILE
+      - cargo run -- dynamodb list-tables --profile $RAW_TEST_PROFILE --region us-east-1
+      - cargo run -- lambda list-functions --profile $RAW_TEST_PROFILE --region us-east-1
+
+      For each end-to-end test, compare raws output against the real AWS CLI:
+        aws sts get-caller-identity --profile $RAW_TEST_PROFILE
+      The output should be identical (same JSON keys, same formatting).
+
+      Always use the --profile flag with $RAW_TEST_PROFILE for end-to-end tests.
+      Never rely on ambient credentials — be explicit about which account is being used.
+    </end_to_end_tests>
+
+    <regression_testing>
+      Before implementing new features, verify nothing is broken:
+      1. cargo build — must succeed
+      2. cargo test — all unit tests must pass
+      3. cargo clippy — no warnings
+      4. Spot-check 1-2 previously passing end-to-end tests
+    </regression_testing>
+  </testing>
+
+  <important_notes>
+    - NEVER hard-code AWS credentials in source code
+    - Use #[cfg(test)] for test modules, not separate test files for unit tests
+    - Use anyhow for error handling throughout (single crate, single binary)
+    - All async functions should be properly async (no block_on inside async)
+    - DO NOT hand-create service model files. Copy the REAL model files from:
+      $AWS_CLI_SRC/botocore/data/
+      These are the same files used by the Python AWS CLI. Copy ALL of them —
+      the whole directory including endpoints.json and partitions.json.
+    - The model loader must handle the FULL complexity of real models. The real
+      S3 model is 13K+ lines, EC2 is even larger. The loader must handle these.
+    - For the initial implementation, endpoint resolution can start simple
+      (format string) and be enhanced with endpoints.json parsing in milestone 9.
+    - All 60+ customizations from awscli/customizations/ should eventually be
+      reimplemented. Prioritize by usage: S3 high-level commands, configure, and
+      cloudformation deploy/package are the most commonly used.
+  </important_notes>
+</project_specification>
