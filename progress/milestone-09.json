@@ -5,8 +5,8 @@
     "verify": [
       { "run": "cargo test -- endpoints_json", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["5 tests, OnceLock caching, lazy-loaded from models/endpoints.json"]
   },
   {
     "id": "partition-aware-resolution",
@@ -14,8 +14,8 @@
     "verify": [
       { "run": "cargo test -- partition_resolve", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["6 tests, two-pass lookup: explicit regions then regionRegex matching"]
   },
   {
     "id": "service-specific-endpoints",
@@ -23,8 +23,8 @@
     "verify": [
       { "run": "cargo test -- service_endpoint", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["7 tests, per-region hostname overrides, service defaults"]
   },
   {
     "id": "global-service-endpoints",
@@ -32,8 +32,8 @@
     "verify": [
       { "run": "cargo test -- global_endpoint", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["4 tests, isRegionalized=false handling, partitionEndpoint"]
   },
   {
     "id": "region-specific-sts",
@@ -41,8 +41,8 @@
     "verify": [
       { "run": "cargo test -- sts_regional", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["5 tests, STS is regionalized by default despite having partitionEndpoint"]
   },
   {
     "id": "s3-virtual-hosted-style",
@@ -86,8 +86,8 @@
     "verify": [
       { "run": "cargo test -- endpoint_url_override", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["4 tests, override bypasses endpoint resolution entirely"]
   },
   {
     "id": "china-partition",
@@ -95,8 +95,8 @@
     "verify": [
       { "run": "cargo test -- china_partition", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["6 tests, *.amazonaws.com.cn suffix for cn-* regions"]
   },
   {
     "id": "govcloud-partition",
@@ -104,7 +104,7 @@
     "verify": [
       { "run": "cargo test -- govcloud_partition", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["7 tests, partition-specific hostnames for us-gov-* regions"]
   }
 ]
