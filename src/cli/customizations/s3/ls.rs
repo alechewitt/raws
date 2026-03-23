@@ -5,6 +5,7 @@
 
 use anyhow::{bail, Result};
 
+use super::parse_s3_url;
 use super::s3_api_call;
 use super::s3_bucket_api_call;
 use super::S3CommandContext;
@@ -34,38 +35,6 @@ pub async fn execute(args: &[String], ctx: &S3CommandContext) -> Result<()> {
             list_objects(ctx, &bucket, &prefix, recursive).await
         }
     }
-}
-
-/// Parse an S3 URL like `s3://bucket/prefix` into (bucket, prefix).
-///
-/// Handles edge cases:
-/// - `s3://bucket` -> ("bucket", "")
-/// - `s3://bucket/` -> ("bucket", "")
-/// - `s3://bucket/prefix` -> ("bucket", "prefix")
-/// - `s3://bucket/path/to/prefix` -> ("bucket", "path/to/prefix")
-fn parse_s3_url(url: &str) -> Result<(String, String)> {
-    let stripped = url
-        .strip_prefix("s3://")
-        .ok_or_else(|| anyhow::anyhow!("Invalid S3 URL: '{}'. Expected format: s3://bucket[/prefix]", url))?;
-
-    if stripped.is_empty() {
-        bail!("Invalid S3 URL: '{}'. Bucket name is required.", url);
-    }
-
-    let (bucket, prefix) = match stripped.find('/') {
-        Some(pos) => {
-            let bucket = &stripped[..pos];
-            let prefix = &stripped[pos + 1..];
-            (bucket.to_string(), prefix.to_string())
-        }
-        None => (stripped.to_string(), String::new()),
-    };
-
-    if bucket.is_empty() {
-        bail!("Invalid S3 URL: '{}'. Bucket name is required.", url);
-    }
-
-    Ok((bucket, prefix))
 }
 
 /// Represents a single object in a ListObjectsV2 response.

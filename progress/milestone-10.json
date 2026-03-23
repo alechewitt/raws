@@ -32,8 +32,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["PutObject via s3_bucket_api_call, content-type guessing, shared parse_s3_url, 17 tests, E2E verified"]
   },
   {
     "id": "s3-cp-download",

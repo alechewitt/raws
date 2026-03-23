@@ -6,6 +6,7 @@
 //!
 //! The real AWS CLI implements these in `awscli/customizations/s3/`.
 
+mod cp;
 mod ls;
 
 use anyhow::{bail, Context, Result};
@@ -410,6 +411,52 @@ fn url_encode(input: &str) -> String {
 }
 
 // ---------------------------------------------------------------------------
+// Shared S3 URL parsing
+// ---------------------------------------------------------------------------
+
+/// Parse an S3 URL like `s3://bucket/key` into (bucket, key).
+///
+/// Handles edge cases:
+/// - `s3://bucket` -> ("bucket", "")
+/// - `s3://bucket/` -> ("bucket", "")
+/// - `s3://bucket/key` -> ("bucket", "key")
+/// - `s3://bucket/path/to/key` -> ("bucket", "path/to/key")
+pub fn parse_s3_url(url: &str) -> Result<(String, String)> {
+    let stripped = url
+        .strip_prefix("s3://")
+        .ok_or_else(|| {
+            anyhow::anyhow!(
+                "Invalid S3 URL: '{}'. Expected format: s3://bucket[/key]",
+                url
+            )
+        })?;
+
+    if stripped.is_empty() {
+        bail!("Invalid S3 URL: '{}'. Bucket name is required.", url);
+    }
+
+    let (bucket, key) = match stripped.find('/') {
+        Some(pos) => {
+            let bucket = &stripped[..pos];
+            let key = &stripped[pos + 1..];
+            (bucket.to_string(), key.to_string())
+        }
+        None => (stripped.to_string(), String::new()),
+    };
+
+    if bucket.is_empty() {
+        bail!("Invalid S3 URL: '{}'. Bucket name is required.", url);
+    }
+
+    Ok((bucket, key))
+}
+
+/// Returns true if the path looks like an S3 URL (starts with "s3://").
+pub fn is_s3_url(path: &str) -> bool {
+    path.starts_with("s3://")
+}
+
+// ---------------------------------------------------------------------------
 // Subcommand handlers
 // ---------------------------------------------------------------------------
 
@@ -417,8 +464,8 @@ async fn handle_ls(args: &[String], ctx: &S3CommandContext) -> Result<()> {
     ls::execute(args, ctx).await
 }
 
-async fn handle_cp(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
-    bail!("s3 cp is not yet implemented")
+async fn handle_cp(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    cp::execute(args, ctx).await
 }
 
 async fn handle_mv(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
@@ -552,12 +599,16 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_cp_returns_not_yet_implemented() {
+    fn test_dispatch_cp_no_args_returns_error() {
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result = rt.block_on(dispatch_s3_subcommand("cp", &[], &ctx));
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("s3 cp is not yet implemented"));
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            err_msg.contains("requires a source and destination"),
+            "Expected usage error, got: {err_msg}"
+        );
     }
 
     #[test]
