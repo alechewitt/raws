@@ -1,0 +1,110 @@
+[
+  {
+    "id": "retry-exponential-backoff",
+    "description": "Retry logic with exponential backoff and jitter for transient errors (5xx, throttling, network errors)",
+    "verify": [
+      { "run": "cargo test -- retry", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "retry-integration",
+    "description": "Wire retry logic into the main driver dispatch loop for all protocol dispatchers",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "adaptive-retry-mode",
+    "description": "Adaptive retry mode matching AWS CLI default: max 3 attempts, rate-limited retries for throttling",
+    "verify": [
+      { "run": "cargo test -- retry", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "waiter-support",
+    "description": "Waiter support using waiters-2.json: raws <service> wait <waiter-name> polls until condition is met",
+    "verify": [
+      { "run": "cargo test -- waiter", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "waiter-cli-dispatch",
+    "description": "Wire waiter subcommand into CLI: raws ec2 wait instance-running --instance-ids i-123",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "connection-timeout",
+    "description": "Configurable connection timeout (default 60s) via --cli-connect-timeout or config",
+    "verify": [
+      { "run": "cargo test -- timeout", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "request-timeout",
+    "description": "Configurable request/read timeout (default 60s) via --cli-read-timeout or config",
+    "verify": [
+      { "run": "cargo test -- timeout", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "network-error-handling",
+    "description": "Graceful error messages for common network failures (DNS resolution, connection refused, TLS errors)",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "signing-key-cache",
+    "description": "Cache SigV4 signing keys per date/region/service to avoid recomputing HMAC chain on every request",
+    "verify": [
+      { "run": "cargo test -- signing_key_cache", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "max-attempts-config",
+    "description": "Support max_attempts config in ~/.aws/config and AWS_MAX_ATTEMPTS env var",
+    "verify": [
+      { "run": "cargo test -- max_attempts", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "retry-mode-config",
+    "description": "Support retry_mode config (standard, adaptive, legacy) in ~/.aws/config and AWS_RETRY_MODE env var",
+    "verify": [
+      { "run": "cargo test -- retry_mode", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-transfer-retry",
+    "description": "Per-part retry logic for S3 multipart uploads and individual S3 operations",
+    "verify": [
+      { "run": "cargo test -- transfer_retry", "expect": "tests pass" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]
