@@ -95,8 +95,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["18 tests, interactive prompts, INI file write/read, preserves existing sections"]
   },
   {
     "id": "output-format-comparison",
@@ -104,7 +104,7 @@
     "verify": [
       { "run": "cargo test -- output_format_match", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["5 tests, 4-space indent matches AWS CLI, key ordering is alphabetical (minor diff from AWS CLI response order)"]
   }
 ]

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "endpoints-json-parser",
+    "description": "Parse models/endpoints.json into structured partition/service/endpoint data",
+    "verify": [
+      { "run": "cargo test -- endpoints_json", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "partition-aware-resolution",
+    "description": "Resolve endpoints using partition data: aws, aws-cn, aws-us-gov, aws-iso, aws-iso-b",
+    "verify": [
+      { "run": "cargo test -- partition_resolve", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "service-specific-endpoints",
+    "description": "Service-specific endpoint overrides from endpoints.json (e.g., S3 has custom hostname patterns)",
+    "verify": [
+      { "run": "cargo test -- service_endpoint", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "global-service-endpoints",
+    "description": "Global services (IAM, STS, Route53, CloudFront) resolve to correct global endpoints",
+    "verify": [
+      { "run": "cargo test -- global_endpoint", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "region-specific-sts",
+    "description": "STS regional endpoints: support both global (sts.amazonaws.com) and regional (sts.us-east-1.amazonaws.com)",
+    "verify": [
+      { "run": "cargo test -- sts_regional", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-virtual-hosted-style",
+    "description": "S3 virtual-hosted style addressing: {bucket}.s3.{region}.amazonaws.com",
+    "verify": [
+      { "run": "cargo test -- s3_virtual_host", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "s3-path-style",
+    "description": "S3 path-style addressing fallback: s3.{region}.amazonaws.com/{bucket}",
+    "verify": [
+      { "run": "cargo test -- s3_path_style", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "dual-stack-endpoints",
+    "description": "Dual-stack endpoint support: --use-dualstack-endpoint flag resolves to *.dualstack.* URLs",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "fips-endpoints",
+    "description": "FIPS endpoint support: --use-fips-endpoint flag resolves to fips-prefixed URLs",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "endpoint-url-override",
+    "description": "--endpoint-url flag overrides resolved endpoint (already implemented, add tests)",
+    "verify": [
+      { "run": "cargo test -- endpoint_url_override", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "china-partition",
+    "description": "China partition endpoints: *.amazonaws.com.cn for cn-north-1, cn-northwest-1",
+    "verify": [
+      { "run": "cargo test -- china_partition", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "govcloud-partition",
+    "description": "GovCloud partition endpoints: *.amazonaws.com for us-gov-east-1, us-gov-west-1",
+    "verify": [
+      { "run": "cargo test -- govcloud_partition", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]

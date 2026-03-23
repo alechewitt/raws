@@ -3,6 +3,7 @@ use clap::Parser;
 use std::path::Path;
 
 use crate::cli::args::GlobalArgs;
+use crate::cli::commands::configure;
 use crate::cli::formatter;
 use crate::cli::jmespath;
 use crate::core::auth::sigv4::{self, SigningParams};
@@ -36,6 +37,15 @@ pub async fn run() -> Result<()> {
     if service == "help" {
         print_service_help();
         return Ok(());
+    }
+
+    // Handle "raws configure": interactive credential setup
+    if service == "configure" {
+        let profile = match args.profile.as_deref() {
+            Some(p) => p.to_string(),
+            None => std::env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string()),
+        };
+        return configure::run_configure(&profile);
     }
 
     let operation = match &args.operation {
