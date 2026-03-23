@@ -365,6 +365,45 @@ pub fn parse_query_error(xml_body: &str) -> Result<(String, String)> {
     Ok((code, message))
 }
 
+/// Parse an EC2 query protocol XML error response.
+///
+/// EC2 uses a different error XML structure from standard query protocol:
+///   <Response>
+///     <Errors>
+///       <Error>
+///         <Code>...</Code>
+///         <Message>...</Message>
+///       </Error>
+///     </Errors>
+///     <RequestID>...</RequestID>
+///   </Response>
+///
+/// Returns (code, message).
+pub fn parse_ec2_error(xml_body: &str) -> Result<(String, String)> {
+    let root = parse_xml_to_tree(xml_body)?;
+
+    // Navigate to <Errors> -> <Error>
+    let errors_node = find_child_element(&root, "Errors");
+    let error_node = errors_node
+        .as_ref()
+        .and_then(|errors| find_child_element(errors, "Error"))
+        .or_else(|| find_child_element(&root, "Error"));
+
+    match error_node {
+        Some(node) => {
+            let code = find_child_text(&node, "Code").unwrap_or_default();
+            let message = find_child_text(&node, "Message").unwrap_or_default();
+            Ok((code, message))
+        }
+        None => {
+            // Fallback: try to find Code/Message directly in root
+            let code = find_child_text(&root, "Code").unwrap_or_default();
+            let message = find_child_text(&root, "Message").unwrap_or_default();
+            Ok((code, message))
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // XML tree representation and parsing
 // ---------------------------------------------------------------------------
@@ -1453,6 +1492,82 @@ mod tests {
 </ErrorResponse>"#;
 
         let (code, message) = parse_query_error(xml).unwrap();
+        assert_eq!(code, "");
+        assert_eq!(message, "Something went wrong");
+    }
+
+    // ---------------------------------------------------------------
+    // Feature: ec2-query-variant error parsing
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn ec2_query_parse_error_standard() {
+        let xml = r#"<Response>
+  <Errors>
+    <Error>
+      <Code>InvalidParameterValue</Code>
+      <Message>The parameter value is invalid.</Message>
+    </Error>
+  </Errors>
+  <RequestID>01234567-89ab-cdef-0123-456789abcdef</RequestID>
+</Response>"#;
+
+        let (code, message) = parse_ec2_error(xml).unwrap();
+        assert_eq!(code, "InvalidParameterValue");
+        assert_eq!(message, "The parameter value is invalid.");
+    }
+
+    #[test]
+    fn ec2_query_parse_error_auth_failure() {
+        let xml = r#"<Response>
+  <Errors>
+    <Error>
+      <Code>AuthFailure</Code>
+      <Message>AWS was not able to validate the provided access credentials</Message>
+    </Error>
+  </Errors>
+  <RequestID>abc-123</RequestID>
+</Response>"#;
+
+        let (code, message) = parse_ec2_error(xml).unwrap();
+        assert_eq!(code, "AuthFailure");
+        assert_eq!(
+            message,
+            "AWS was not able to validate the provided access credentials"
+        );
+    }
+
+    #[test]
+    fn ec2_query_parse_error_dry_run() {
+        let xml = r#"<Response>
+  <Errors>
+    <Error>
+      <Code>DryRunOperation</Code>
+      <Message>Request would have succeeded, but DryRun flag is set.</Message>
+    </Error>
+  </Errors>
+  <RequestID>req-789</RequestID>
+</Response>"#;
+
+        let (code, message) = parse_ec2_error(xml).unwrap();
+        assert_eq!(code, "DryRunOperation");
+        assert_eq!(
+            message,
+            "Request would have succeeded, but DryRun flag is set."
+        );
+    }
+
+    #[test]
+    fn ec2_query_parse_error_missing_code() {
+        let xml = r#"<Response>
+  <Errors>
+    <Error>
+      <Message>Something went wrong</Message>
+    </Error>
+  </Errors>
+</Response>"#;
+
+        let (code, message) = parse_ec2_error(xml).unwrap();
         assert_eq!(code, "");
         assert_eq!(message, "Something went wrong");
     }

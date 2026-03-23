@@ -1,0 +1,110 @@
+[
+  {
+    "id": "dynamic-service-discovery",
+    "description": "Scan models/ directory at startup to discover all available services as subcommands",
+    "verify": [
+      { "run": "cargo run -- help 2>&1 | head -20", "expect": "shows list of available services or help text" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "dynamic-arg-parsing",
+    "description": "Parse operation arguments dynamically from model input shape: each member becomes --kebab-case flag",
+    "verify": [
+      { "run": "cargo test -- dynamic_arg", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "iam-get-user-e2e",
+    "description": "E2E: raws iam get-user works (query protocol)",
+    "verify": [
+      { "run": "cargo run -- iam get-user --region us-east-1", "expect": "returns JSON with User info or AccessDenied" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "ec2-describe-regions-e2e",
+    "description": "E2E: raws ec2 describe-regions works (ec2 protocol)",
+    "verify": [
+      { "run": "cargo run -- ec2 describe-regions --region us-east-1", "expect": "returns JSON with Regions array" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "kms-list-keys-e2e",
+    "description": "E2E: raws kms list-keys works (json protocol)",
+    "verify": [
+      { "run": "cargo run -- kms list-keys --region us-east-1", "expect": "returns JSON with Keys array" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "sns-list-topics-e2e",
+    "description": "E2E: raws sns list-topics works (query protocol)",
+    "verify": [
+      { "run": "cargo run -- sns list-topics --region us-east-1", "expect": "returns JSON with Topics" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "sqs-list-queues-e2e",
+    "description": "E2E: raws sqs list-queues works (query or json protocol)",
+    "verify": [
+      { "run": "cargo run -- sqs list-queues --region us-east-1", "expect": "returns JSON with QueueUrls" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "cloudformation-list-stacks-e2e",
+    "description": "E2E: raws cloudformation list-stacks works (query protocol)",
+    "verify": [
+      { "run": "cargo run -- cloudformation list-stacks --region us-east-1", "expect": "returns JSON with StackSummaries" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "route53-list-hosted-zones-e2e",
+    "description": "E2E: raws route53 list-hosted-zones works (rest-xml protocol)",
+    "verify": [
+      { "run": "cargo run -- route53 list-hosted-zones --region us-east-1", "expect": "returns JSON with HostedZones" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "cloudwatch-list-metrics-e2e",
+    "description": "E2E: raws cloudwatch list-metrics works (query protocol)",
+    "verify": [
+      { "run": "cargo run -- cloudwatch list-metrics --region us-east-1", "expect": "returns JSON with Metrics" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "ecs-list-clusters-e2e",
+    "description": "E2E: raws ecs list-clusters works (json protocol)",
+    "verify": [
+      { "run": "cargo run -- ecs list-clusters --region us-east-1", "expect": "returns JSON with clusterArns" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "rds-describe-db-instances-e2e",
+    "description": "E2E: raws rds describe-db-instances works (query protocol)",
+    "verify": [
+      { "run": "cargo run -- rds describe-db-instances --region us-east-1", "expect": "returns JSON with DBInstances" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]

@@ -5,8 +5,8 @@
     "verify": [
       { "run": "cargo test -- json_protocol_serialize", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 8 tests, build_target_header, build_content_type, serialize_json_request"]
   },
   {
     "id": "json-protocol-parser",
@@ -14,8 +14,8 @@
     "verify": [
       { "run": "cargo test -- json_protocol_parse", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 4 tests, parse_json_response handles empty/null/nested"]
   },
   {
     "id": "json-protocol-error-parser",
@@ -23,8 +23,8 @@
     "verify": [
       { "run": "cargo test -- json_protocol_error", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 8 tests, handles # namespace prefix and both message/Message"]
   },
   {
     "id": "rest-json-protocol-serializer",
@@ -32,8 +32,8 @@
     "verify": [
       { "run": "cargo test -- rest_json_serialize", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 11 tests, URI templates, greedy labels, headers, querystring, mixed locations"]
   },
   {
     "id": "rest-json-protocol-parser",
@@ -41,8 +41,8 @@
     "verify": [
       { "run": "cargo test -- rest_json_parse", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 13 tests, body+headers+statusCode, streaming payload, error parsing"]
   },
   {
     "id": "rest-xml-protocol-serializer",
@@ -50,8 +50,8 @@
     "verify": [
       { "run": "cargo test -- rest_xml_serialize", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 11 tests, URI templates, XML body, payload, flattened lists, maps"]
   },
   {
     "id": "rest-xml-protocol-parser",
@@ -59,8 +59,8 @@
     "verify": [
       { "run": "cargo test -- rest_xml_parse", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 14 tests, S3 ListBuckets format, headers, payload, flattened lists, error parsing"]
   },
   {
     "id": "ec2-query-variant",
@@ -68,8 +68,8 @@
     "verify": [
       { "run": "cargo test -- ec2_query", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: 4 tests, parse_ec2_error in query.rs, dispatch_ec2_protocol in driver"]
   },
   {
     "id": "protocol-dispatch",
@@ -77,8 +77,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles without errors" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: All 5 protocols dispatched in driver.rs, s3api->s3 alias mapping"]
   },
   {
     "id": "dynamodb-list-tables-e2e",
@@ -86,8 +86,8 @@
     "verify": [
       { "run": "cargo run -- dynamodb list-tables --region us-east-1", "expect": "returns JSON with TableNames" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: Returns {\"TableNames\": []} from real AWS"]
   },
   {
     "id": "s3api-list-buckets-e2e",
@@ -95,8 +95,8 @@
     "verify": [
       { "run": "cargo run -- s3api list-buckets", "expect": "returns JSON with Buckets array" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: Returns Buckets array with 2 buckets from real AWS, s3api alias maps to s3 model"]
   },
   {
     "id": "lambda-list-functions-e2e",
@@ -104,7 +104,7 @@
     "verify": [
       { "run": "cargo run -- lambda list-functions --region us-east-1", "expect": "returns JSON with Functions array" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Session 2: Returns {\"Functions\": []} from real AWS"]
   }
 ]
