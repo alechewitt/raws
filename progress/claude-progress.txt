@@ -100,3 +100,69 @@ NEXT SESSION PRIORITIES:
 5. M8: Auto-pagination using paginators-1.json
 6. M8: --cli-input-json and --generate-cli-skeleton
 7. M8: raws configure command
+
+=== Session 3: Milestone 8 Complete (2026-03-23) ===
+
+ACCOMPLISHED:
+- Completed Milestone 8 (CLI Polish): 12/12
+  - text-output-formatter: Tab-separated values matching AWS CLI behavior (15 tests)
+    - Handles objects, arrays, nested structures, scalars
+    - Keys sorted alphabetically, uppercase identifiers for nested keys
+  - table-output-formatter: ASCII tables with +/-/| borders (20 tests)
+    - Vertical tables for single-row objects, horizontal for lists of objects
+    - Column width auto-calculation, centered headers, 2-space padding
+  - debug-flag: Already implemented (all 5 protocol dispatchers)
+  - error-messages: 11 tests for no-region, unknown service, unknown operation, credential failures
+  - help-text-generation: `raws <service> help` lists operations, `raws <service> <op> help` shows params/types/required
+    - Loads model without needing credentials/region
+    - Documentation text with HTML tags stripped
+  - no-paginate-flag + auto-pagination (26 tests):
+    - Loads paginators-1.json per service
+    - Follows output_token, merges result_key arrays across pages
+    - Handles multi-token, IsTruncated, non-aggregate keys
+    - --no-paginate flag disables auto-pagination
+  - cli-input-json (4 tests): file:// and inline JSON, merge with explicit args
+  - generate-cli-skeleton (11 tests): Recursive skeleton from input shape, 4-space indent
+    - Works without credentials (early return before signing)
+  - query-jmespath (25 tests): Hand-rolled JMESPath evaluator (370 lines)
+    - Supports: field access, dot paths, [0] index, [] flatten, [?filter], * wildcard, | pipe, multi-select, literals
+    - No external crate dependency
+  - configure-command (18 tests): Interactive prompts, INI file read/write
+    - Preserves existing sections in config files
+    - Handles default vs named profiles
+  - output-format-comparison (5 tests): JSON formatter now uses 4-space indentation
+
+- Created milestone-09.json for Endpoint Resolution (12 features)
+
+TEST RESULTS:
+- 315 tests passing (up from 181 in session 2)
+- cargo build succeeds
+- cargo clippy: only pre-existing dead_code warnings
+
+NEW FILES:
+- src/cli/jmespath.rs (370 lines) - Hand-rolled JMESPath evaluator
+- progress/milestone-09.json - Endpoint Resolution features
+
+DESIGN DECISIONS:
+- JMESPath: hand-rolled rather than external crate (simpler, no dependency, covers common patterns)
+- Pagination: integrated into driver dispatch loop, separate paginate.rs module
+- Help text: loads model early (before credentials), strips HTML from documentation
+- Configure: uses simple INI serializer, preserves existing file sections
+- JSON formatter: serde_json PrettyFormatter with 4-space indent (key ordering is alphabetical, minor diff from AWS CLI response order)
+
+KNOWN ISSUES:
+- JSON key ordering is alphabetical (serde default) while AWS CLI preserves response order from XML/JSON parsing
+- Code duplication between protocol modules still exists
+- credential_process not supported (M13)
+- smithy-rpc-v2-cbor protocol not supported
+
+MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12, M8=12/12
+Current milestone: 9 (Endpoint Resolution)
+
+NEXT SESSION PRIORITIES:
+1. M9: Parse endpoints.json for accurate endpoint mapping
+2. M9: Partition-aware resolution (aws, aws-cn, aws-us-gov)
+3. M9: Service-specific endpoint overrides
+4. M9: Global service endpoints
+5. M9: S3 virtual-hosted and path-style addressing
+6. M9: Dual-stack and FIPS endpoint support

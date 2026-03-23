@@ -30,9 +30,34 @@ TEST RESULTS: 181 tests passing
 MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12
 Current milestone: 8 (CLI Polish)
 
-KNOWN ISSUES:
-- Code duplication between protocol modules (URI template, XML parsing)
-- credential_process not supported (M13)
-- smithy-rpc-v2-cbor protocol not supported (CloudWatch etc.)
+=== Session 3: Milestone 8 Complete (2026-03-23) ===
 
-NEXT: M8 - Text/table formatters, help text, --query JMESPath, pagination, configure command
+ACCOMPLISHED:
+- Completed Milestone 8 (CLI Polish): 12/12
+  - text-output-formatter: Tab-separated values matching AWS CLI (15 tests)
+  - table-output-formatter: ASCII tables with borders (20 tests)
+  - debug-flag: Already implemented from prior sessions
+  - error-messages: 11 tests for common failure error paths
+  - help-text-generation: Operation listing + parameter help with types
+  - no-paginate-flag + auto-pagination: Loads paginators-1.json, merges pages (26 tests)
+  - cli-input-json: file:// and inline JSON support (4 tests)
+  - generate-cli-skeleton: Recursive input shape skeleton (11 tests)
+  - query-jmespath: Hand-rolled evaluator supporting field/index/flatten/filter/wildcard/pipe (25 tests)
+  - configure-command: Interactive setup with INI read/write (18 tests)
+  - output-format-comparison: 4-space JSON indent matching AWS CLI (5 tests)
+
+- Created milestone-09.json for Endpoint Resolution (12 features)
+
+NEW FILES: src/cli/jmespath.rs (370 lines), progress/milestone-09.json
+
+TEST RESULTS: 315 tests passing (up from 181)
+MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12, M8=12/12
+Current milestone: 9 (Endpoint Resolution)
+
+KNOWN ISSUES:
+- JSON key ordering is alphabetical (minor diff from AWS CLI response order)
+- Code duplication between protocol modules
+- credential_process not supported (M13)
+- smithy-rpc-v2-cbor protocol not supported
+
+NEXT: M9 - Parse endpoints.json, partition-aware resolution, global services, S3 addressing, dual-stack, FIPS
