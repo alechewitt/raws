@@ -59,8 +59,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Reuses cp functions + delete, E2E verified. Minor: prints 'copy:' instead of 'move:' - cosmetic only"]
   },
   {
     "id": "s3-rm",
@@ -68,8 +68,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["DELETE /{key}, --recursive with paginated ListObjectsV2, E2E verified"]
   },
   {
     "id": "s3-mb-rb",
@@ -77,8 +77,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["CreateBucket with LocationConstraint for non-us-east-1, rb --force empties first"]
   },
   {
     "id": "s3-recursive-flag",

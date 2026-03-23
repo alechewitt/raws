@@ -8,6 +8,9 @@
 
 mod cp;
 mod ls;
+mod mb;
+mod mv;
+mod rm;
 
 use anyhow::{bail, Context, Result};
 
@@ -468,24 +471,24 @@ async fn handle_cp(args: &[String], ctx: &S3CommandContext) -> Result<()> {
     cp::execute(args, ctx).await
 }
 
-async fn handle_mv(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
-    bail!("s3 mv is not yet implemented")
+async fn handle_mv(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    mv::execute(args, ctx).await
 }
 
-async fn handle_rm(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
-    bail!("s3 rm is not yet implemented")
+async fn handle_rm(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    rm::execute(args, ctx).await
 }
 
 async fn handle_sync(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
     bail!("s3 sync is not yet implemented")
 }
 
-async fn handle_mb(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
-    bail!("s3 mb is not yet implemented")
+async fn handle_mb(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    mb::execute_mb(args, ctx).await
 }
 
-async fn handle_rb(_args: &[String], _ctx: &S3CommandContext) -> Result<()> {
-    bail!("s3 rb is not yet implemented")
+async fn handle_rb(args: &[String], ctx: &S3CommandContext) -> Result<()> {
+    mb::execute_rb(args, ctx).await
 }
 
 #[cfg(test)]
@@ -612,21 +615,21 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_mv_returns_not_yet_implemented() {
+    fn test_dispatch_mv_no_args_returns_usage_error() {
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result = rt.block_on(dispatch_s3_subcommand("mv", &[], &ctx));
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("s3 mv is not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("s3 mv requires a source and destination"));
     }
 
     #[test]
-    fn test_dispatch_rm_returns_not_yet_implemented() {
+    fn test_dispatch_rm_no_args_returns_usage_error() {
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result = rt.block_on(dispatch_s3_subcommand("rm", &[], &ctx));
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("s3 rm is not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("s3 rm requires an S3 URL argument"));
     }
 
     #[test]
@@ -639,21 +642,21 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_mb_returns_not_yet_implemented() {
+    fn test_dispatch_mb_no_args_returns_usage_error() {
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result = rt.block_on(dispatch_s3_subcommand("mb", &[], &ctx));
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("s3 mb is not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("s3 mb requires an S3 URL argument"));
     }
 
     #[test]
-    fn test_dispatch_rb_returns_not_yet_implemented() {
+    fn test_dispatch_rb_no_args_returns_usage_error() {
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
         let result = rt.block_on(dispatch_s3_subcommand("rb", &[], &ctx));
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("s3 rb is not yet implemented"));
+        assert!(result.unwrap_err().to_string().contains("s3 rb requires an S3 URL argument"));
     }
 
     #[test]

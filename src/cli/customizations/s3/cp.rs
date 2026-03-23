@@ -61,7 +61,7 @@ pub async fn execute(args: &[String], ctx: &S3CommandContext) -> Result<()> {
 ///
 /// Reads the entire file into memory and sends it as a PUT request to the
 /// appropriate S3 bucket endpoint with virtual-hosted style addressing.
-async fn upload_file(local_path: &str, s3_url: &str, ctx: &S3CommandContext) -> Result<()> {
+pub(super) async fn upload_file(local_path: &str, s3_url: &str, ctx: &S3CommandContext) -> Result<()> {
     let (bucket, key) = parse_s3_url(s3_url)?;
 
     if key.is_empty() {
@@ -136,7 +136,7 @@ async fn upload_file(local_path: &str, s3_url: &str, ctx: &S3CommandContext) -> 
 /// Sends a GET request to the S3 bucket endpoint and writes the response body
 /// to the local file path. If `local_path` is an existing directory, the
 /// filename portion of the S3 key is used as the output file name.
-async fn download_file(s3_url: &str, local_path: &str, ctx: &S3CommandContext) -> Result<()> {
+pub(super) async fn download_file(s3_url: &str, local_path: &str, ctx: &S3CommandContext) -> Result<()> {
     let (bucket, key) = parse_s3_url(s3_url)?;
 
     if key.is_empty() {
@@ -206,7 +206,7 @@ async fn download_file(s3_url: &str, local_path: &str, ctx: &S3CommandContext) -
 /// Sends a PUT request to the destination bucket with the `x-amz-copy-source`
 /// header pointing to the source bucket/key. The copy happens entirely
 /// server-side - no data is transferred through the client.
-async fn copy_s3_to_s3(
+pub(super) async fn copy_s3_to_s3(
     src_url: &str,
     dst_url: &str,
     ctx: &S3CommandContext,
@@ -330,7 +330,7 @@ fn guess_content_type(path: &str) -> Option<String> {
 }
 
 /// Extract an error message from an S3 XML error response.
-fn extract_s3_error(body: &str) -> String {
+pub(super) fn extract_s3_error(body: &str) -> String {
     // Try to find <Message>...</Message> in the error XML
     use quick_xml::events::Event;
     use quick_xml::Reader;
