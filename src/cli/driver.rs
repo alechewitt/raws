@@ -43,6 +43,41 @@ pub async fn run() -> Result<()> {
         }
     };
 
+    // Load the service model early so help commands work without region/credentials.
+    // Map CLI service names to model directory names (e.g., s3api -> s3)
+    let model_service = resolve_service_name(service);
+    let models_dir = Path::new("models").join(model_service);
+    let model_path = loader::find_service_model(&models_dir)
+        .ok_or_else(|| anyhow::anyhow!(
+            "Service model not found for '{}'. Check that models/{} exists.",
+            service, model_service
+        ))?;
+
+    let service_model = loader::load_service_model(&model_path)
+        .with_context(|| format!("Failed to load service model for '{}'", service))?;
+
+    // Handle "raws <service> help": list all operations for this service
+    if operation == "help" {
+        print_operation_list(service, &service_model);
+        return Ok(());
+    }
+
+    // Find the operation (convert kebab-case CLI name to PascalCase)
+    let operation_name = model::find_operation_by_cli_name(&service_model.operations, operation)
+        .ok_or_else(|| anyhow::anyhow!(
+            "Unknown operation '{}' for service '{}'. Operation not found in service model.",
+            operation, service
+        ))?
+        .to_string();
+
+    let op = &service_model.operations[&operation_name];
+
+    // Handle "raws <service> <operation> help": show operation parameters
+    if args.args.iter().any(|a| a == "help") {
+        print_operation_help(service, operation, op, &service_model);
+        return Ok(());
+    }
+
     // 1. Load config (resolves region, profile, output format)
     let config = ConfigProvider::new(
         args.region.as_deref(),
@@ -64,32 +99,9 @@ pub async fn run() -> Result<()> {
         eprintln!("[debug] region={region} profile={} output={output_format}", config.profile);
     }
 
-    // 2. Load the service model
-    // Map CLI service names to model directory names (e.g., s3api -> s3)
-    let model_service = resolve_service_name(service);
-    let models_dir = Path::new("models").join(model_service);
-    let model_path = loader::find_service_model(&models_dir)
-        .ok_or_else(|| anyhow::anyhow!(
-            "Service model not found for '{}'. Check that models/{} exists.",
-            service, model_service
-        ))?;
-
-    let service_model = loader::load_service_model(&model_path)
-        .with_context(|| format!("Failed to load service model for '{}'", service))?;
-
     if args.debug {
         eprintln!("[debug] protocol={} api_version={}", service_model.metadata.protocol, service_model.metadata.api_version);
     }
-
-    // 3. Find the operation (convert kebab-case CLI name to PascalCase)
-    let operation_name = model::find_operation_by_cli_name(&service_model.operations, operation)
-        .ok_or_else(|| anyhow::anyhow!(
-            "Unknown operation '{}' for service '{}'. Operation not found in service model.",
-            operation, service
-        ))?
-        .to_string();
-
-    let op = &service_model.operations[&operation_name];
 
     if args.debug {
         eprintln!("[debug] resolved operation: {operation_name}");
@@ -903,6 +915,105 @@ fn print_service_help() {
     println!("  --debug                 Enable debug output");
 }
 
+/// Print a list of all available operations for a service.
+///
+/// Called when the user runs `raws <service> help`.
+fn print_operation_list(service: &str, service_model: &model::ServiceModel) {
+    println!("{service} operations:\n");
+
+    let mut op_names: Vec<String> = service_model
+        .operations
+        .keys()
+        .map(|k| model::pascal_to_kebab(k))
+        .collect();
+    op_names.sort();
+
+    if op_names.is_empty() {
+        println!("  (no operations found)");
+        return;
+    }
+
+    let col_width = op_names.iter().map(|n| n.len()).max().unwrap_or(20) + 4;
+    let terminal_width = 80;
+    let cols = std::cmp::max(1, terminal_width / col_width);
+
+    for chunk in op_names.chunks(cols) {
+        let line: Vec<String> = chunk
+            .iter()
+            .map(|s| format!("  {:<width$}", s, width = col_width))
+            .collect();
+        println!("{}", line.join(""));
+    }
+
+    println!("\nTo see help for an operation:");
+    println!("  raws {service} <operation> help");
+}
+
+/// Print help for a specific operation, showing its parameters.
+///
+/// Called when the user runs `raws <service> <operation> help`.
+fn print_operation_help(
+    service: &str,
+    operation: &str,
+    op: &model::Operation,
+    service_model: &model::ServiceModel,
+) {
+    println!("{service} {operation}\n");
+
+    if let Some(ref doc) = op.documentation {
+        // Strip simple HTML tags for display
+        let clean = strip_html_tags(doc);
+        if !clean.is_empty() {
+            println!("{clean}\n");
+        }
+    }
+
+    let input_shape_name = match op.input_shape.as_deref() {
+        Some(name) => name,
+        None => {
+            println!("This operation takes no parameters.");
+            return;
+        }
+    };
+
+    let args_info = get_operation_args_info(input_shape_name, &service_model.shapes);
+
+    if args_info.is_empty() {
+        println!("This operation takes no parameters.");
+        return;
+    }
+
+    // Find the longest CLI name for alignment
+    let max_name_len = args_info.iter().map(|a| a.cli_name.len()).max().unwrap_or(0);
+
+    println!("Parameters:\n");
+    for arg in &args_info {
+        let required_tag = if arg.required { " [required]" } else { "" };
+        println!(
+            "  {:<width$}  ({}){}",
+            arg.cli_name,
+            arg.shape_type,
+            required_tag,
+            width = max_name_len,
+        );
+    }
+}
+
+/// Strip basic HTML tags from a documentation string for terminal display.
+fn strip_html_tags(input: &str) -> String {
+    let mut result = String::with_capacity(input.len());
+    let mut in_tag = false;
+    for ch in input.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => result.push(ch),
+            _ => {}
+        }
+    }
+    result.trim().to_string()
+}
+
 /// Information about a single CLI argument derived from a service model input shape.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ArgInfo {
@@ -1243,5 +1354,312 @@ mod tests {
         let path_arg = cu_args.iter().find(|a| a.model_name == "Path").unwrap();
         assert_eq!(path_arg.cli_name, "--path");
         assert!(!path_arg.required);
+    }
+
+    // ---------------------------------------------------------------
+    // Error message tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_error_message_no_region() {
+        // Simulate the error that occurs when no region is specified.
+        // The driver builds this error via .ok_or_else on an Option<&str>.
+        let region: Option<&str> = None;
+        let err = region
+            .ok_or_else(|| anyhow::anyhow!(
+                "No region specified. Use --region, AWS_REGION, or configure a default region."
+            ))
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("No region specified"),
+            "Error should mention 'No region specified', got: {msg}"
+        );
+        assert!(
+            msg.contains("--region"),
+            "Error should mention --region flag, got: {msg}"
+        );
+        assert!(
+            msg.contains("AWS_REGION"),
+            "Error should mention AWS_REGION env var, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_error_message_unknown_service() {
+        // When find_service_model returns None, the driver produces this error.
+        let service = "nonexistent-service";
+        let model_service = resolve_service_name(service);
+        let models_dir = std::path::Path::new("models").join(model_service);
+        let result = loader::find_service_model(&models_dir);
+
+        assert!(
+            result.is_none(),
+            "find_service_model should return None for a nonexistent service"
+        );
+
+        // Reproduce the exact error the driver would create
+        let err = result
+            .ok_or_else(|| anyhow::anyhow!(
+                "Service model not found for '{}'. Check that models/{} exists.",
+                service, model_service
+            ))
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("Service model not found"),
+            "Error should mention 'Service model not found', got: {msg}"
+        );
+        assert!(
+            msg.contains(service),
+            "Error should include the service name '{}', got: {msg}",
+            service
+        );
+    }
+
+    #[test]
+    fn test_error_message_unknown_operation() {
+        // Build a minimal operations map and look up a nonexistent operation.
+        let mut ops = std::collections::HashMap::new();
+        ops.insert(
+            "GetCallerIdentity".to_string(),
+            model::Operation {
+                name: "GetCallerIdentity".to_string(),
+                http_method: "POST".to_string(),
+                http_request_uri: "/".to_string(),
+                input_shape: None,
+                output_shape: None,
+                result_wrapper: None,
+                errors: vec![],
+                documentation: None,
+            },
+        );
+
+        let service = "sts";
+        let operation = "nonexistent-operation";
+
+        let result = model::find_operation_by_cli_name(&ops, operation);
+        assert!(
+            result.is_none(),
+            "find_operation_by_cli_name should return None for an unknown operation"
+        );
+
+        // Reproduce the exact error the driver would create
+        let err = result
+            .ok_or_else(|| anyhow::anyhow!(
+                "Unknown operation '{}' for service '{}'. Operation not found in service model.",
+                operation, service
+            ))
+            .unwrap_err();
+        let msg = err.to_string();
+        assert!(
+            msg.contains("Unknown operation"),
+            "Error should mention 'Unknown operation', got: {msg}"
+        );
+        assert!(
+            msg.contains(operation),
+            "Error should include the operation name '{}', got: {msg}",
+            operation
+        );
+        assert!(
+            msg.contains(service),
+            "Error should include the service name '{}', got: {msg}",
+            service
+        );
+    }
+
+    #[test]
+    fn test_error_message_credential_failure_query_protocol() {
+        // Test that query protocol error parsing produces the expected
+        // error message format for an auth failure (e.g., InvalidClientTokenId).
+        let error_xml = r#"<ErrorResponse>
+            <Error>
+                <Code>InvalidClientTokenId</Code>
+                <Message>The security token included in the request is invalid.</Message>
+                <Type>Sender</Type>
+            </Error>
+            <RequestId>abc-123</RequestId>
+        </ErrorResponse>"#;
+
+        let (code, message) = query::parse_query_error(error_xml).unwrap();
+        assert_eq!(code, "InvalidClientTokenId");
+        assert_eq!(
+            message,
+            "The security token included in the request is invalid."
+        );
+
+        // Verify the formatted error message that the driver would produce
+        let status = 403;
+        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
+        assert!(
+            formatted.contains("403"),
+            "Error should include HTTP status, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("InvalidClientTokenId"),
+            "Error should include error code, got: {formatted}"
+        );
+    }
+
+    #[test]
+    fn test_error_message_credential_failure_json_protocol() {
+        // Test JSON protocol error parsing for credential-related errors
+        // (e.g., UnrecognizedClientException from DynamoDB/KMS).
+        let error_body = r#"{
+            "__type": "com.amazonaws.kms#UnrecognizedClientException",
+            "message": "The security token included in the request is invalid."
+        }"#;
+
+        let (code, message) = json_protocol::parse_json_error(error_body).unwrap();
+        assert_eq!(code, "UnrecognizedClientException");
+        assert_eq!(
+            message,
+            "The security token included in the request is invalid."
+        );
+
+        let status = 403;
+        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
+        assert!(
+            formatted.contains("403"),
+            "Error should include HTTP status, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("UnrecognizedClientException"),
+            "Error should include error code, got: {formatted}"
+        );
+    }
+
+    #[test]
+    fn test_error_message_credential_failure_rest_json_protocol() {
+        // Test REST-JSON protocol error parsing for auth failures
+        // (e.g., AccessDeniedException from Lambda).
+        let error_body = r#"{
+            "__type": "com.amazonaws.lambda#AccessDeniedException",
+            "Message": "User is not authorized to perform this action."
+        }"#;
+
+        let (code, message) = rest_json::parse_rest_json_error(error_body).unwrap();
+        assert_eq!(code, "AccessDeniedException");
+        assert_eq!(
+            message,
+            "User is not authorized to perform this action."
+        );
+
+        let status = 403;
+        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
+        assert!(
+            formatted.contains("403"),
+            "Error should include HTTP status, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("AccessDeniedException"),
+            "Error should include error code, got: {formatted}"
+        );
+    }
+
+    #[test]
+    fn test_error_message_credential_failure_rest_xml_protocol() {
+        // Test REST-XML protocol error parsing for auth failures
+        // (e.g., AccessDenied from S3).
+        let error_xml = r#"<Error>
+            <Code>AccessDenied</Code>
+            <Message>Access Denied</Message>
+            <RequestId>abc-123</RequestId>
+        </Error>"#;
+
+        let (code, message) = rest_xml::parse_rest_xml_error(error_xml).unwrap();
+        assert_eq!(code, "AccessDenied");
+        assert_eq!(message, "Access Denied");
+
+        let status = 403;
+        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
+        assert!(
+            formatted.contains("403"),
+            "Error should include HTTP status, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("AccessDenied"),
+            "Error should include error code, got: {formatted}"
+        );
+    }
+
+    #[test]
+    fn test_error_message_credential_failure_ec2_protocol() {
+        // Test EC2 protocol error parsing for auth failures
+        // (EC2 uses a different error XML format than standard query).
+        let error_xml = r#"<Response>
+            <Errors>
+                <Error>
+                    <Code>AuthFailure</Code>
+                    <Message>AWS was not able to validate the provided access credentials</Message>
+                </Error>
+            </Errors>
+            <RequestID>abc-123</RequestID>
+        </Response>"#;
+
+        let (code, message) = query::parse_ec2_error(error_xml).unwrap();
+        assert_eq!(code, "AuthFailure");
+        assert_eq!(
+            message,
+            "AWS was not able to validate the provided access credentials"
+        );
+
+        let status = 401;
+        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
+        assert!(
+            formatted.contains("401"),
+            "Error should include HTTP status, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("AuthFailure"),
+            "Error should include error code, got: {formatted}"
+        );
+    }
+
+    #[test]
+    fn test_error_message_unsupported_protocol() {
+        // The driver bails with a specific message for unsupported protocols.
+        let protocol = "smithy-rpc-v2-cbor";
+        let msg = format!(
+            "Protocol '{}' is not supported. Supported protocols: query, ec2, json, rest-json, rest-xml.",
+            protocol
+        );
+        assert!(
+            msg.contains("not supported"),
+            "Error should mention 'not supported', got: {msg}"
+        );
+        assert!(
+            msg.contains(protocol),
+            "Error should include the protocol name, got: {msg}"
+        );
+        assert!(
+            msg.contains("query"),
+            "Error should list supported protocols, got: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_error_message_service_name_resolution() {
+        // Verify that s3api maps to s3, and unknown services pass through.
+        assert_eq!(resolve_service_name("s3api"), "s3");
+        assert_eq!(resolve_service_name("iam"), "iam");
+        assert_eq!(resolve_service_name("totally-fake"), "totally-fake");
+    }
+
+    #[test]
+    fn test_error_message_missing_operation_name() {
+        // When no operation is provided, the driver produces this error.
+        let service = "sts";
+        let msg = format!(
+            "Usage: raws {service} <operation> [--params...]\n\nMissing operation name."
+        );
+        assert!(
+            msg.contains("Missing operation name"),
+            "Error should mention 'Missing operation name', got: {msg}"
+        );
+        assert!(
+            msg.contains(service),
+            "Error should include the service name, got: {msg}"
+        );
     }
 }

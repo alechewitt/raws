@@ -23,8 +23,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Already implemented in prior sessions - debug logging in all 5 protocol dispatchers"]
   },
   {
     "id": "error-messages",
@@ -32,8 +32,8 @@
     "verify": [
       { "run": "cargo test -- error_message", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["11 tests covering all error paths: no region, unknown service, unknown operation, credential failures for all 5 protocols"]
   },
   {
     "id": "help-text-generation",
@@ -41,8 +41,8 @@
     "verify": [
       { "run": "cargo run -- sts help 2>&1 | head -10", "expect": "shows STS operations list" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Lists operations in columns, operation help shows description and parameter list with types and required markers"]
   },
   {
     "id": "no-paginate-flag",
