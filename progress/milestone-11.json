@@ -32,8 +32,8 @@
     "verify": [
       { "run": "cargo test -- waiter", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["WaiterConfig/Acceptor/MatcherType/AcceptorState types, load_waiters(), evaluate_acceptors(), minimal JMESPath evaluator for waiters, 12 tests"]
   },
   {
     "id": "waiter-cli-dispatch",
@@ -41,8 +41,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["handle_wait_command() in driver.rs, intercepts 'wait' operation, loads waiters-2.json, polls with acceptor evaluation, supports all 5 matcher types"]
   },
   {
     "id": "connection-timeout",

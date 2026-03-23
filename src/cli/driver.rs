@@ -23,6 +23,7 @@ use crate::core::protocol::query;
 use crate::core::protocol::rest_json;
 use crate::core::protocol::rest_xml;
 use crate::core::retry;
+use crate::core::waiter;
 
 pub async fn run() -> Result<()> {
     let args = GlobalArgs::parse();
@@ -81,6 +82,11 @@ pub async fn run() -> Result<()> {
     if operation == "help" {
         print_operation_list(service, &service_model);
         return Ok(());
+    }
+
+    // Handle "raws <service> wait <waiter-name> [--params...]"
+    if operation == "wait" {
+        return handle_wait_command(service, &args, &model_path, &service_model).await;
     }
 
     // Find the operation (convert kebab-case CLI name to PascalCase)
@@ -300,6 +306,148 @@ pub async fn run() -> Result<()> {
     println!("{formatted}");
 
     Ok(())
+}
+
+/// Handle the `raws <service> wait <waiter-name> [--params...]` command.
+///
+/// Polls an API operation at fixed intervals until an acceptor condition is met.
+async fn handle_wait_command(
+    service: &str,
+    args: &GlobalArgs,
+    model_path: &Path,
+    service_model: &model::ServiceModel,
+) -> Result<()> {
+    // First arg is the waiter name, rest are operation params
+    let waiter_cli_name = args.args.first()
+        .ok_or_else(|| anyhow::anyhow!(
+            "Usage: raws {service} wait <waiter-name> [--params...]\n\nMissing waiter name."
+        ))?;
+    let remaining_args: Vec<String> = args.args[1..].to_vec();
+
+    // Load waiters
+    let service_version_dir = model_path.parent().unwrap_or_else(|| Path::new("."));
+    let waiters = waiter::load_waiters(service_version_dir)
+        .with_context(|| format!("Failed to load waiters for service '{service}'"))?;
+
+    if waiters.is_empty() {
+        bail!("Service '{service}' has no waiters defined.");
+    }
+
+    // Find the waiter by CLI name
+    let waiter_name = waiter::cli_to_waiter_name(waiter_cli_name, &waiters)
+        .ok_or_else(|| {
+            let available: Vec<String> = waiters.keys()
+                .map(|k| waiter::waiter_name_to_cli(k))
+                .collect();
+            anyhow::anyhow!(
+                "Unknown waiter '{}' for service '{}'. Available waiters: {}",
+                waiter_cli_name, service, available.join(", ")
+            )
+        })?;
+
+    let waiter_config = &waiters[&waiter_name];
+
+    // Find the operation that this waiter polls
+    let op = service_model.operations.get(&waiter_config.operation)
+        .ok_or_else(|| anyhow::anyhow!(
+            "Waiter '{}' references operation '{}' which is not found in the service model.",
+            waiter_name, waiter_config.operation
+        ))?;
+
+    // Load config (region, credentials)
+    let config = ConfigProvider::new(
+        args.region.as_deref(),
+        Some(args.output.as_str()),
+        args.profile.as_deref(),
+    )?;
+
+    let region = config.region.as_deref()
+        .ok_or_else(|| anyhow::anyhow!(
+            "No region specified. Use --region, AWS_REGION, or configure a default region."
+        ))?;
+
+    // Resolve credentials
+    let mut providers: Vec<Box<dyn CredentialProvider>> =
+        vec![Box::new(EnvCredentialProvider)];
+    providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
+    let chain = ChainCredentialProvider::new(providers);
+    let creds = chain.resolve().context("Failed to resolve AWS credentials")?;
+
+    // Resolve endpoint
+    let model_service = resolve_service_name(service);
+    let variant_tags = resolver::EndpointVariantTags {
+        use_dualstack: args.use_dualstack_endpoint,
+        use_fips: args.use_fips_endpoint,
+    };
+    let endpoint_url = match &args.endpoint_url {
+        Some(url) => url.clone(),
+        None => resolver::resolve_endpoint_with_variants(
+            &service_model.metadata.endpoint_prefix,
+            region,
+            service_model.metadata.global_endpoint.as_deref(),
+            &variant_tags,
+        )?,
+    };
+
+    let protocol = service_model.metadata.protocol.as_str();
+
+    // Parse operation-specific arguments
+    let input = parse_operation_args(&remaining_args)?;
+
+    if args.debug {
+        eprintln!("[debug] waiter: {} (operation={}, delay={}s, max_attempts={})",
+            waiter_name, waiter_config.operation, waiter_config.delay, waiter_config.max_attempts);
+    }
+
+    // Poll loop
+    for attempt in 1..=waiter_config.max_attempts {
+        if args.debug {
+            eprintln!("[debug] waiter: poll attempt {}/{}", attempt, waiter_config.max_attempts);
+        }
+
+        let outcome = dispatch_request(
+            protocol, &endpoint_url, service_model, op, &input, &creds, region, args.debug,
+        ).await;
+
+        // Evaluate acceptors
+        let response = match &outcome.result {
+            Ok(val) => val.clone(),
+            Err(_) => serde_json::json!({}),
+        };
+
+        let acceptor_state = waiter::evaluate_acceptors(
+            &waiter_config.acceptors,
+            &response,
+            outcome.status,
+            outcome.error_code.as_deref(),
+        );
+
+        match acceptor_state {
+            Some(waiter::AcceptorState::Success) => {
+                if args.debug {
+                    eprintln!("[debug] waiter: success on attempt {attempt}");
+                }
+                return Ok(());
+            }
+            Some(waiter::AcceptorState::Failure) => {
+                bail!(
+                    "Waiter {} failed: acceptor matched failure condition on attempt {}/{}",
+                    waiter_cli_name, attempt, waiter_config.max_attempts
+                );
+            }
+            Some(waiter::AcceptorState::Retry) | None => {
+                // Continue polling
+                if attempt < waiter_config.max_attempts {
+                    tokio::time::sleep(std::time::Duration::from_secs(waiter_config.delay)).await;
+                }
+            }
+        }
+    }
+
+    bail!(
+        "Waiter {} exceeded max attempts ({})",
+        waiter_cli_name, waiter_config.max_attempts
+    );
 }
 
 /// Result from a protocol dispatch including retry-relevant metadata.
