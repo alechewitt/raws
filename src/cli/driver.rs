@@ -14,6 +14,7 @@ use crate::core::endpoint::resolver;
 use crate::core::http::client::HttpClient;
 use crate::core::http::request::HttpRequest;
 use crate::core::model::{self, loader};
+use crate::core::paginate;
 use crate::core::protocol::json as json_protocol;
 use crate::core::protocol::query;
 use crate::core::protocol::rest_json;
@@ -142,68 +143,126 @@ pub async fn run() -> Result<()> {
         eprintln!("[debug] endpoint: {endpoint_url}");
     }
 
-    // 7. Build and send the request based on protocol
+    // 7. Load paginator config for possible auto-pagination
+    let paginator_config = if !args.no_paginate {
+        // model_path points to service-2.json; paginators-1.json is in the same directory
+        let service_version_dir = model_path.parent().unwrap_or_else(|| Path::new("."));
+        let paginators = paginate::load_paginators(service_version_dir)
+            .unwrap_or_default();
+        paginators.get(&operation_name).cloned()
+    } else {
+        None
+    };
+
+    if args.debug {
+        if let Some(ref pc) = paginator_config {
+            eprintln!(
+                "[debug] paginator: input_token={:?} output_token={:?} result_key={:?}",
+                pc.input_token, pc.output_token, pc.result_key
+            );
+        } else {
+            eprintln!("[debug] no paginator for this operation (or --no-paginate set)");
+        }
+    }
+
+    // 8. Build and send the request based on protocol, with auto-pagination
     let protocol = service_model.metadata.protocol.as_str();
-    let response_value = match protocol {
-        "query" => {
-            dispatch_query_protocol(
+    let response_value = if let Some(ref pc) = paginator_config {
+        // Auto-pagination: collect all pages
+        let mut pages = Vec::new();
+        let mut current_input = input.clone();
+
+        loop {
+            let page = dispatch_request(
+                protocol,
                 &endpoint_url,
                 &service_model,
                 op,
-                &input,
+                &current_input,
                 &creds,
                 region,
                 args.debug,
             )
-            .await?
+            .await?;
+
+            let next_tokens = paginate::extract_next_tokens(&page, pc);
+            pages.push(page);
+
+            match next_tokens {
+                Some(tokens) => {
+                    // Set the input tokens for the next request
+                    if let Some(obj) = current_input.as_object_mut() {
+                        for (key, value) in &tokens {
+                            obj.insert(key.clone(), serde_json::Value::String(value.clone()));
+                        }
+                    }
+                    if args.debug {
+                        eprintln!("[debug] paginating: fetching next page (page {})", pages.len() + 1);
+                    }
+                }
+                None => {
+                    // No more pages
+                    break;
+                }
+            }
+        }
+
+        if args.debug {
+            eprintln!("[debug] pagination complete: {} page(s)", pages.len());
+        }
+
+        paginate::merge_pages(&pages, pc)
+    } else {
+        // No pagination: single request
+        dispatch_request(
+            protocol,
+            &endpoint_url,
+            &service_model,
+            op,
+            &input,
+            &creds,
+            region,
+            args.debug,
+        )
+        .await?
+    };
+
+    // 9. Format and print output
+    let formatted = formatter::format_output(&response_value, output_format)?;
+    println!("{formatted}");
+
+    Ok(())
+}
+
+/// Dispatch a request using the appropriate protocol.
+///
+/// This is a thin wrapper that selects the correct protocol dispatcher.
+#[allow(clippy::too_many_arguments)]
+async fn dispatch_request(
+    protocol: &str,
+    endpoint_url: &str,
+    model: &model::ServiceModel,
+    op: &model::Operation,
+    input: &serde_json::Value,
+    creds: &crate::core::credentials::Credentials,
+    region: &str,
+    debug: bool,
+) -> Result<serde_json::Value> {
+    match protocol {
+        "query" => {
+            dispatch_query_protocol(endpoint_url, model, op, input, creds, region, debug).await
         }
         "ec2" => {
-            dispatch_ec2_protocol(
-                &endpoint_url,
-                &service_model,
-                op,
-                &input,
-                &creds,
-                region,
-                args.debug,
-            )
-            .await?
+            dispatch_ec2_protocol(endpoint_url, model, op, input, creds, region, debug).await
         }
         "json" => {
-            dispatch_json_protocol(
-                &endpoint_url,
-                &service_model,
-                op,
-                &input,
-                &creds,
-                region,
-                args.debug,
-            )
-            .await?
+            dispatch_json_protocol(endpoint_url, model, op, input, creds, region, debug).await
         }
         "rest-json" => {
-            dispatch_rest_json_protocol(
-                &endpoint_url,
-                &service_model,
-                op,
-                &input,
-                &creds,
-                region,
-                args.debug,
-            )
-            .await?
+            dispatch_rest_json_protocol(endpoint_url, model, op, input, creds, region, debug).await
         }
         "rest-xml" => {
-            dispatch_rest_xml_protocol(
-                &endpoint_url,
-                &service_model,
-                op,
-                &input,
-                &creds,
-                region,
-                args.debug,
-            )
-            .await?
+            dispatch_rest_xml_protocol(endpoint_url, model, op, input, creds, region, debug).await
         }
         _ => {
             bail!(
@@ -211,13 +270,7 @@ pub async fn run() -> Result<()> {
                 protocol
             );
         }
-    };
-
-    // 8. Format and print output
-    let formatted = formatter::format_output(&response_value, output_format)?;
-    println!("{formatted}");
-
-    Ok(())
+    }
 }
 
 /// Dispatch a request using the AWS Query protocol.
@@ -913,6 +966,7 @@ fn print_service_help() {
     println!("  --output <FORMAT>       Output format: json, table, text");
     println!("  --endpoint-url <URL>    Override endpoint URL");
     println!("  --debug                 Enable debug output");
+    println!("  --no-paginate           Disable automatic pagination");
 }
 
 /// Print a list of all available operations for a service.

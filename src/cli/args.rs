@@ -19,6 +19,10 @@ pub struct GlobalArgs {
     #[arg(long, global = true)]
     pub debug: bool,
 
+    /// Disable automatic pagination
+    #[arg(long, global = true)]
+    pub no_paginate: bool,
+
     /// Override endpoint URL
     #[arg(long, global = true)]
     pub endpoint_url: Option<String>,

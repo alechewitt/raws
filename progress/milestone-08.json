@@ -50,8 +50,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["Added --no-paginate flag to GlobalArgs, integrated with pagination loop"]
   },
   {
     "id": "auto-pagination",
@@ -59,8 +59,8 @@
     "verify": [
       { "run": "cargo test -- auto_paginate", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["26 tests, loads paginators-1.json, merges pages, handles multi-token and IsTruncated"]
   },
   {
     "id": "cli-input-json",
