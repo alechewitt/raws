@@ -5,8 +5,8 @@
     "verify": [
       { "run": "cargo test -- retry", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["RetryConfig, RetryClassification, RetryDecision types, classify_error(), should_retry(), calculate_backoff() with splitmix jitter, 13 tests"]
   },
   {
     "id": "retry-integration",
@@ -14,8 +14,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["dispatch_with_retry() wraps all 5 protocol dispatchers, DispatchOutcome carries status/error_code/is_network_error for classification, re-signs each retry"]
   },
   {
     "id": "adaptive-retry-mode",
@@ -23,8 +23,8 @@
     "verify": [
       { "run": "cargo test -- retry", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["RetryMode::Legacy (5 attempts), Standard (3, default), Adaptive (3 + token bucket). TokenBucket: 500 tokens, 5 cost, 1 refill"]
   },
   {
     "id": "waiter-support",

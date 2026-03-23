@@ -22,6 +22,7 @@ use crate::core::protocol::json as json_protocol;
 use crate::core::protocol::query;
 use crate::core::protocol::rest_json;
 use crate::core::protocol::rest_xml;
+use crate::core::retry;
 
 pub async fn run() -> Result<()> {
     let args = GlobalArgs::parse();
@@ -215,7 +216,14 @@ pub async fn run() -> Result<()> {
         }
     }
 
-    // 8. Build and send the request based on protocol, with auto-pagination
+    // 8. Build retry config
+    let retry_config = retry::RetryConfig::default();
+
+    if args.debug {
+        eprintln!("[debug] retry: mode={:?}, max_attempts={}", retry_config.mode, retry_config.max_attempts);
+    }
+
+    // 9. Build and send the request based on protocol, with auto-pagination and retry
     let protocol = service_model.metadata.protocol.as_str();
     let response_value = if let Some(ref pc) = paginator_config {
         // Auto-pagination: collect all pages
@@ -223,7 +231,7 @@ pub async fn run() -> Result<()> {
         let mut current_input = input.clone();
 
         loop {
-            let page = dispatch_request(
+            let page = dispatch_with_retry(
                 protocol,
                 &endpoint_url,
                 &service_model,
@@ -232,6 +240,7 @@ pub async fn run() -> Result<()> {
                 &creds,
                 region,
                 args.debug,
+                &retry_config,
             )
             .await?;
 
@@ -263,8 +272,8 @@ pub async fn run() -> Result<()> {
 
         paginate::merge_pages(&pages, pc)
     } else {
-        // No pagination: single request
-        dispatch_request(
+        // No pagination: single request with retry
+        dispatch_with_retry(
             protocol,
             &endpoint_url,
             &service_model,
@@ -273,6 +282,7 @@ pub async fn run() -> Result<()> {
             &creds,
             region,
             args.debug,
+            &retry_config,
         )
         .await?
     };
@@ -292,9 +302,85 @@ pub async fn run() -> Result<()> {
     Ok(())
 }
 
+/// Result from a protocol dispatch including retry-relevant metadata.
+struct DispatchOutcome {
+    result: Result<serde_json::Value>,
+    /// HTTP status code of the response (0 if network error).
+    status: u16,
+    /// AWS error code extracted from the response body, if any.
+    error_code: Option<String>,
+    /// Whether this was a network-level error (no response received).
+    is_network_error: bool,
+}
+
+/// Dispatch a request with retry logic.
+///
+/// Wraps `dispatch_request` in a retry loop using the configured retry policy.
+#[allow(clippy::too_many_arguments)]
+async fn dispatch_with_retry(
+    protocol: &str,
+    endpoint_url: &str,
+    model: &model::ServiceModel,
+    op: &model::Operation,
+    input: &serde_json::Value,
+    creds: &crate::core::credentials::Credentials,
+    region: &str,
+    debug: bool,
+    retry_config: &retry::RetryConfig,
+) -> Result<serde_json::Value> {
+    let mut attempt = 0u32;
+
+    loop {
+        attempt += 1;
+
+        let outcome = dispatch_request(
+            protocol, endpoint_url, model, op, input, creds, region, debug,
+        )
+        .await;
+
+        // If successful, return immediately.
+        if outcome.result.is_ok() {
+            return outcome.result;
+        }
+
+        // Classify the error for retry purposes.
+        let classification = retry::classify_error(
+            outcome.status,
+            outcome.error_code.as_deref(),
+            outcome.is_network_error,
+        );
+
+        let decision = retry::should_retry(retry_config, attempt, &classification);
+
+        match decision {
+            retry::RetryDecision::RetryAfter(delay) => {
+                if debug {
+                    eprintln!(
+                        "[debug] retry: attempt {attempt}/{} failed (status={}, code={:?}, class={:?}), retrying after {:?}",
+                        retry_config.max_attempts,
+                        outcome.status,
+                        outcome.error_code,
+                        classification,
+                        delay
+                    );
+                }
+                tokio::time::sleep(delay).await;
+            }
+            retry::RetryDecision::DontRetry => {
+                if debug && attempt > 1 {
+                    eprintln!(
+                        "[debug] retry: giving up after {attempt} attempts"
+                    );
+                }
+                return outcome.result;
+            }
+        }
+    }
+}
+
 /// Dispatch a request using the appropriate protocol.
 ///
-/// This is a thin wrapper that selects the correct protocol dispatcher.
+/// Returns a `DispatchOutcome` with the result and retry-relevant metadata.
 #[allow(clippy::too_many_arguments)]
 async fn dispatch_request(
     protocol: &str,
@@ -305,7 +391,7 @@ async fn dispatch_request(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
-) -> Result<serde_json::Value> {
+) -> DispatchOutcome {
     match protocol {
         "query" => {
             dispatch_query_protocol(endpoint_url, model, op, input, creds, region, debug).await
@@ -322,12 +408,15 @@ async fn dispatch_request(
         "rest-xml" => {
             dispatch_rest_xml_protocol(endpoint_url, model, op, input, creds, region, debug).await
         }
-        _ => {
-            bail!(
+        _ => DispatchOutcome {
+            result: Err(anyhow::anyhow!(
                 "Protocol '{}' is not supported. Supported protocols: query, ec2, json, rest-json, rest-xml.",
                 protocol
-            );
-        }
+            )),
+            status: 0,
+            error_code: None,
+            is_network_error: false,
+        },
     }
 }
 
@@ -340,31 +429,37 @@ async fn dispatch_query_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
-) -> Result<serde_json::Value> {
+) -> DispatchOutcome {
     // Serialize the query request body
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
-    let body_str = query::serialize_query_request(
+    let body_str = match query::serialize_query_request(
         &op.name,
         &model.metadata.api_version,
         input,
         &model.shapes,
         input_shape_name,
-    )?;
+    ) {
+        Ok(b) => b,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
 
     if debug {
         eprintln!("[debug] request body: {body_str}");
     }
 
     // Build HTTP request
-    let parsed_url = url::Url::parse(endpoint_url)
-        .with_context(|| format!("Invalid endpoint URL: {endpoint_url}"))?;
-    let host = parsed_url
-        .host_str()
-        .ok_or_else(|| anyhow::anyhow!("No host in endpoint URL: {endpoint_url}"))?;
+    let parsed_url = match url::Url::parse(endpoint_url) {
+        Ok(u) => u,
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+    };
+    let host = match parsed_url.host_str() {
+        Some(h) => h.to_string(),
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+    };
 
     let mut request = HttpRequest::new(&op.http_method, endpoint_url);
     request.body = body_str.as_bytes().to_vec();
-    request.add_header("host", host);
+    request.add_header("host", &host);
     request.add_header(
         "content-type",
         "application/x-www-form-urlencoded; charset=utf-8",
@@ -376,27 +471,38 @@ async fn dispatch_query_protocol(
 
     let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
 
-    // Extract URI path and query from the URL
     let uri_path = parsed_url.path();
     let query_string = parsed_url.query().unwrap_or("");
 
-    sigv4::sign_request(
+    if let Err(e) = sigv4::sign_request(
         &request.method,
         uri_path,
         query_string,
         &mut request.headers,
         &request.body,
         &signing_params,
-    )?;
+    ) {
+        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    }
 
     if debug {
         eprintln!("[debug] signed request, sending to {endpoint_url}");
     }
 
     // Send HTTP request
-    let http_client = HttpClient::new()?;
-    let response = http_client.send(&request).await
-        .context("HTTP request failed")?;
+    let http_client = match HttpClient::new() {
+        Ok(c) => c,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
+    let response = match http_client.send(&request).await {
+        Ok(r) => r,
+        Err(e) => return DispatchOutcome {
+            result: Err(e.context("HTTP request failed")),
+            status: 0,
+            error_code: None,
+            is_network_error: true,
+        },
+    };
 
     let response_body = response.body_string();
 
@@ -407,11 +513,9 @@ async fn dispatch_query_protocol(
 
     // Parse response
     if response.status >= 200 && response.status < 300 {
-        // Success: parse the XML response
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            // No output shape: return empty object
-            return Ok(serde_json::json!({}));
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
         }
 
         let parsed = query::parse_query_response(
@@ -420,28 +524,20 @@ async fn dispatch_query_protocol(
             output_shape_name,
             &model.shapes,
         )
-        .with_context(|| format!("Failed to parse response XML for {}", op.name))?;
+        .with_context(|| format!("Failed to parse response XML for {}", op.name));
 
-        Ok(parsed)
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
     } else {
-        // Error response: parse error XML
-        match query::parse_query_error(&response_body) {
+        let (error_code, result) = match query::parse_query_error(&response_body) {
             Ok((code, message)) => {
-                bail!(
-                    "AWS Error (HTTP {}): {} - {}",
-                    response.status,
-                    code,
-                    message
-                );
+                let ec = code.clone();
+                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
             }
             Err(_) => {
-                bail!(
-                    "AWS Error (HTTP {}): {}",
-                    response.status,
-                    response_body
-                );
+                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
             }
-        }
+        };
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
     }
 }
 
@@ -457,37 +553,40 @@ async fn dispatch_ec2_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
-) -> Result<serde_json::Value> {
-    // EC2 uses the same query serializer
+) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
-    let body_str = query::serialize_query_request(
+    let body_str = match query::serialize_query_request(
         &op.name,
         &model.metadata.api_version,
         input,
         &model.shapes,
         input_shape_name,
-    )?;
+    ) {
+        Ok(b) => b,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
 
     if debug {
         eprintln!("[debug] request body: {body_str}");
     }
 
-    // Build HTTP request
-    let parsed_url = url::Url::parse(endpoint_url)
-        .with_context(|| format!("Invalid endpoint URL: {endpoint_url}"))?;
-    let host = parsed_url
-        .host_str()
-        .ok_or_else(|| anyhow::anyhow!("No host in endpoint URL: {endpoint_url}"))?;
+    let parsed_url = match url::Url::parse(endpoint_url) {
+        Ok(u) => u,
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+    };
+    let host = match parsed_url.host_str() {
+        Some(h) => h.to_string(),
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+    };
 
     let mut request = HttpRequest::new(&op.http_method, endpoint_url);
     request.body = body_str.as_bytes().to_vec();
-    request.add_header("host", host);
+    request.add_header("host", &host);
     request.add_header(
         "content-type",
         "application/x-www-form-urlencoded; charset=utf-8",
     );
 
-    // Sign the request with SigV4
     let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
     let signing_service = &model.metadata.endpoint_prefix;
     let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
@@ -495,23 +594,28 @@ async fn dispatch_ec2_protocol(
     let uri_path = parsed_url.path();
     let query_string = parsed_url.query().unwrap_or("");
 
-    sigv4::sign_request(
-        &request.method,
-        uri_path,
-        query_string,
-        &mut request.headers,
-        &request.body,
-        &signing_params,
-    )?;
+    if let Err(e) = sigv4::sign_request(
+        &request.method, uri_path, query_string,
+        &mut request.headers, &request.body, &signing_params,
+    ) {
+        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    }
 
     if debug {
         eprintln!("[debug] signed request, sending to {endpoint_url}");
     }
 
-    // Send HTTP request
-    let http_client = HttpClient::new()?;
-    let response = http_client.send(&request).await
-        .context("HTTP request failed")?;
+    let http_client = match HttpClient::new() {
+        Ok(c) => c,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
+    let response = match http_client.send(&request).await {
+        Ok(r) => r,
+        Err(e) => return DispatchOutcome {
+            result: Err(e.context("HTTP request failed")),
+            status: 0, error_code: None, is_network_error: true,
+        },
+    };
 
     let response_body = response.body_string();
 
@@ -520,41 +624,28 @@ async fn dispatch_ec2_protocol(
         eprintln!("[debug] response body: {response_body}");
     }
 
-    // Parse response
     if response.status >= 200 && response.status < 300 {
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            return Ok(serde_json::json!({}));
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
         }
 
         let parsed = query::parse_query_response(
-            &response_body,
-            op.result_wrapper.as_deref(),
-            output_shape_name,
-            &model.shapes,
-        )
-        .with_context(|| format!("Failed to parse response XML for {}", op.name))?;
+            &response_body, op.result_wrapper.as_deref(), output_shape_name, &model.shapes,
+        ).with_context(|| format!("Failed to parse response XML for {}", op.name));
 
-        Ok(parsed)
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
     } else {
-        // EC2 uses a different error format
-        match query::parse_ec2_error(&response_body) {
+        let (error_code, result) = match query::parse_ec2_error(&response_body) {
             Ok((code, message)) => {
-                bail!(
-                    "AWS Error (HTTP {}): {} - {}",
-                    response.status,
-                    code,
-                    message
-                );
+                let ec = code.clone();
+                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
             }
             Err(_) => {
-                bail!(
-                    "AWS Error (HTTP {}): {}",
-                    response.status,
-                    response_body
-                );
+                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
             }
-        }
+        };
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
     }
 }
 
@@ -569,17 +660,16 @@ async fn dispatch_json_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
-) -> Result<serde_json::Value> {
-    // Build X-Amz-Target header
+) -> DispatchOutcome {
     let target_prefix = model.metadata.target_prefix.as_deref().unwrap_or("");
     let target_header = json_protocol::build_target_header(target_prefix, &op.name);
-
-    // Build Content-Type header
     let json_version = model.metadata.json_version.as_deref().unwrap_or("1.0");
     let content_type = json_protocol::build_content_type(json_version);
 
-    // Serialize the request body as JSON
-    let body_str = json_protocol::serialize_json_request(input)?;
+    let body_str = match json_protocol::serialize_json_request(input) {
+        Ok(b) => b,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
 
     if debug {
         eprintln!("[debug] X-Amz-Target: {target_header}");
@@ -587,20 +677,21 @@ async fn dispatch_json_protocol(
         eprintln!("[debug] request body: {body_str}");
     }
 
-    // Build HTTP request
-    let parsed_url = url::Url::parse(endpoint_url)
-        .with_context(|| format!("Invalid endpoint URL: {endpoint_url}"))?;
-    let host = parsed_url
-        .host_str()
-        .ok_or_else(|| anyhow::anyhow!("No host in endpoint URL: {endpoint_url}"))?;
+    let parsed_url = match url::Url::parse(endpoint_url) {
+        Ok(u) => u,
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+    };
+    let host = match parsed_url.host_str() {
+        Some(h) => h.to_string(),
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+    };
 
     let mut request = HttpRequest::new("POST", endpoint_url);
     request.body = body_str.as_bytes().to_vec();
-    request.add_header("host", host);
+    request.add_header("host", &host);
     request.add_header("content-type", &content_type);
     request.add_header("x-amz-target", &target_header);
 
-    // Sign the request with SigV4
     let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
     let signing_service = &model.metadata.endpoint_prefix;
     let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
@@ -608,23 +699,28 @@ async fn dispatch_json_protocol(
     let uri_path = parsed_url.path();
     let query_string = parsed_url.query().unwrap_or("");
 
-    sigv4::sign_request(
-        "POST",
-        uri_path,
-        query_string,
-        &mut request.headers,
-        &request.body,
-        &signing_params,
-    )?;
+    if let Err(e) = sigv4::sign_request(
+        "POST", uri_path, query_string,
+        &mut request.headers, &request.body, &signing_params,
+    ) {
+        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    }
 
     if debug {
         eprintln!("[debug] signed request, sending to {endpoint_url}");
     }
 
-    // Send HTTP request
-    let http_client = HttpClient::new()?;
-    let response = http_client.send(&request).await
-        .context("HTTP request failed")?;
+    let http_client = match HttpClient::new() {
+        Ok(c) => c,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
+    let response = match http_client.send(&request).await {
+        Ok(r) => r,
+        Err(e) => return DispatchOutcome {
+            result: Err(e.context("HTTP request failed")),
+            status: 0, error_code: None, is_network_error: true,
+        },
+    };
 
     let response_body = response.body_string();
 
@@ -633,28 +729,21 @@ async fn dispatch_json_protocol(
         eprintln!("[debug] response body: {response_body}");
     }
 
-    // Parse response
     if response.status >= 200 && response.status < 300 {
-        json_protocol::parse_json_response(&response_body)
-            .with_context(|| format!("Failed to parse JSON response for {}", op.name))
+        let parsed = json_protocol::parse_json_response(&response_body)
+            .with_context(|| format!("Failed to parse JSON response for {}", op.name));
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
     } else {
-        match json_protocol::parse_json_error(&response_body) {
+        let (error_code, result) = match json_protocol::parse_json_error(&response_body) {
             Ok((code, message)) => {
-                bail!(
-                    "AWS Error (HTTP {}): {} - {}",
-                    response.status,
-                    code,
-                    message
-                );
+                let ec = code.clone();
+                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
             }
             Err(_) => {
-                bail!(
-                    "AWS Error (HTTP {}): {}",
-                    response.status,
-                    response_body
-                );
+                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
             }
-        }
+        };
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
     }
 }
 
@@ -669,29 +758,29 @@ async fn dispatch_rest_json_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
-) -> Result<serde_json::Value> {
+) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
 
-    // Serialize the REST request: resolve URI, extract headers/query/body
     let (resolved_uri, extra_headers, query_params, body_json) = if input_shape_name.is_empty() {
         (op.http_request_uri.clone(), vec![], vec![], None)
     } else {
-        rest_json::serialize_rest_json_request(
-            &op.http_request_uri,
-            input,
-            input_shape_name,
-            &model.shapes,
-        )?
+        match rest_json::serialize_rest_json_request(
+            &op.http_request_uri, input, input_shape_name, &model.shapes,
+        ) {
+            Ok(r) => r,
+            Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        }
     };
 
-    // Build the full URL: base endpoint + resolved URI + query params
-    let parsed_base = url::Url::parse(endpoint_url)
-        .with_context(|| format!("Invalid endpoint URL: {endpoint_url}"))?;
-    let host = parsed_base
-        .host_str()
-        .ok_or_else(|| anyhow::anyhow!("No host in endpoint URL: {endpoint_url}"))?;
+    let parsed_base = match url::Url::parse(endpoint_url) {
+        Ok(u) => u,
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+    };
+    let host = match parsed_base.host_str() {
+        Some(h) => h.to_string(),
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+    };
 
-    // Build full URL with resolved URI path and query parameters
     let mut full_url = format!(
         "{}://{}{}",
         parsed_base.scheme(),
@@ -699,17 +788,10 @@ async fn dispatch_rest_json_protocol(
         resolved_uri
     );
 
-    // Append query parameters
     if !query_params.is_empty() {
         let qs: Vec<String> = query_params
             .iter()
-            .map(|(k, v)| {
-                format!(
-                    "{}={}",
-                    percent_encode_query_param(k),
-                    percent_encode_query_param(v)
-                )
-            })
+            .map(|(k, v)| format!("{}={}", percent_encode_query_param(k), percent_encode_query_param(v)))
             .collect();
         let separator = if full_url.contains('?') { "&" } else { "?" };
         full_url = format!("{}{}{}", full_url, separator, qs.join("&"));
@@ -723,55 +805,56 @@ async fn dispatch_rest_json_protocol(
         }
     }
 
-    // Build HTTP request
     let mut request = HttpRequest::new(&op.http_method, &full_url);
-    request.add_header("host", host);
+    request.add_header("host", &host);
 
-    // Add Content-Type for requests that have a body
     if body_json.is_some() {
         let json_version = model.metadata.json_version.as_deref().unwrap_or("1.0");
         let content_type = json_protocol::build_content_type(json_version);
         request.add_header("content-type", &content_type);
     }
 
-    // Add extra headers from serialization (e.g., X-Amz-Invocation-Type)
     for (k, v) in &extra_headers {
         request.add_header(k, v);
     }
 
-    // Set request body
     if let Some(ref body) = body_json {
         request.body = body.as_bytes().to_vec();
     }
 
-    // Sign the request with SigV4
     let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
     let signing_service = &model.metadata.endpoint_prefix;
     let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
 
-    // For signing, we use the resolved URI path (not the template)
-    let signing_url = url::Url::parse(&full_url)
-        .with_context(|| format!("Invalid full URL: {full_url}"))?;
+    let signing_url = match url::Url::parse(&full_url) {
+        Ok(u) => u,
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+    };
     let signing_uri_path = signing_url.path();
     let signing_query_string = signing_url.query().unwrap_or("");
 
-    sigv4::sign_request(
-        &request.method,
-        signing_uri_path,
-        signing_query_string,
-        &mut request.headers,
-        &request.body,
-        &signing_params,
-    )?;
+    if let Err(e) = sigv4::sign_request(
+        &request.method, signing_uri_path, signing_query_string,
+        &mut request.headers, &request.body, &signing_params,
+    ) {
+        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    }
 
     if debug {
         eprintln!("[debug] signed request, sending to {full_url}");
     }
 
-    // Send HTTP request
-    let http_client = HttpClient::new()?;
-    let response = http_client.send(&request).await
-        .context("HTTP request failed")?;
+    let http_client = match HttpClient::new() {
+        Ok(c) => c,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
+    let response = match http_client.send(&request).await {
+        Ok(r) => r,
+        Err(e) => return DispatchOutcome {
+            result: Err(e.context("HTTP request failed")),
+            status: 0, error_code: None, is_network_error: true,
+        },
+    };
 
     let response_body = response.body_string();
 
@@ -780,39 +863,28 @@ async fn dispatch_rest_json_protocol(
         eprintln!("[debug] response body: {response_body}");
     }
 
-    // Parse response
     if response.status >= 200 && response.status < 300 {
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            return Ok(serde_json::json!({}));
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
         }
 
-        rest_json::parse_rest_json_response(
-            &response_body,
-            response.status,
-            &response.headers,
-            output_shape_name,
-            &model.shapes,
-        )
-        .with_context(|| format!("Failed to parse REST-JSON response for {}", op.name))
+        let parsed = rest_json::parse_rest_json_response(
+            &response_body, response.status, &response.headers, output_shape_name, &model.shapes,
+        ).with_context(|| format!("Failed to parse REST-JSON response for {}", op.name));
+
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
     } else {
-        match rest_json::parse_rest_json_error(&response_body) {
+        let (error_code, result) = match rest_json::parse_rest_json_error(&response_body) {
             Ok((code, message)) => {
-                bail!(
-                    "AWS Error (HTTP {}): {} - {}",
-                    response.status,
-                    code,
-                    message
-                );
+                let ec = code.clone();
+                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
             }
             Err(_) => {
-                bail!(
-                    "AWS Error (HTTP {}): {}",
-                    response.status,
-                    response_body
-                );
+                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
             }
-        }
+        };
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
     }
 }
 
@@ -827,32 +899,31 @@ async fn dispatch_rest_xml_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
-) -> Result<serde_json::Value> {
+) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
 
-    // Serialize the REST request: resolve URI, extract headers/query/body
     let (resolved_uri, extra_headers, query_params, body_xml) = if input_shape_name.is_empty() {
         (op.http_request_uri.clone(), vec![], vec![], None)
     } else {
-        rest_xml::serialize_rest_xml_request(
-            &op.http_request_uri,
-            input,
-            input_shape_name,
-            &model.shapes,
-        )?
+        match rest_xml::serialize_rest_xml_request(
+            &op.http_request_uri, input, input_shape_name, &model.shapes,
+        ) {
+            Ok(r) => r,
+            Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        }
     };
 
-    // Build the full URL: base endpoint + resolved URI + query params
-    let parsed_base = url::Url::parse(endpoint_url)
-        .with_context(|| format!("Invalid endpoint URL: {endpoint_url}"))?;
-    let host = parsed_base
-        .host_str()
-        .ok_or_else(|| anyhow::anyhow!("No host in endpoint URL: {endpoint_url}"))?;
+    let parsed_base = match url::Url::parse(endpoint_url) {
+        Ok(u) => u,
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+    };
+    let host = match parsed_base.host_str() {
+        Some(h) => h.to_string(),
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+    };
 
-    // For S3 virtual-hosted style: if the bucket is in the hostname, strip the
-    // leading /{bucket} from the resolved URI since the bucket is no longer in the path.
     let effective_uri = if model.metadata.endpoint_prefix == "s3" {
-        strip_s3_bucket_prefix_if_virtual_hosted(host, &resolved_uri, input)
+        strip_s3_bucket_prefix_if_virtual_hosted(&host, &resolved_uri, input)
     } else {
         resolved_uri.clone()
     };
@@ -864,17 +935,10 @@ async fn dispatch_rest_xml_protocol(
         effective_uri
     );
 
-    // Append query parameters
     if !query_params.is_empty() {
         let qs: Vec<String> = query_params
             .iter()
-            .map(|(k, v)| {
-                format!(
-                    "{}={}",
-                    percent_encode_query_param(k),
-                    percent_encode_query_param(v)
-                )
-            })
+            .map(|(k, v)| format!("{}={}", percent_encode_query_param(k), percent_encode_query_param(v)))
             .collect();
         let separator = if full_url.contains('?') { "&" } else { "?" };
         full_url = format!("{}{}{}", full_url, separator, qs.join("&"));
@@ -889,50 +953,51 @@ async fn dispatch_rest_xml_protocol(
         }
     }
 
-    // Build HTTP request
     let mut request = HttpRequest::new(&op.http_method, &full_url);
-    request.add_header("host", host);
+    request.add_header("host", &host);
 
-    // Add extra headers from serialization
     for (k, v) in &extra_headers {
         request.add_header(k, v);
     }
 
-    // Set request body
     if let Some(ref body) = body_xml {
         request.body = body.as_bytes().to_vec();
-        // Set Content-Type for XML body
         request.add_header("content-type", "application/xml");
     }
 
-    // Sign the request with SigV4
     let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
     let signing_service = &model.metadata.endpoint_prefix;
     let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
 
-    // For signing, use the resolved URI path
-    let signing_url = url::Url::parse(&full_url)
-        .with_context(|| format!("Invalid full URL: {full_url}"))?;
+    let signing_url = match url::Url::parse(&full_url) {
+        Ok(u) => u,
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+    };
     let signing_uri_path = signing_url.path();
     let signing_query_string = signing_url.query().unwrap_or("");
 
-    sigv4::sign_request(
-        &request.method,
-        signing_uri_path,
-        signing_query_string,
-        &mut request.headers,
-        &request.body,
-        &signing_params,
-    )?;
+    if let Err(e) = sigv4::sign_request(
+        &request.method, signing_uri_path, signing_query_string,
+        &mut request.headers, &request.body, &signing_params,
+    ) {
+        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    }
 
     if debug {
         eprintln!("[debug] signed request, sending to {full_url}");
     }
 
-    // Send HTTP request
-    let http_client = HttpClient::new()?;
-    let response = http_client.send(&request).await
-        .context("HTTP request failed")?;
+    let http_client = match HttpClient::new() {
+        Ok(c) => c,
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+    };
+    let response = match http_client.send(&request).await {
+        Ok(r) => r,
+        Err(e) => return DispatchOutcome {
+            result: Err(e.context("HTTP request failed")),
+            status: 0, error_code: None, is_network_error: true,
+        },
+    };
 
     let response_body = response.body_string();
 
@@ -941,39 +1006,28 @@ async fn dispatch_rest_xml_protocol(
         eprintln!("[debug] response body: {response_body}");
     }
 
-    // Parse response
     if response.status >= 200 && response.status < 300 {
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            return Ok(serde_json::json!({}));
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
         }
 
-        rest_xml::parse_rest_xml_response(
-            &response_body,
-            response.status,
-            &response.headers,
-            output_shape_name,
-            &model.shapes,
-        )
-        .with_context(|| format!("Failed to parse REST-XML response for {}", op.name))
+        let parsed = rest_xml::parse_rest_xml_response(
+            &response_body, response.status, &response.headers, output_shape_name, &model.shapes,
+        ).with_context(|| format!("Failed to parse REST-XML response for {}", op.name));
+
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
     } else {
-        match rest_xml::parse_rest_xml_error(&response_body) {
+        let (error_code, result) = match rest_xml::parse_rest_xml_error(&response_body) {
             Ok((code, message)) => {
-                bail!(
-                    "AWS Error (HTTP {}): {} - {}",
-                    response.status,
-                    code,
-                    message
-                );
+                let ec = code.clone();
+                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
             }
             Err(_) => {
-                bail!(
-                    "AWS Error (HTTP {}): {}",
-                    response.status,
-                    response_body
-                );
+                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
             }
-        }
+        };
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
     }
 }
 
