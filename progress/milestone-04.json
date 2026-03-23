@@ -1,0 +1,110 @@
+[
+  {
+    "id": "request-response-types",
+    "description": "Request and Response types for HTTP layer with headers, body, method, URI",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: HttpRequest and HttpResponse in src/core/http/request.rs"]
+  },
+  {
+    "id": "http-client-wrapper",
+    "description": "Async HTTP client wrapping reqwest with rustls-tls, send method returns Response",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: HttpClient in src/core/http/client.rs wraps reqwest with rustls-tls"]
+  },
+  {
+    "id": "service-model-struct",
+    "description": "ServiceModel struct with metadata, operations map, and shapes map",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: ServiceModel, ServiceMetadata, Operation in src/core/model/mod.rs"]
+  },
+  {
+    "id": "shape-type-parsing",
+    "description": "Parse all shape types: structure, string, integer, long, float, double, boolean, timestamp, blob, list, map",
+    "verify": [
+      { "run": "cargo test -- shape_type", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": ["Session 1: Shapes stored as raw serde_json::Value. Dedicated shape type tests needed."]
+  },
+  {
+    "id": "operation-parsing",
+    "description": "Parse operation definitions: name, http method/URI, input/output shape refs, errors",
+    "verify": [
+      { "run": "cargo test -- operation_parsing", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": ["Session 1: Operations parsed in model loader, but no dedicated test with filter 'operation_parsing' yet"]
+  },
+  {
+    "id": "service-metadata-parsing",
+    "description": "Parse service metadata: apiVersion, protocol, endpointPrefix, serviceId, signatureVersion, targetPrefix, jsonVersion",
+    "verify": [
+      { "run": "cargo test -- metadata_parsing", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": ["Session 1: Metadata parsed in model loader, verified via load_sts test, but no dedicated 'metadata_parsing' filter test"]
+  },
+  {
+    "id": "model-loader-from-file",
+    "description": "Model loader reads service-2.json from disk and returns ServiceModel",
+    "verify": [
+      { "run": "cargo test -- model_loader", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: load_service_model() and parse_service_model() implemented with tests"]
+  },
+  {
+    "id": "load-sts-model",
+    "description": "Successfully load and parse real STS service-2.json model file",
+    "verify": [
+      { "run": "cargo test -- load_sts", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Tests pass, verifies protocol=query and GetCallerIdentity operation exists"]
+  },
+  {
+    "id": "load-s3-model",
+    "description": "Successfully load and parse real S3 service-2.json model file (13K+ lines)",
+    "verify": [
+      { "run": "cargo test -- load_s3", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Tests pass, verifies protocol=rest-xml, ListBuckets, PutObject, 100+ shapes"]
+  },
+  {
+    "id": "load-dynamodb-model",
+    "description": "Successfully load and parse real DynamoDB service-2.json model file",
+    "verify": [
+      { "run": "cargo test -- load_dynamodb", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Tests pass, verifies protocol=json and ListTables operation"]
+  },
+  {
+    "id": "load-ec2-model",
+    "description": "Successfully load and parse real EC2 service-2.json model file (largest model)",
+    "verify": [
+      { "run": "cargo test -- load_ec2", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Tests pass, verifies protocol=ec2, DescribeInstances, 1000+ shapes"]
+  },
+  {
+    "id": "member-modifiers",
+    "description": "Parse member modifiers: required list, location (header/querystring/uri), locationName, streaming",
+    "verify": [
+      { "run": "cargo test -- member_modifier", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": ["Session 1: Member modifiers available in raw shape JSON but no dedicated parsing/test yet"]
+  }
+]

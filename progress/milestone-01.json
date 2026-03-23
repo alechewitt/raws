@@ -1,0 +1,68 @@
+[
+  {
+    "id": "cargo-toml-dependencies",
+    "description": "Cargo.toml with all required dependencies (reqwest, ring, chrono, serde, quick-xml, tokio, anyhow, url, percent-encoding, clap, heck)",
+    "verify": [
+      { "run": "cargo check", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: All dependencies compile successfully"]
+  },
+  {
+    "id": "core-module-stubs",
+    "description": "src/core/ module stubs compile: config/, credentials/, auth/, endpoint/, http/, protocol/, model/, error.rs, retry.rs, paginate.rs, waiter.rs",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: All core modules created with real implementations for config, credentials, auth, model, endpoint, http"]
+  },
+  {
+    "id": "cli-module-stubs",
+    "description": "src/cli/ module stubs compile: driver.rs, args.rs, formatter/, commands/, customizations/",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: CLI structure with clap-based arg parsing, JSON formatter, stub driver"]
+  },
+  {
+    "id": "models-copied",
+    "description": "All ~418 botocore service model directories plus endpoints.json and partitions.json copied to models/",
+    "verify": [
+      { "run": "ls models/ | wc -l", "expect": "approximately 420 entries" },
+      { "run": "ls models/sts/2011-06-15/service-2.json", "expect": "file exists" },
+      { "run": "ls models/s3/2006-03-01/service-2.json", "expect": "file exists" },
+      { "run": "ls models/endpoints.json", "expect": "file exists" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: 418 service directories copied from $AWS_CLI_SRC/botocore/data/, models/ added to .gitignore"]
+  },
+  {
+    "id": "cargo-build-clean",
+    "description": "cargo build succeeds with zero errors",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles successfully" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Builds with dead_code warnings only (expected for stubs)"]
+  },
+  {
+    "id": "cargo-test-clean",
+    "description": "cargo test succeeds (no test failures)",
+    "verify": [
+      { "run": "cargo test", "expect": "all tests pass" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: 33 tests pass including real model loading tests"]
+  },
+  {
+    "id": "cargo-clippy-clean",
+    "description": "cargo clippy passes with zero warnings",
+    "verify": [
+      { "run": "cargo clippy -- -D warnings", "expect": "no warnings or errors" }
+    ],
+    "passes": false,
+    "notes": ["Session 1: Only dead_code warnings remain (expected for stubs not yet wired together). No clippy code quality warnings."]
+  }
+]

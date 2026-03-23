@@ -1,0 +1,10 @@
+{
+  "current_milestone": 4,
+  "milestones": {
+    "1": { "total": 7, "passing": 6, "file": "milestone-01.json" },
+    "2": { "total": 12, "passing": 12, "file": "milestone-02.json" },
+    "3": { "total": 10, "passing": 10, "file": "milestone-03.json" },
+    "4": { "total": 12, "passing": 7, "file": "milestone-04.json" },
+    "5": { "total": 12, "passing": 0, "file": "milestone-05.json" }
+  }
+}

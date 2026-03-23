@@ -1,0 +1,110 @@
+[
+  {
+    "id": "query-serializer-basic",
+    "description": "Query protocol serializer: Action, Version, and flat structure members as form-encoded body",
+    "verify": [
+      { "run": "cargo test -- query_serialize_basic", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "query-serializer-nested",
+    "description": "Query protocol: nested structure serialization using dot notation (e.g., Filter.1.Name=...)",
+    "verify": [
+      { "run": "cargo test -- query_serialize_nested", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "query-serializer-lists",
+    "description": "Query protocol: list serialization using positional notation (e.g., InstanceId.1=...)",
+    "verify": [
+      { "run": "cargo test -- query_serialize_list", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "query-response-parser",
+    "description": "Query protocol response parser: XML response with resultWrapper -> serde_json::Value",
+    "verify": [
+      { "run": "cargo test -- query_parse_response", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "query-error-parser",
+    "description": "Query protocol error parsing: ErrorResponse XML -> structured error with Code and Message",
+    "verify": [
+      { "run": "cargo test -- query_parse_error", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "simple-endpoint-resolution",
+    "description": "Simple endpoint resolution: https://{endpointPrefix}.{region}.amazonaws.com",
+    "verify": [
+      { "run": "cargo test -- endpoint_resolve", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "service-discovery",
+    "description": "Discover available services by scanning models/ directory for service-2.json files",
+    "verify": [
+      { "run": "cargo test -- service_discovery", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "cli-arg-parsing-global",
+    "description": "Parse global CLI arguments: --region, --profile, --output, --debug",
+    "verify": [
+      { "run": "cargo test -- global_args", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "cli-operation-dispatch",
+    "description": "Wire up full pipeline: CLI args -> model loading -> credentials -> signing -> HTTP -> parse response",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "json-output-formatter",
+    "description": "JSON output formatter: pretty-print serde_json::Value with 4-space indentation",
+    "verify": [
+      { "run": "cargo test -- json_format", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "sts-get-caller-identity-e2e",
+    "description": "End-to-end: raws sts get-caller-identity returns Account, UserId, Arn from real AWS",
+    "verify": [
+      { "run": "source prompt/.env && cargo run -- sts get-caller-identity --profile $RAW_TEST_PROFILE", "expect": "returns JSON with Account, UserId, Arn" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "operation-name-mapping",
+    "description": "Map kebab-case CLI operation names to PascalCase model operation names and back",
+    "verify": [
+      { "run": "cargo test -- operation_name_map", "expect": "test passes" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]

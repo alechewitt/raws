@@ -1,0 +1,111 @@
+[
+  {
+    "id": "ini-parser",
+    "description": "INI file parser that handles sections, key-value pairs, comments, and multi-line values",
+    "verify": [
+      { "run": "cargo test -- ini_parser", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Implemented in src/core/config/loader.rs with tests for sections, comments, key-value pairs"]
+  },
+  {
+    "id": "credentials-file-loading",
+    "description": "Load and parse ~/.aws/credentials file with profile sections",
+    "verify": [
+      { "run": "cargo test -- credentials_file", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: load_credentials_file() in src/core/config/loader.rs"]
+  },
+  {
+    "id": "config-file-loading",
+    "description": "Load and parse ~/.aws/config file with 'profile ' prefix handling for non-default sections",
+    "verify": [
+      { "run": "cargo test -- config_file", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: load_config_file() normalizes 'profile X' sections to just 'X'"]
+  },
+  {
+    "id": "env-credential-provider",
+    "description": "CredentialProvider that reads AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN from environment",
+    "verify": [
+      { "run": "cargo test -- env_credential", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: EnvCredentialProvider in src/core/credentials/env.rs"]
+  },
+  {
+    "id": "profile-credential-provider",
+    "description": "CredentialProvider that reads credentials from ~/.aws/credentials for a given profile",
+    "verify": [
+      { "run": "cargo test -- profile_credential", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: ProfileCredentialProvider in src/core/credentials/profile.rs with tempfile-based test"]
+  },
+  {
+    "id": "credential-chain",
+    "description": "ChainProvider that tries environment then profile credential providers in order",
+    "verify": [
+      { "run": "cargo test -- credential_chain", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: ChainCredentialProvider in src/core/credentials/chain.rs"]
+  },
+  {
+    "id": "config-region-resolution",
+    "description": "Resolve region from CLI arg > AWS_REGION env > AWS_DEFAULT_REGION env > profile config",
+    "verify": [
+      { "run": "cargo test -- region_resolution", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: ConfigProvider.resolve_region() in src/core/config/provider.rs"]
+  },
+  {
+    "id": "config-output-resolution",
+    "description": "Resolve output format from CLI arg > AWS_DEFAULT_OUTPUT env > profile config > default (json)",
+    "verify": [
+      { "run": "cargo test -- output_resolution", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: ConfigProvider.resolve_output() in src/core/config/provider.rs"]
+  },
+  {
+    "id": "profile-selection",
+    "description": "Profile selected by --profile CLI arg > AWS_PROFILE env > 'default'",
+    "verify": [
+      { "run": "cargo test -- profile_selection", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: ConfigProvider.resolve_profile() with tests for CLI and default"]
+  },
+  {
+    "id": "credentials-struct",
+    "description": "Credentials struct with access_key_id, secret_access_key, session_token fields and CredentialProvider trait",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Defined in src/core/credentials/mod.rs"]
+  },
+  {
+    "id": "config-provider-struct",
+    "description": "ConfigProvider struct that aggregates region, output format, and profile settings",
+    "verify": [
+      { "run": "cargo build", "expect": "compiles without errors" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Defined in src/core/config/provider.rs"]
+  },
+  {
+    "id": "config-credentials-unit-tests",
+    "description": "Comprehensive unit tests for INI parsing edge cases and credential/config resolution",
+    "verify": [
+      { "run": "cargo test -- config", "expect": "all config tests pass" },
+      { "run": "cargo test -- credential", "expect": "all credential tests pass" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: 13 tests covering INI parsing, config loading, credential providers, chain, profile selection, region/output resolution"]
+  }
+]

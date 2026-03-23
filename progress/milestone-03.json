@@ -1,0 +1,92 @@
+[
+  {
+    "id": "sha256-hashing",
+    "description": "SHA256 hashing utility using ring for payload and canonical request hashing",
+    "verify": [
+      { "run": "cargo test -- sha256", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: sha256_hex() in src/core/auth/sigv4.rs, verified with empty string known hash"]
+  },
+  {
+    "id": "hmac-sha256",
+    "description": "HMAC-SHA256 utility using ring for signing key derivation and signature calculation",
+    "verify": [
+      { "run": "cargo test -- hmac", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: hmac_sha256() in src/core/auth/sigv4.rs"]
+  },
+  {
+    "id": "sigv4-uri-encoding",
+    "description": "URI encoding per SigV4 spec (percent-encode all characters except unreserved)",
+    "verify": [
+      { "run": "cargo test -- uri_encode", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: uri_encode() with encode_slash parameter"]
+  },
+  {
+    "id": "sigv4-canonical-request",
+    "description": "SigV4 canonical request construction with sorted headers and URI encoding",
+    "verify": [
+      { "run": "cargo test -- canonical_request", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: canonical_request() tested with STS GetCallerIdentity request"]
+  },
+  {
+    "id": "sigv4-string-to-sign",
+    "description": "SigV4 string to sign construction with timestamp, scope, and hashed canonical request",
+    "verify": [
+      { "run": "cargo test -- string_to_sign", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: string_to_sign() verified format matches AWS spec"]
+  },
+  {
+    "id": "sigv4-signing-key",
+    "description": "SigV4 signing key derivation: HMAC chain of date, region, service, aws4_request",
+    "verify": [
+      { "run": "cargo test -- signing_key", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: signing_key() verified against AWS documentation known answer (IAM 20150830 us-east-1)"]
+  },
+  {
+    "id": "sigv4-signature",
+    "description": "Full SigV4 signature generation: HMAC-SHA256(signing_key, string_to_sign) hex-encoded",
+    "verify": [
+      { "run": "cargo test -- sigv4_signature", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: calculate_signature() produces 64-char hex string"]
+  },
+  {
+    "id": "sigv4-authorization-header",
+    "description": "Construct Authorization header: AWS4-HMAC-SHA256 Credential=.../Scope, SignedHeaders=..., Signature=...",
+    "verify": [
+      { "run": "cargo test -- authorization_header", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: authorization_header() format verified"]
+  },
+  {
+    "id": "sigv4-session-token",
+    "description": "Include X-Amz-Security-Token header when session token is present",
+    "verify": [
+      { "run": "cargo test -- session_token", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: sign_request() adds X-Amz-Security-Token when session_token is Some"]
+  },
+  {
+    "id": "sigv4-known-answer-test",
+    "description": "End-to-end SigV4 test with hardcoded STS GetCallerIdentity request verifying exact signature",
+    "verify": [
+      { "run": "cargo test -- sigv4_known_answer", "expect": "test passes" }
+    ],
+    "passes": true,
+    "notes": ["Session 1: Full STS signing flow verified with AKIDEXAMPLE/wJalr... test credentials, signing key derivation matches AWS docs known answer"]
+  }
+]

@@ -1,0 +1,38 @@
+=== Session 1: Initializer (2026-03-23) ===
+
+ACCOMPLISHED:
+- Created progress/ directory with feature files for milestones 1-5
+- Created init.sh environment setup script
+- Created complete Cargo project structure with all module directories
+- Set up Cargo.toml with all dependencies (reqwest, ring, chrono, serde, quick-xml, tokio, anyhow, url, percent-encoding, clap, heck)
+- Copied all 418 botocore service model directories to models/ (added to .gitignore)
+- Implemented config loading: INI parser, ~/.aws/config and ~/.aws/credentials file parsing
+- Implemented credential providers: env, profile, chain
+- Implemented ConfigProvider with region/output/profile resolution
+- Implemented full SigV4 signing: SHA256, HMAC-SHA256, URI encoding, canonical request, string to sign, signing key derivation, signature generation, authorization header
+- Implemented model loader: parse service-2.json into ServiceModel struct
+- Implemented service discovery (scan models/ dir for available services)
+- Implemented HTTP client wrapper around reqwest
+- Implemented Request/Response types
+- Implemented simple endpoint resolution
+- Implemented JSON output formatter
+- Implemented CLI arg parsing with clap derive
+
+TEST RESULTS:
+- 33 tests passing
+- cargo build succeeds
+- cargo clippy: only dead_code warnings (expected for stubs)
+
+MILESTONE STATUS:
+- Milestone 1 (Project Skeleton): 6/7 passing (clippy -D warnings fails due to dead_code only)
+- Milestone 2 (Config and Credentials): 12/12 passing
+- Milestone 3 (SigV4 Signing): 10/10 passing
+- Milestone 4 (HTTP Client and Model Loader): 7/12 passing (need dedicated shape/operation/metadata/member tests)
+- Milestone 5 (Query Protocol and STS E2E): 0/12 (not started)
+
+NEXT SESSION PRIORITIES:
+1. Add dedicated tests for milestone 4 remaining features (shape types, operation parsing, metadata parsing, member modifiers)
+2. Implement query protocol serializer and response parser
+3. Wire up the full CLI pipeline: args -> model -> credentials -> sign -> HTTP -> parse -> output
+4. Get "raws sts get-caller-identity" working end-to-end
+5. Implement service discovery and dynamic CLI dispatch
