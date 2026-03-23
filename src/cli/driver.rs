@@ -4,6 +4,7 @@ use std::path::Path;
 
 use crate::cli::args::GlobalArgs;
 use crate::cli::commands::configure;
+use crate::cli::customizations::s3 as s3_commands;
 use crate::cli::formatter;
 use crate::cli::jmespath;
 use crate::core::auth::sigv4::{self, SigningParams};
@@ -46,6 +47,13 @@ pub async fn run() -> Result<()> {
             None => std::env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string()),
         };
         return configure::run_configure(&profile);
+    }
+
+    // Handle "raws s3 <subcommand>": S3 high-level commands (ls, cp, mv, rm, sync, mb, rb).
+    // These are custom commands that don't map to S3 API operations, so we intercept
+    // before the normal operation lookup. Use "s3api" for API-level S3 operations.
+    if service == "s3" {
+        return s3_commands::handle_s3_command(&args).await;
     }
 
     let operation = match &args.operation {
