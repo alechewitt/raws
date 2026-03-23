@@ -176,9 +176,11 @@ git commit -m "Implement [feature id] - reviewed and verified
 - AWS CLI comparison: [matched / not applicable]
 - Milestone N: X/Y features complete
 "
+git push
 ```
 
-Commit frequently — at least once per completed feature.
+Commit and push frequently — at least once per completed feature. Always push
+immediately after committing so that progress is never lost.
 
 ### STEP 9: CHECK FOR MILESTONE COMPLETION
 
