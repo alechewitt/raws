@@ -79,6 +79,23 @@ pub async fn run() -> Result<()> {
         return Ok(());
     }
 
+    // Handle --generate-cli-skeleton: print JSON skeleton and return (no API call needed)
+    if let Some(skeleton_mode) = extract_generate_cli_skeleton(&args.args) {
+        let shape_name = match skeleton_mode.as_str() {
+            "output" => op.output_shape.as_deref().unwrap_or(""),
+            _ => op.input_shape.as_deref().unwrap_or(""),  // "input" is the default
+        };
+        let skeleton = if shape_name.is_empty() {
+            serde_json::json!({})
+        } else {
+            generate_skeleton(shape_name, &service_model.shapes)
+        };
+        let formatted = serialize_json_4_space(&skeleton)
+            .unwrap_or_else(|_| "{}".to_string());
+        println!("{formatted}");
+        return Ok(());
+    }
+
     // 1. Load config (resolves region, profile, output format)
     let config = ConfigProvider::new(
         args.region.as_deref(),
@@ -1138,30 +1155,176 @@ pub fn get_operation_args_info(
     args_info
 }
 
-fn parse_operation_args(args: &[String]) -> Result<serde_json::Value> {
-    let mut map = serde_json::Map::new();
+/// Serialize a JSON value with 4-space indentation, matching AWS CLI output.
+fn serialize_json_4_space(value: &serde_json::Value) -> Result<String> {
+    let mut buf = Vec::new();
+    let formatter = serde_json::ser::PrettyFormatter::with_indent(b"    ");
+    let mut ser = serde_json::Serializer::with_formatter(&mut buf, formatter);
+    serde::Serialize::serialize(value, &mut ser)
+        .context("Failed to serialize JSON skeleton")?;
+    String::from_utf8(buf).context("JSON skeleton is not valid UTF-8")
+}
 
+/// Check if `--generate-cli-skeleton` is present in the operation args.
+///
+/// Returns `Some(mode)` where mode is "input" (default) or "output".
+/// Returns `None` if the flag is not present.
+fn extract_generate_cli_skeleton(args: &[String]) -> Option<String> {
     let mut i = 0;
     while i < args.len() {
-        let arg = &args[i];
+        if args[i] == "--generate-cli-skeleton" {
+            // Check if next arg is a value (not another flag)
+            if i + 1 < args.len() && !args[i + 1].starts_with("--") {
+                return Some(args[i + 1].clone());
+            }
+            // No value provided: default to "input"
+            return Some("input".to_string());
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Generate a JSON skeleton for a given shape, showing placeholder values
+/// for each member.
+///
+/// Type mapping:
+/// - string, timestamp, blob -> `""`
+/// - integer, long -> `0`
+/// - float, double -> `0.0`
+/// - boolean -> `true`
+/// - list -> array with one skeleton element
+/// - map -> object with `{"KeyName": value_skeleton}`
+/// - structure -> object with member skeletons
+pub fn generate_skeleton(
+    shape_name: &str,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) -> serde_json::Value {
+    generate_skeleton_inner(shape_name, shapes, 0)
+}
+
+fn generate_skeleton_inner(
+    shape_name: &str,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+    depth: usize,
+) -> serde_json::Value {
+    // Guard against infinite recursion on self-referencing shapes
+    if depth > 20 {
+        return serde_json::Value::Null;
+    }
+
+    let shape = match shapes.get(shape_name) {
+        Some(s) => s,
+        None => return serde_json::Value::Null,
+    };
+
+    let shape_type = shape
+        .get("type")
+        .and_then(|t| t.as_str())
+        .unwrap_or("string");
+
+    match shape_type {
+        "string" | "timestamp" | "blob" => serde_json::Value::String(String::new()),
+        "integer" | "long" => serde_json::json!(0),
+        "float" | "double" => serde_json::json!(0.0),
+        "boolean" => serde_json::json!(true),
+        "list" => {
+            let member_shape = shape
+                .get("member")
+                .and_then(|m| m.get("shape"))
+                .and_then(|s| s.as_str())
+                .unwrap_or("String");
+            let element = generate_skeleton_inner(member_shape, shapes, depth + 1);
+            serde_json::json!([element])
+        }
+        "map" => {
+            let value_shape = shape
+                .get("value")
+                .and_then(|v| v.get("shape"))
+                .and_then(|s| s.as_str())
+                .unwrap_or("String");
+            let value_skeleton = generate_skeleton_inner(value_shape, shapes, depth + 1);
+            let mut map = serde_json::Map::new();
+            map.insert("KeyName".to_string(), value_skeleton);
+            serde_json::Value::Object(map)
+        }
+        "structure" => {
+            let mut map = serde_json::Map::new();
+            if let Some(members) = shape.get("members").and_then(|m| m.as_object()) {
+                for (member_name, member_def) in members {
+                    let member_shape = member_def
+                        .get("shape")
+                        .and_then(|s| s.as_str())
+                        .unwrap_or("String");
+                    let value = generate_skeleton_inner(member_shape, shapes, depth + 1);
+                    map.insert(member_name.clone(), value);
+                }
+            }
+            serde_json::Value::Object(map)
+        }
+        _ => serde_json::Value::String(String::new()),
+    }
+}
+
+fn parse_operation_args(args: &[String]) -> Result<serde_json::Value> {
+    // 1. Scan for --cli-input-json and extract its value, collecting remaining args
+    let mut remaining_args: Vec<&String> = Vec::new();
+    let mut cli_input_json_value: Option<&String> = None;
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == "--cli-input-json" {
+            if i + 1 < args.len() {
+                cli_input_json_value = Some(&args[i + 1]);
+                i += 2;
+            } else {
+                bail!("--cli-input-json requires a value (inline JSON or file://path)");
+            }
+        } else {
+            remaining_args.push(&args[i]);
+            i += 1;
+        }
+    }
+
+    // 2. If --cli-input-json was provided, load and parse the base JSON
+    let mut map = if let Some(raw_value) = cli_input_json_value {
+        let json_str = if let Some(path) = raw_value.strip_prefix("file://") {
+            std::fs::read_to_string(path)
+                .with_context(|| format!("Failed to read cli-input-json file: {path}"))?
+        } else {
+            raw_value.clone()
+        };
+        let parsed: serde_json::Value = serde_json::from_str(&json_str)
+            .context("Failed to parse --cli-input-json as JSON")?;
+        match parsed {
+            serde_json::Value::Object(m) => m,
+            _ => bail!("--cli-input-json must be a JSON object"),
+        }
+    } else {
+        serde_json::Map::new()
+    };
+
+    // 3. Parse remaining explicit --args (these override values from cli-input-json)
+    let mut j = 0;
+    while j < remaining_args.len() {
+        let arg = remaining_args[j];
         if let Some(key) = arg.strip_prefix("--") {
             // Convert kebab-case key to PascalCase for the API
             let pascal_key = model::kebab_to_pascal(key);
 
-            if i + 1 < args.len() && !args[i + 1].starts_with("--") {
-                let value = &args[i + 1];
+            if j + 1 < remaining_args.len() && !remaining_args[j + 1].starts_with("--") {
+                let value = remaining_args[j + 1];
                 // Try to parse as JSON first, otherwise use as string
                 let json_value = serde_json::from_str(value)
                     .unwrap_or_else(|_| serde_json::Value::String(value.clone()));
                 map.insert(pascal_key, json_value);
-                i += 2;
+                j += 2;
             } else {
                 // Flag without value: treat as boolean true
                 map.insert(pascal_key, serde_json::Value::Bool(true));
-                i += 1;
+                j += 1;
             }
         } else {
-            i += 1;
+            j += 1;
         }
     }
 
@@ -1218,6 +1381,62 @@ mod tests {
         ];
         let result = parse_operation_args(&args).unwrap();
         assert!(result["Tags"].is_array());
+    }
+
+    // ---------------------------------------------------------------
+    // --cli-input-json tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_cli_input_json_inline() {
+        let args = vec![
+            "--cli-input-json".to_string(),
+            r#"{"UserName":"alice","Path":"/admins/"}"#.to_string(),
+        ];
+        let result = parse_operation_args(&args).unwrap();
+        assert_eq!(result["UserName"].as_str(), Some("alice"));
+        assert_eq!(result["Path"].as_str(), Some("/admins/"));
+    }
+
+    #[test]
+    fn test_cli_input_json_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let file_path = dir.path().join("input.json");
+        std::fs::write(&file_path, r#"{"UserName":"from-file","Path":"/"}"#).unwrap();
+
+        let args = vec![
+            "--cli-input-json".to_string(),
+            format!("file://{}", file_path.display()),
+        ];
+        let result = parse_operation_args(&args).unwrap();
+        assert_eq!(result["UserName"].as_str(), Some("from-file"));
+        assert_eq!(result["Path"].as_str(), Some("/"));
+    }
+
+    #[test]
+    fn test_cli_input_json_merge_explicit_overrides() {
+        let args = vec![
+            "--cli-input-json".to_string(),
+            r#"{"UserName":"alice","Path":"/old/"}"#.to_string(),
+            "--user-name".to_string(),
+            "bob".to_string(),
+        ];
+        let result = parse_operation_args(&args).unwrap();
+        // Explicit --user-name bob should override the JSON value
+        assert_eq!(result["UserName"].as_str(), Some("bob"));
+        // Path from JSON should remain since it was not overridden
+        assert_eq!(result["Path"].as_str(), Some("/old/"));
+    }
+
+    #[test]
+    fn test_cli_input_json_absent_normal_behavior() {
+        // No --cli-input-json at all: should behave exactly like before
+        let args = vec![
+            "--user-name".to_string(),
+            "alice".to_string(),
+        ];
+        let result = parse_operation_args(&args).unwrap();
+        assert_eq!(result["UserName"].as_str(), Some("alice"));
     }
 
     #[test]
@@ -1715,5 +1934,282 @@ mod tests {
             msg.contains(service),
             "Error should include the service name, got: {msg}"
         );
+    }
+
+    // ---------------------------------------------------------------
+    // --generate-cli-skeleton tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_cli_skeleton_simple_structure() {
+        // A simple input shape with strings and integers
+        let shapes: std::collections::HashMap<String, serde_json::Value> =
+            serde_json::from_str(r#"{
+                "SimpleInput": {
+                    "type": "structure",
+                    "members": {
+                        "Name": { "shape": "StringType" },
+                        "Count": { "shape": "IntegerType" },
+                        "Active": { "shape": "BooleanType" },
+                        "Score": { "shape": "DoubleType" }
+                    }
+                },
+                "StringType": { "type": "string" },
+                "IntegerType": { "type": "integer" },
+                "BooleanType": { "type": "boolean" },
+                "DoubleType": { "type": "double" }
+            }"#).unwrap();
+
+        let skeleton = generate_skeleton("SimpleInput", &shapes);
+        assert!(skeleton.is_object());
+
+        assert_eq!(skeleton["Name"], serde_json::json!(""));
+        assert_eq!(skeleton["Count"], serde_json::json!(0));
+        assert_eq!(skeleton["Active"], serde_json::json!(true));
+        assert_eq!(skeleton["Score"], serde_json::json!(0.0));
+    }
+
+    #[test]
+    fn test_cli_skeleton_nested_structures() {
+        // Nested structures, lists, and maps
+        let shapes: std::collections::HashMap<String, serde_json::Value> =
+            serde_json::from_str(r#"{
+                "OuterInput": {
+                    "type": "structure",
+                    "members": {
+                        "Name": { "shape": "StringType" },
+                        "Tags": { "shape": "TagList" },
+                        "Metadata": { "shape": "MetadataMap" },
+                        "Config": { "shape": "ConfigShape" }
+                    }
+                },
+                "ConfigShape": {
+                    "type": "structure",
+                    "members": {
+                        "Timeout": { "shape": "IntegerType" },
+                        "Enabled": { "shape": "BooleanType" }
+                    }
+                },
+                "TagList": {
+                    "type": "list",
+                    "member": { "shape": "Tag" }
+                },
+                "Tag": {
+                    "type": "structure",
+                    "members": {
+                        "Key": { "shape": "StringType" },
+                        "Value": { "shape": "StringType" }
+                    }
+                },
+                "MetadataMap": {
+                    "type": "map",
+                    "key": { "shape": "StringType" },
+                    "value": { "shape": "StringType" }
+                },
+                "StringType": { "type": "string" },
+                "IntegerType": { "type": "integer" },
+                "BooleanType": { "type": "boolean" }
+            }"#).unwrap();
+
+        let skeleton = generate_skeleton("OuterInput", &shapes);
+        assert!(skeleton.is_object());
+
+        // Top-level string
+        assert_eq!(skeleton["Name"], serde_json::json!(""));
+
+        // Nested structure
+        assert!(skeleton["Config"].is_object());
+        assert_eq!(skeleton["Config"]["Timeout"], serde_json::json!(0));
+        assert_eq!(skeleton["Config"]["Enabled"], serde_json::json!(true));
+
+        // List with one element (which is a structure)
+        assert!(skeleton["Tags"].is_array());
+        let tags = skeleton["Tags"].as_array().unwrap();
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0]["Key"], serde_json::json!(""));
+        assert_eq!(tags[0]["Value"], serde_json::json!(""));
+
+        // Map with KeyName placeholder
+        assert!(skeleton["Metadata"].is_object());
+        assert_eq!(skeleton["Metadata"]["KeyName"], serde_json::json!(""));
+    }
+
+    #[test]
+    fn test_cli_skeleton_all_types() {
+        // Verify all type mappings
+        let shapes: std::collections::HashMap<String, serde_json::Value> =
+            serde_json::from_str(r#"{
+                "AllTypesInput": {
+                    "type": "structure",
+                    "members": {
+                        "S": { "shape": "StringType" },
+                        "I": { "shape": "IntegerType" },
+                        "L": { "shape": "LongType" },
+                        "F": { "shape": "FloatType" },
+                        "D": { "shape": "DoubleType" },
+                        "B": { "shape": "BooleanType" },
+                        "T": { "shape": "TimestampType" },
+                        "Bl": { "shape": "BlobType" }
+                    }
+                },
+                "StringType": { "type": "string" },
+                "IntegerType": { "type": "integer" },
+                "LongType": { "type": "long" },
+                "FloatType": { "type": "float" },
+                "DoubleType": { "type": "double" },
+                "BooleanType": { "type": "boolean" },
+                "TimestampType": { "type": "timestamp" },
+                "BlobType": { "type": "blob" }
+            }"#).unwrap();
+
+        let skeleton = generate_skeleton("AllTypesInput", &shapes);
+        assert_eq!(skeleton["S"], serde_json::json!(""));
+        assert_eq!(skeleton["I"], serde_json::json!(0));
+        assert_eq!(skeleton["L"], serde_json::json!(0));
+        assert_eq!(skeleton["F"], serde_json::json!(0.0));
+        assert_eq!(skeleton["D"], serde_json::json!(0.0));
+        assert_eq!(skeleton["B"], serde_json::json!(true));
+        assert_eq!(skeleton["T"], serde_json::json!(""));
+        assert_eq!(skeleton["Bl"], serde_json::json!(""));
+    }
+
+    #[test]
+    fn test_cli_skeleton_sts_assume_role() {
+        let path = std::path::Path::new("models/sts/2011-06-15/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: STS model not copied yet");
+            return;
+        }
+        let model = loader::load_service_model(path).unwrap();
+
+        let input_shape = model.operations["AssumeRole"]
+            .input_shape
+            .as_deref()
+            .unwrap();
+        let skeleton = generate_skeleton(input_shape, &model.shapes);
+
+        // RoleArn and RoleSessionName should be strings
+        assert_eq!(skeleton["RoleArn"], serde_json::json!(""));
+        assert_eq!(skeleton["RoleSessionName"], serde_json::json!(""));
+
+        // DurationSeconds should be integer
+        assert_eq!(skeleton["DurationSeconds"], serde_json::json!(0));
+
+        // Policy should be a string
+        assert_eq!(skeleton["Policy"], serde_json::json!(""));
+
+        // PolicyArns is a list of structures
+        assert!(skeleton["PolicyArns"].is_array());
+        let policy_arns = skeleton["PolicyArns"].as_array().unwrap();
+        assert_eq!(policy_arns.len(), 1);
+        assert_eq!(policy_arns[0]["arn"], serde_json::json!(""));
+
+        // Tags is a list of Tag structures
+        assert!(skeleton["Tags"].is_array());
+        let tags = skeleton["Tags"].as_array().unwrap();
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0]["Key"], serde_json::json!(""));
+        assert_eq!(tags[0]["Value"], serde_json::json!(""));
+
+        // Verify the output can be pretty-printed with 4-space indentation
+        let formatted = serde_json::to_string_pretty(&skeleton).unwrap();
+        assert!(formatted.contains("\"RoleArn\""));
+        assert!(formatted.contains("\"RoleSessionName\""));
+    }
+
+    #[test]
+    fn test_cli_skeleton_extract_flag_no_value() {
+        let args = vec!["--generate-cli-skeleton".to_string()];
+        assert_eq!(
+            extract_generate_cli_skeleton(&args),
+            Some("input".to_string())
+        );
+    }
+
+    #[test]
+    fn test_cli_skeleton_extract_flag_with_input() {
+        let args = vec![
+            "--generate-cli-skeleton".to_string(),
+            "input".to_string(),
+        ];
+        assert_eq!(
+            extract_generate_cli_skeleton(&args),
+            Some("input".to_string())
+        );
+    }
+
+    #[test]
+    fn test_cli_skeleton_extract_flag_with_output() {
+        let args = vec![
+            "--generate-cli-skeleton".to_string(),
+            "output".to_string(),
+        ];
+        assert_eq!(
+            extract_generate_cli_skeleton(&args),
+            Some("output".to_string())
+        );
+    }
+
+    #[test]
+    fn test_cli_skeleton_extract_flag_absent() {
+        let args = vec![
+            "--role-arn".to_string(),
+            "arn:aws:iam::123456789012:role/MyRole".to_string(),
+        ];
+        assert_eq!(extract_generate_cli_skeleton(&args), None);
+    }
+
+    #[test]
+    fn test_cli_skeleton_extract_flag_among_other_args() {
+        let args = vec![
+            "--role-arn".to_string(),
+            "arn:aws:iam::123456789012:role/MyRole".to_string(),
+            "--generate-cli-skeleton".to_string(),
+        ];
+        assert_eq!(
+            extract_generate_cli_skeleton(&args),
+            Some("input".to_string())
+        );
+    }
+
+    #[test]
+    fn test_cli_skeleton_empty_input_shape() {
+        // When the operation has no input shape, skeleton should be {}
+        let shapes: std::collections::HashMap<String, serde_json::Value> =
+            std::collections::HashMap::new();
+        let skeleton = generate_skeleton("NonexistentShape", &shapes);
+        assert!(skeleton.is_null());
+    }
+
+    #[test]
+    fn test_cli_skeleton_pretty_print_4_space() {
+        // Verify 4-space indentation matching AWS CLI output.
+        let shapes: std::collections::HashMap<String, serde_json::Value> =
+            serde_json::from_str(r#"{
+                "TestInput": {
+                    "type": "structure",
+                    "members": {
+                        "Name": { "shape": "StringType" }
+                    }
+                },
+                "StringType": { "type": "string" }
+            }"#).unwrap();
+
+        let skeleton = generate_skeleton("TestInput", &shapes);
+        let formatted = serialize_json_4_space(&skeleton).unwrap();
+
+        // Verify 4-space indentation is used (not 2-space)
+        assert!(
+            formatted.contains("    \"Name\""),
+            "Expected 4-space indentation, got: {formatted}"
+        );
+        assert!(
+            !formatted.contains("  \"Name\"\n"),
+            "Should not have 2-space indentation"
+        );
+
+        // Verify it parses back
+        let reparsed: serde_json::Value = serde_json::from_str(&formatted).unwrap();
+        assert_eq!(reparsed["Name"], serde_json::json!(""));
     }
 }

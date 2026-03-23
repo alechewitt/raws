@@ -68,8 +68,8 @@
     "verify": [
       { "run": "cargo test -- cli_input_json", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["4 tests: inline JSON, file:// loading, merge with explicit args, absent behavior"]
   },
   {
     "id": "generate-cli-skeleton",
@@ -77,8 +77,8 @@
     "verify": [
       { "run": "cargo test -- cli_skeleton", "expect": "test passes" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["11 tests, 4-space indentation, all shape types, real STS model verified"]
   },
   {
     "id": "query-jmespath",
