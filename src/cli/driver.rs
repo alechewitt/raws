@@ -14,7 +14,7 @@ use crate::core::credentials::env::EnvCredentialProvider;
 use crate::core::credentials::profile::ProfileCredentialProvider;
 use crate::core::credentials::CredentialProvider;
 use crate::core::endpoint::resolver;
-use crate::core::http::client::HttpClient;
+use crate::core::http::client::{HttpClient, HttpClientConfig};
 use crate::core::http::request::HttpRequest;
 use crate::core::model::{self, loader};
 use crate::core::paginate;
@@ -222,11 +222,14 @@ pub async fn run() -> Result<()> {
         }
     }
 
-    // 8. Build retry config
+    // 8. Build retry config and HTTP client config
     let retry_config = retry::RetryConfig::default();
+
+    let http_config = build_http_config(&args);
 
     if args.debug {
         eprintln!("[debug] retry: mode={:?}, max_attempts={}", retry_config.mode, retry_config.max_attempts);
+        eprintln!("[debug] timeouts: connect={:?}, read={:?}", http_config.connect_timeout, http_config.read_timeout);
     }
 
     // 9. Build and send the request based on protocol, with auto-pagination and retry
@@ -247,6 +250,7 @@ pub async fn run() -> Result<()> {
                 region,
                 args.debug,
                 &retry_config,
+                &http_config,
             )
             .await?;
 
@@ -289,6 +293,7 @@ pub async fn run() -> Result<()> {
             region,
             args.debug,
             &retry_config,
+            &http_config,
         )
         .await?
     };
@@ -390,6 +395,7 @@ async fn handle_wait_command(
     };
 
     let protocol = service_model.metadata.protocol.as_str();
+    let http_config = build_http_config(args);
 
     // Parse operation-specific arguments
     let input = parse_operation_args(&remaining_args)?;
@@ -406,7 +412,7 @@ async fn handle_wait_command(
         }
 
         let outcome = dispatch_request(
-            protocol, &endpoint_url, service_model, op, &input, &creds, region, args.debug,
+            protocol, &endpoint_url, service_model, op, &input, &creds, region, args.debug, &http_config,
         ).await;
 
         // Evaluate acceptors
@@ -475,6 +481,7 @@ async fn dispatch_with_retry(
     region: &str,
     debug: bool,
     retry_config: &retry::RetryConfig,
+    http_config: &HttpClientConfig,
 ) -> Result<serde_json::Value> {
     let mut attempt = 0u32;
 
@@ -482,7 +489,7 @@ async fn dispatch_with_retry(
         attempt += 1;
 
         let outcome = dispatch_request(
-            protocol, endpoint_url, model, op, input, creds, region, debug,
+            protocol, endpoint_url, model, op, input, creds, region, debug, http_config,
         )
         .await;
 
@@ -539,22 +546,23 @@ async fn dispatch_request(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
+    http_config: &HttpClientConfig,
 ) -> DispatchOutcome {
     match protocol {
         "query" => {
-            dispatch_query_protocol(endpoint_url, model, op, input, creds, region, debug).await
+            dispatch_query_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
         }
         "ec2" => {
-            dispatch_ec2_protocol(endpoint_url, model, op, input, creds, region, debug).await
+            dispatch_ec2_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
         }
         "json" => {
-            dispatch_json_protocol(endpoint_url, model, op, input, creds, region, debug).await
+            dispatch_json_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
         }
         "rest-json" => {
-            dispatch_rest_json_protocol(endpoint_url, model, op, input, creds, region, debug).await
+            dispatch_rest_json_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
         }
         "rest-xml" => {
-            dispatch_rest_xml_protocol(endpoint_url, model, op, input, creds, region, debug).await
+            dispatch_rest_xml_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
         }
         _ => DispatchOutcome {
             result: Err(anyhow::anyhow!(
@@ -577,6 +585,7 @@ async fn dispatch_query_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
+    http_config: &HttpClientConfig,
 ) -> DispatchOutcome {
     // Serialize the query request body
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
@@ -638,7 +647,7 @@ async fn dispatch_query_protocol(
     }
 
     // Send HTTP request
-    let http_client = match HttpClient::new() {
+    let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
         Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
     };
@@ -701,6 +710,7 @@ async fn dispatch_ec2_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
+    http_config: &HttpClientConfig,
 ) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
     let body_str = match query::serialize_query_request(
@@ -753,7 +763,7 @@ async fn dispatch_ec2_protocol(
         eprintln!("[debug] signed request, sending to {endpoint_url}");
     }
 
-    let http_client = match HttpClient::new() {
+    let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
         Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
     };
@@ -808,6 +818,7 @@ async fn dispatch_json_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
+    http_config: &HttpClientConfig,
 ) -> DispatchOutcome {
     let target_prefix = model.metadata.target_prefix.as_deref().unwrap_or("");
     let target_header = json_protocol::build_target_header(target_prefix, &op.name);
@@ -858,7 +869,7 @@ async fn dispatch_json_protocol(
         eprintln!("[debug] signed request, sending to {endpoint_url}");
     }
 
-    let http_client = match HttpClient::new() {
+    let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
         Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
     };
@@ -906,6 +917,7 @@ async fn dispatch_rest_json_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
+    http_config: &HttpClientConfig,
 ) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
 
@@ -992,7 +1004,7 @@ async fn dispatch_rest_json_protocol(
         eprintln!("[debug] signed request, sending to {full_url}");
     }
 
-    let http_client = match HttpClient::new() {
+    let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
         Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
     };
@@ -1047,6 +1059,7 @@ async fn dispatch_rest_xml_protocol(
     creds: &crate::core::credentials::Credentials,
     region: &str,
     debug: bool,
+    http_config: &HttpClientConfig,
 ) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
 
@@ -1135,7 +1148,7 @@ async fn dispatch_rest_xml_protocol(
         eprintln!("[debug] signed request, sending to {full_url}");
     }
 
-    let http_client = match HttpClient::new() {
+    let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
         Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
     };
@@ -1177,6 +1190,18 @@ async fn dispatch_rest_xml_protocol(
         };
         DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
     }
+}
+
+/// Build HTTP client configuration from CLI args.
+fn build_http_config(args: &GlobalArgs) -> HttpClientConfig {
+    let mut config = HttpClientConfig::default();
+    if let Some(t) = args.cli_connect_timeout {
+        config.connect_timeout = std::time::Duration::from_secs(t);
+    }
+    if let Some(t) = args.cli_read_timeout {
+        config.read_timeout = std::time::Duration::from_secs(t);
+    }
+    config
 }
 
 /// Percent-encode a query parameter key or value for URL construction.

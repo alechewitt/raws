@@ -50,8 +50,8 @@
     "verify": [
       { "run": "cargo test -- timeout", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["HttpClientConfig with connect_timeout/read_timeout, --cli-connect-timeout CLI arg, default 60s, 5 tests"]
   },
   {
     "id": "request-timeout",
@@ -59,8 +59,8 @@
     "verify": [
       { "run": "cargo test -- timeout", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["--cli-read-timeout CLI arg, wired through build_http_config -> HttpClient::with_config, default 60s"]
   },
   {
     "id": "network-error-handling",

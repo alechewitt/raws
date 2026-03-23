@@ -39,6 +39,14 @@ pub struct GlobalArgs {
     #[arg(long, global = true)]
     pub endpoint_url: Option<String>,
 
+    /// Connection timeout in seconds (default: 60)
+    #[arg(long, global = true)]
+    pub cli_connect_timeout: Option<u64>,
+
+    /// Read/request timeout in seconds (default: 60)
+    #[arg(long, global = true)]
+    pub cli_read_timeout: Option<u64>,
+
     /// Service name (e.g., sts, s3, ec2)
     pub service: Option<String>,
 
