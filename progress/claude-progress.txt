@@ -166,3 +166,52 @@ NEXT SESSION PRIORITIES:
 4. M9: Global service endpoints
 5. M9: S3 virtual-hosted and path-style addressing
 6. M9: Dual-stack and FIPS endpoint support
+
+=== Session 3 (continued): Milestone 9 Complete (2026-03-23) ===
+
+ACCOMPLISHED:
+- Completed Milestone 9 (Endpoint Resolution): 12/12
+  - endpoints-json-parser: Full parser for 40K-line endpoints.json (5 tests)
+    - OnceLock caching for thread-safe lazy loading
+  - partition-aware-resolution: 8 partitions supported (6 tests)
+    - Two-pass lookup: explicit region check then regionRegex matching
+    - Added regex crate dependency for regionRegex
+  - service-specific-endpoints: Per-region hostname overrides (7 tests)
+  - global-service-endpoints: IAM, Route53, CloudFront non-regionalized (4 tests)
+  - region-specific-sts: STS correctly regionalized despite partitionEndpoint (5 tests)
+  - s3-virtual-hosted-style: DNS-compatible buckets use {bucket}.s3.{region}.amazonaws.com (7 tests)
+    - is_bucket_dns_compatible() checks for dots, length 3-63
+    - strip_s3_bucket_prefix_if_virtual_hosted() removes /{Bucket} from URI path
+  - s3-path-style: Fallback for buckets with dots (6 tests)
+  - dual-stack-endpoints: --use-dualstack-endpoint flag with variant resolution from endpoints.json
+  - fips-endpoints: --use-fips-endpoint flag with variant resolution, combinable with dualstack
+  - endpoint-url-override: 4 tests confirming --endpoint-url bypasses resolution
+  - china-partition: *.amazonaws.com.cn for cn-* regions (6 tests)
+  - govcloud-partition: partition-specific hostnames for us-gov-* (7 tests)
+
+- Created milestone-10.json for S3 High-Level Commands (12 features)
+
+TEST RESULTS:
+- 398 tests passing (up from 315 after M8)
+- cargo build succeeds
+- cargo clippy: only pre-existing dead_code warnings
+
+NEW DEPENDENCIES: regex = "1" (for regionRegex matching)
+
+DESIGN DECISIONS:
+- Endpoint resolver uses OnceLock for lazy, thread-safe endpoints.json caching
+- Partition matching is two-pass: explicit region listing first, then regex fallback
+- S3 virtual-hosted: only for DNS-compatible bucket names (no dots, 3-63 chars)
+- Variant resolution cascades: endpoint -> service defaults -> partition defaults -> fallback
+- FIPS and dualstack can be combined (both tags required in variant match)
+
+MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12, M8=12/12, M9=12/12
+Current milestone: 10 (S3 High-Level Commands)
+
+NEXT SESSION PRIORITIES:
+1. M10: S3 command framework (dispatch raws s3 <subcommand>)
+2. M10: raws s3 ls (list buckets and objects)
+3. M10: raws s3 cp (upload, download, S3-to-S3)
+4. M10: raws s3 mv, rm, mb, rb
+5. M10: raws s3 sync
+6. M10: Multipart upload for large files

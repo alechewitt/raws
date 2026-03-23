@@ -13,46 +13,38 @@ MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=7/12, M5=0/12
 === Session 2: Milestones 4-7 Complete (2026-03-23) ===
 
 ACCOMPLISHED:
-- Completed M4 (HTTP Client and Model Loader): 12/12 - 25 tests for shapes/ops/metadata/members
-- Completed M5 (Query Protocol and STS E2E): 12/12
-  - Query serializer/parser, operation name mapping, CLI arg parsing, full pipeline
-  - STS get-caller-identity works E2E against real AWS
-- Completed M6 (All Four Protocols): 12/12
-  - JSON (20 tests), REST-JSON (24 tests), REST-XML (25 tests), EC2 variant (4 tests)
-  - Protocol dispatch for all 5 protocols, s3api->s3 alias
-  - E2E: STS, DynamoDB, S3, Lambda, EC2 all working
-- Completed M7 (Full Service Dispatch): 12/12
-  - Dynamic service discovery (416 services in help), dynamic arg parsing (7 tests)
-  - Global endpoint support for IAM, Route53, STS
-  - E2E verified: 12 services across all protocols
+- Completed M4-M7 (HTTP Client, Query Protocol, All Protocols, Full Service Dispatch)
+- E2E verified: 12 services across all protocols (STS, DynamoDB, S3, Lambda, EC2, IAM, etc.)
 
 TEST RESULTS: 181 tests passing
 MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12
-Current milestone: 8 (CLI Polish)
 
-=== Session 3: Milestone 8 Complete (2026-03-23) ===
+=== Session 3: Milestones 8-9 Complete (2026-03-23) ===
 
 ACCOMPLISHED:
 - Completed Milestone 8 (CLI Polish): 12/12
-  - text-output-formatter: Tab-separated values matching AWS CLI (15 tests)
-  - table-output-formatter: ASCII tables with borders (20 tests)
-  - debug-flag: Already implemented from prior sessions
-  - error-messages: 11 tests for common failure error paths
-  - help-text-generation: Operation listing + parameter help with types
-  - no-paginate-flag + auto-pagination: Loads paginators-1.json, merges pages (26 tests)
-  - cli-input-json: file:// and inline JSON support (4 tests)
-  - generate-cli-skeleton: Recursive input shape skeleton (11 tests)
-  - query-jmespath: Hand-rolled evaluator supporting field/index/flatten/filter/wildcard/pipe (25 tests)
-  - configure-command: Interactive setup with INI read/write (18 tests)
-  - output-format-comparison: 4-space JSON indent matching AWS CLI (5 tests)
+  - text-output-formatter (15 tests), table-output-formatter (20 tests)
+  - debug-flag (pre-existing), error-messages (11 tests)
+  - help-text-generation (operation listing + param help)
+  - no-paginate-flag + auto-pagination (26 tests)
+  - cli-input-json (4 tests), generate-cli-skeleton (11 tests)
+  - query-jmespath: hand-rolled evaluator (25 tests, 370 lines)
+  - configure-command (18 tests), output-format-comparison (5 tests)
 
-- Created milestone-09.json for Endpoint Resolution (12 features)
+- Completed Milestone 9 (Endpoint Resolution): 12/12
+  - Full endpoints.json parser with OnceLock caching
+  - 8 partitions: aws, aws-cn, aws-us-gov, aws-iso, aws-iso-b, aws-iso-e, aws-iso-f, aws-eusc
+  - Service-specific overrides, global services (IAM, Route53, CloudFront)
+  - S3 virtual-hosted style (DNS-compatible buckets) + path-style fallback
+  - Dual-stack (--use-dualstack-endpoint) and FIPS (--use-fips-endpoint) flags
+  - China and GovCloud partition resolution
 
-NEW FILES: src/cli/jmespath.rs (370 lines), progress/milestone-09.json
+NEW FILES: src/cli/jmespath.rs, progress/milestone-09.json, progress/milestone-10.json
+NEW DEPS: regex = "1"
 
-TEST RESULTS: 315 tests passing (up from 181)
-MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12, M8=12/12
-Current milestone: 9 (Endpoint Resolution)
+TEST RESULTS: 398 tests passing (up from 181)
+MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12, M8=12/12, M9=12/12
+Current milestone: 10 (S3 High-Level Commands)
 
 KNOWN ISSUES:
 - JSON key ordering is alphabetical (minor diff from AWS CLI response order)
@@ -60,4 +52,4 @@ KNOWN ISSUES:
 - credential_process not supported (M13)
 - smithy-rpc-v2-cbor protocol not supported
 
-NEXT: M9 - Parse endpoints.json, partition-aware resolution, global services, S3 addressing, dual-stack, FIPS
+NEXT: M10 - S3 command framework, ls, cp, mv, rm, mb/rb, sync, multipart upload
