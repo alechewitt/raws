@@ -1,10 +1,12 @@
 //! S3 `ls` high-level command implementation.
 //!
-//! Handles `raws s3 ls` (list all buckets) and in the future `raws s3 ls s3://bucket/prefix`.
+//! Handles `raws s3 ls` (list all buckets) and `raws s3 ls s3://bucket/prefix`
+//! (list objects in a bucket with optional prefix).
 
 use anyhow::{bail, Result};
 
 use super::s3_api_call;
+use super::s3_bucket_api_call;
 use super::S3CommandContext;
 
 /// Represents a single S3 bucket returned by ListBuckets.
@@ -17,17 +19,278 @@ struct BucketInfo {
 /// Execute the `s3 ls` command.
 ///
 /// When no path argument is given, lists all S3 buckets.
-/// When a path argument like `s3://bucket/prefix` is given, lists objects (future feature).
+/// When a path argument like `s3://bucket/prefix` is given, lists objects in the bucket.
 pub async fn execute(args: &[String], ctx: &S3CommandContext) -> Result<()> {
-    // Filter out flags we don't handle yet, and find the positional path argument
+    // Check for --recursive flag
+    let recursive = args.iter().any(|a| a == "--recursive");
+
+    // Filter out flags and find the positional path argument
     let path_arg = args.iter().find(|a| !a.starts_with('-'));
 
     match path_arg {
         None => list_buckets(ctx).await,
-        Some(_path) => {
-            bail!("s3 ls with path argument is not yet implemented")
+        Some(path) => {
+            let (bucket, prefix) = parse_s3_url(path)?;
+            list_objects(ctx, &bucket, &prefix, recursive).await
         }
     }
+}
+
+/// Parse an S3 URL like `s3://bucket/prefix` into (bucket, prefix).
+///
+/// Handles edge cases:
+/// - `s3://bucket` -> ("bucket", "")
+/// - `s3://bucket/` -> ("bucket", "")
+/// - `s3://bucket/prefix` -> ("bucket", "prefix")
+/// - `s3://bucket/path/to/prefix` -> ("bucket", "path/to/prefix")
+fn parse_s3_url(url: &str) -> Result<(String, String)> {
+    let stripped = url
+        .strip_prefix("s3://")
+        .ok_or_else(|| anyhow::anyhow!("Invalid S3 URL: '{}'. Expected format: s3://bucket[/prefix]", url))?;
+
+    if stripped.is_empty() {
+        bail!("Invalid S3 URL: '{}'. Bucket name is required.", url);
+    }
+
+    let (bucket, prefix) = match stripped.find('/') {
+        Some(pos) => {
+            let bucket = &stripped[..pos];
+            let prefix = &stripped[pos + 1..];
+            (bucket.to_string(), prefix.to_string())
+        }
+        None => (stripped.to_string(), String::new()),
+    };
+
+    if bucket.is_empty() {
+        bail!("Invalid S3 URL: '{}'. Bucket name is required.", url);
+    }
+
+    Ok((bucket, prefix))
+}
+
+/// Represents a single object in a ListObjectsV2 response.
+#[derive(Debug, Clone)]
+struct ObjectInfo {
+    key: String,
+    last_modified: String,
+    size: u64,
+}
+
+/// Represents a common prefix (virtual directory) in a ListObjectsV2 response.
+#[derive(Debug, Clone)]
+struct CommonPrefixInfo {
+    prefix: String,
+}
+
+/// List objects in an S3 bucket with optional prefix.
+///
+/// Calls the ListObjectsV2 API, handles pagination, and prints results in AWS CLI format:
+/// - Common prefixes: `                           PRE dirname/`
+/// - Objects: `2023-01-15 10:30:45      12345 file.txt`
+async fn list_objects(
+    ctx: &S3CommandContext,
+    bucket: &str,
+    prefix: &str,
+    recursive: bool,
+) -> Result<()> {
+    let mut continuation_token: Option<String> = None;
+
+    loop {
+        // Build query parameters
+        let mut params: Vec<(&str, &str)> = vec![("list-type", "2")];
+
+        if !prefix.is_empty() {
+            params.push(("prefix", prefix));
+        }
+
+        if !recursive {
+            params.push(("delimiter", "/"));
+        }
+
+        // We need to own the token string for borrowing
+        let token_string;
+        if let Some(ref token) = continuation_token {
+            token_string = token.clone();
+            params.push(("continuation-token", &token_string));
+        }
+
+        let response = s3_bucket_api_call(ctx, bucket, "GET", "/", &params, None, &[]).await?;
+
+        if response.status >= 300 {
+            let body = response.body_string();
+            bail!(
+                "ListObjectsV2 failed (HTTP {}): {}",
+                response.status,
+                extract_error_message(&body)
+            );
+        }
+
+        let body = response.body_string();
+        let page = parse_list_objects_v2_response(&body)?;
+
+        // Print common prefixes first (shown as PRE)
+        for cp in &page.common_prefixes {
+            let display_name = strip_prefix_from_key(&cp.prefix, prefix);
+            println!("{:>30} {}", "PRE", display_name);
+        }
+
+        // Print objects
+        for obj in &page.objects {
+            let display_name = strip_prefix_from_key(&obj.key, prefix);
+            let formatted_date = format_creation_date(&obj.last_modified);
+            println!("{} {:>10} {}", formatted_date, obj.size, display_name);
+        }
+
+        // Handle pagination
+        if page.is_truncated {
+            if let Some(token) = page.next_continuation_token {
+                continuation_token = Some(token);
+            } else {
+                break;
+            }
+        } else {
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+/// Strip the search prefix from a key for display purposes.
+///
+/// When listing `s3://bucket/photos/`, the prefix "photos/" is stripped from
+/// displayed keys, so `photos/cat.jpg` becomes `cat.jpg`.
+fn strip_prefix_from_key<'a>(key: &'a str, prefix: &str) -> &'a str {
+    key.strip_prefix(prefix).unwrap_or(key)
+}
+
+/// Parsed result of a single ListObjectsV2 response page.
+#[derive(Debug)]
+struct ListObjectsV2Page {
+    objects: Vec<ObjectInfo>,
+    common_prefixes: Vec<CommonPrefixInfo>,
+    is_truncated: bool,
+    next_continuation_token: Option<String>,
+}
+
+/// Parse a ListObjectsV2 XML response.
+fn parse_list_objects_v2_response(xml_body: &str) -> Result<ListObjectsV2Page> {
+    use quick_xml::events::Event;
+    use quick_xml::Reader;
+
+    let mut reader = Reader::from_str(xml_body);
+    let mut objects = Vec::new();
+    let mut common_prefixes = Vec::new();
+    let mut is_truncated = false;
+    let mut next_continuation_token: Option<String> = None;
+
+    // State machine
+    let mut in_contents = false;
+    let mut in_common_prefixes = false;
+    let mut current_tag = String::new();
+
+    // Current object fields
+    let mut current_key: Option<String> = None;
+    let mut current_last_modified: Option<String> = None;
+    let mut current_size: Option<u64> = None;
+
+    // Current common prefix
+    let mut current_prefix: Option<String> = None;
+
+    // Top-level tag tracking (for IsTruncated, NextContinuationToken)
+    let mut top_level_tag = String::new();
+
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(ref e)) => {
+                let tag = strip_ns(std::str::from_utf8(e.name().as_ref()).unwrap_or(""));
+                match tag.as_str() {
+                    "Contents" => {
+                        in_contents = true;
+                        current_key = None;
+                        current_last_modified = None;
+                        current_size = None;
+                    }
+                    "CommonPrefixes" => {
+                        in_common_prefixes = true;
+                        current_prefix = None;
+                    }
+                    _ => {
+                        if in_contents || in_common_prefixes {
+                            current_tag = tag;
+                        } else {
+                            top_level_tag = tag;
+                        }
+                    }
+                }
+            }
+            Ok(Event::End(ref e)) => {
+                let tag = strip_ns(std::str::from_utf8(e.name().as_ref()).unwrap_or(""));
+                match tag.as_str() {
+                    "Contents" => {
+                        if in_contents {
+                            if let (Some(key), Some(last_modified)) =
+                                (current_key.take(), current_last_modified.take())
+                            {
+                                objects.push(ObjectInfo {
+                                    key,
+                                    last_modified,
+                                    size: current_size.unwrap_or(0),
+                                });
+                            }
+                            in_contents = false;
+                        }
+                    }
+                    "CommonPrefixes" => {
+                        if in_common_prefixes {
+                            if let Some(prefix) = current_prefix.take() {
+                                common_prefixes.push(CommonPrefixInfo { prefix });
+                            }
+                            in_common_prefixes = false;
+                        }
+                    }
+                    _ => {}
+                }
+                current_tag.clear();
+                top_level_tag.clear();
+            }
+            Ok(Event::Text(ref e)) => {
+                let text = e.unescape().unwrap_or_default().to_string();
+                if in_contents {
+                    match current_tag.as_str() {
+                        "Key" => current_key = Some(text),
+                        "LastModified" => current_last_modified = Some(text),
+                        "Size" => current_size = text.parse::<u64>().ok(),
+                        _ => {}
+                    }
+                } else if in_common_prefixes {
+                    if current_tag == "Prefix" {
+                        current_prefix = Some(text);
+                    }
+                } else {
+                    match top_level_tag.as_str() {
+                        "IsTruncated" => {
+                            is_truncated = text == "true";
+                        }
+                        "NextContinuationToken" => {
+                            next_continuation_token = Some(text);
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Ok(Event::Eof) => break,
+            Ok(_) => {}
+            Err(e) => bail!("Failed to parse ListObjectsV2 XML response: {}", e),
+        }
+    }
+
+    Ok(ListObjectsV2Page {
+        objects,
+        common_prefixes,
+        is_truncated,
+        next_continuation_token,
+    })
 }
 
 /// List all S3 buckets (no path argument).
@@ -440,5 +703,312 @@ mod tests {
         assert_eq!(buckets[0].name, "alpha-bucket");
         assert_eq!(buckets[1].name, "middle-bucket");
         assert_eq!(buckets[2].name, "zebra-bucket");
+    }
+
+    // ---------------------------------------------------------------
+    // parse_s3_url tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_parse_s3_url_bucket_only() {
+        let (bucket, prefix) = parse_s3_url("s3://my-bucket").unwrap();
+        assert_eq!(bucket, "my-bucket");
+        assert_eq!(prefix, "");
+    }
+
+    #[test]
+    fn test_parse_s3_url_bucket_with_trailing_slash() {
+        let (bucket, prefix) = parse_s3_url("s3://my-bucket/").unwrap();
+        assert_eq!(bucket, "my-bucket");
+        assert_eq!(prefix, "");
+    }
+
+    #[test]
+    fn test_parse_s3_url_bucket_with_prefix() {
+        let (bucket, prefix) = parse_s3_url("s3://my-bucket/photos/").unwrap();
+        assert_eq!(bucket, "my-bucket");
+        assert_eq!(prefix, "photos/");
+    }
+
+    #[test]
+    fn test_parse_s3_url_bucket_with_deep_prefix() {
+        let (bucket, prefix) = parse_s3_url("s3://my-bucket/path/to/dir/").unwrap();
+        assert_eq!(bucket, "my-bucket");
+        assert_eq!(prefix, "path/to/dir/");
+    }
+
+    #[test]
+    fn test_parse_s3_url_bucket_with_file_prefix() {
+        let (bucket, prefix) = parse_s3_url("s3://my-bucket/file.txt").unwrap();
+        assert_eq!(bucket, "my-bucket");
+        assert_eq!(prefix, "file.txt");
+    }
+
+    #[test]
+    fn test_parse_s3_url_invalid_no_s3_scheme() {
+        let result = parse_s3_url("https://my-bucket/");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Invalid S3 URL"));
+    }
+
+    #[test]
+    fn test_parse_s3_url_invalid_empty_after_scheme() {
+        let result = parse_s3_url("s3://");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_s3_url_invalid_no_scheme() {
+        let result = parse_s3_url("my-bucket/prefix");
+        assert!(result.is_err());
+    }
+
+    // ---------------------------------------------------------------
+    // parse_list_objects_v2_response tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_parse_list_objects_v2_typical() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Name>my-bucket</Name>
+  <Prefix>photos/</Prefix>
+  <Delimiter>/</Delimiter>
+  <IsTruncated>false</IsTruncated>
+  <Contents>
+    <Key>photos/cat.jpg</Key>
+    <LastModified>2023-01-15T10:30:45.000Z</LastModified>
+    <ETag>"abc123"</ETag>
+    <Size>12345</Size>
+    <StorageClass>STANDARD</StorageClass>
+  </Contents>
+  <Contents>
+    <Key>photos/dog.jpg</Key>
+    <LastModified>2023-06-20T14:22:10.000Z</LastModified>
+    <ETag>"def456"</ETag>
+    <Size>678</Size>
+    <StorageClass>STANDARD</StorageClass>
+  </Contents>
+  <CommonPrefixes>
+    <Prefix>photos/vacation/</Prefix>
+  </CommonPrefixes>
+</ListBucketResult>"#;
+
+        let page = parse_list_objects_v2_response(xml).unwrap();
+        assert_eq!(page.objects.len(), 2);
+        assert_eq!(page.objects[0].key, "photos/cat.jpg");
+        assert_eq!(page.objects[0].last_modified, "2023-01-15T10:30:45.000Z");
+        assert_eq!(page.objects[0].size, 12345);
+        assert_eq!(page.objects[1].key, "photos/dog.jpg");
+        assert_eq!(page.objects[1].size, 678);
+        assert_eq!(page.common_prefixes.len(), 1);
+        assert_eq!(page.common_prefixes[0].prefix, "photos/vacation/");
+        assert!(!page.is_truncated);
+        assert!(page.next_continuation_token.is_none());
+    }
+
+    #[test]
+    fn test_parse_list_objects_v2_truncated() {
+        let xml = r#"<ListBucketResult>
+  <IsTruncated>true</IsTruncated>
+  <NextContinuationToken>abc123token</NextContinuationToken>
+  <Contents>
+    <Key>file1.txt</Key>
+    <LastModified>2023-01-15T10:30:45.000Z</LastModified>
+    <Size>100</Size>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page = parse_list_objects_v2_response(xml).unwrap();
+        assert!(page.is_truncated);
+        assert_eq!(
+            page.next_continuation_token,
+            Some("abc123token".to_string())
+        );
+        assert_eq!(page.objects.len(), 1);
+    }
+
+    #[test]
+    fn test_parse_list_objects_v2_empty() {
+        let xml = r#"<ListBucketResult>
+  <IsTruncated>false</IsTruncated>
+</ListBucketResult>"#;
+
+        let page = parse_list_objects_v2_response(xml).unwrap();
+        assert_eq!(page.objects.len(), 0);
+        assert_eq!(page.common_prefixes.len(), 0);
+        assert!(!page.is_truncated);
+    }
+
+    #[test]
+    fn test_parse_list_objects_v2_only_common_prefixes() {
+        let xml = r#"<ListBucketResult>
+  <IsTruncated>false</IsTruncated>
+  <CommonPrefixes>
+    <Prefix>photos/</Prefix>
+  </CommonPrefixes>
+  <CommonPrefixes>
+    <Prefix>videos/</Prefix>
+  </CommonPrefixes>
+</ListBucketResult>"#;
+
+        let page = parse_list_objects_v2_response(xml).unwrap();
+        assert_eq!(page.objects.len(), 0);
+        assert_eq!(page.common_prefixes.len(), 2);
+        assert_eq!(page.common_prefixes[0].prefix, "photos/");
+        assert_eq!(page.common_prefixes[1].prefix, "videos/");
+    }
+
+    #[test]
+    fn test_parse_list_objects_v2_with_namespace() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <IsTruncated>false</IsTruncated>
+  <Contents>
+    <Key>test.txt</Key>
+    <LastModified>2023-01-01T00:00:00.000Z</LastModified>
+    <Size>42</Size>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page = parse_list_objects_v2_response(xml).unwrap();
+        assert_eq!(page.objects.len(), 1);
+        assert_eq!(page.objects[0].key, "test.txt");
+        assert_eq!(page.objects[0].size, 42);
+    }
+
+    // ---------------------------------------------------------------
+    // strip_prefix_from_key tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_strip_prefix_from_key_with_prefix() {
+        assert_eq!(strip_prefix_from_key("photos/cat.jpg", "photos/"), "cat.jpg");
+    }
+
+    #[test]
+    fn test_strip_prefix_from_key_no_prefix() {
+        assert_eq!(strip_prefix_from_key("file.txt", ""), "file.txt");
+    }
+
+    #[test]
+    fn test_strip_prefix_from_key_prefix_not_matching() {
+        // If the key doesn't start with the prefix, return the full key
+        assert_eq!(
+            strip_prefix_from_key("other/file.txt", "photos/"),
+            "other/file.txt"
+        );
+    }
+
+    #[test]
+    fn test_strip_prefix_from_key_dir_prefix() {
+        assert_eq!(
+            strip_prefix_from_key("photos/vacation/", "photos/"),
+            "vacation/"
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // Output format tests for list objects
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_list_objects_pre_format() {
+        // Verify PRE format matches AWS CLI: right-aligned to 30 chars
+        let line = format!("{:>30} {}", "PRE", "photos/");
+        assert!(line.contains("PRE photos/"));
+        // "PRE" should be right-aligned within 30 chars
+        assert_eq!(line.len(), 30 + 1 + "photos/".len());
+    }
+
+    #[test]
+    fn test_list_objects_object_format() {
+        // Verify object format: date (19) + space + size (10 right-aligned) + space + name
+        let date = "2023-01-15 10:30:45";
+        let size: u64 = 12345;
+        let name = "file.txt";
+        let line = format!("{} {:>10} {}", date, size, name);
+        assert_eq!(line, "2023-01-15 10:30:45      12345 file.txt");
+    }
+
+    #[test]
+    fn test_list_objects_object_format_small_size() {
+        let date = "2023-06-20 14:22:10";
+        let size: u64 = 678;
+        let name = "file2.txt";
+        let line = format!("{} {:>10} {}", date, size, name);
+        assert_eq!(line, "2023-06-20 14:22:10        678 file2.txt");
+    }
+
+    #[test]
+    fn test_list_objects_object_format_zero_size() {
+        let date = "2023-01-01 00:00:00";
+        let size: u64 = 0;
+        let name = "empty.txt";
+        let line = format!("{} {:>10} {}", date, size, name);
+        assert_eq!(line, "2023-01-01 00:00:00          0 empty.txt");
+    }
+
+    #[test]
+    fn test_list_objects_object_format_large_size() {
+        let date = "2023-01-01 00:00:00";
+        let size: u64 = 1_073_741_824; // 1 GB
+        let name = "large.bin";
+        let line = format!("{} {:>10} {}", date, size, name);
+        assert_eq!(line, "2023-01-01 00:00:00 1073741824 large.bin");
+    }
+
+    // ---------------------------------------------------------------
+    // parse_list_objects_v2_response edge cases
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_parse_list_objects_v2_missing_size() {
+        let xml = r#"<ListBucketResult>
+  <IsTruncated>false</IsTruncated>
+  <Contents>
+    <Key>file.txt</Key>
+    <LastModified>2023-01-01T00:00:00.000Z</LastModified>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page = parse_list_objects_v2_response(xml).unwrap();
+        assert_eq!(page.objects.len(), 1);
+        assert_eq!(page.objects[0].size, 0); // Defaults to 0 when missing
+    }
+
+    #[test]
+    fn test_parse_list_objects_v2_multiple_pages_structure() {
+        // Verify that we can parse two separate pages correctly
+        let page1_xml = r#"<ListBucketResult>
+  <IsTruncated>true</IsTruncated>
+  <NextContinuationToken>token1</NextContinuationToken>
+  <Contents>
+    <Key>a.txt</Key>
+    <LastModified>2023-01-01T00:00:00.000Z</LastModified>
+    <Size>10</Size>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page2_xml = r#"<ListBucketResult>
+  <IsTruncated>false</IsTruncated>
+  <Contents>
+    <Key>b.txt</Key>
+    <LastModified>2023-01-02T00:00:00.000Z</LastModified>
+    <Size>20</Size>
+  </Contents>
+</ListBucketResult>"#;
+
+        let page1 = parse_list_objects_v2_response(page1_xml).unwrap();
+        assert!(page1.is_truncated);
+        assert_eq!(page1.next_continuation_token, Some("token1".to_string()));
+        assert_eq!(page1.objects.len(), 1);
+        assert_eq!(page1.objects[0].key, "a.txt");
+
+        let page2 = parse_list_objects_v2_response(page2_xml).unwrap();
+        assert!(!page2.is_truncated);
+        assert!(page2.next_continuation_token.is_none());
+        assert_eq!(page2.objects.len(), 1);
+        assert_eq!(page2.objects[0].key, "b.txt");
     }
 }

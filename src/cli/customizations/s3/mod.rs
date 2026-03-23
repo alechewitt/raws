@@ -287,6 +287,128 @@ pub async fn s3_api_call(
     Ok(response)
 }
 
+/// Make a low-level S3 API call to a specific bucket using virtual-hosted style.
+///
+/// This is like `s3_api_call`, but prepends the bucket name to the host for
+/// virtual-hosted style addressing (e.g., `https://{bucket}.s3.{region}.amazonaws.com`).
+/// For buckets with dots (not DNS-compatible), it falls back to path-style.
+///
+/// # Arguments
+/// * `ctx` - The S3 command context
+/// * `bucket` - The S3 bucket name
+/// * `method` - HTTP method
+/// * `uri_path` - The URI path (e.g., `/`)
+/// * `query_params` - Query string parameters
+/// * `body` - Optional request body
+/// * `extra_headers` - Additional headers
+pub async fn s3_bucket_api_call(
+    ctx: &S3CommandContext,
+    bucket: &str,
+    method: &str,
+    uri_path: &str,
+    query_params: &[(&str, &str)],
+    body: Option<&[u8]>,
+    extra_headers: &[(&str, &str)],
+) -> Result<HttpResponse> {
+    let bucket_endpoint = resolver::apply_s3_virtual_hosted_style(&ctx.endpoint_url, bucket);
+
+    // If virtual-hosted style was applied, use "/" as the uri_path (bucket is in host).
+    // If not (e.g., dots in bucket name), use path-style: "/{bucket}{uri_path}".
+    let (effective_endpoint, effective_path) = if bucket_endpoint != ctx.endpoint_url {
+        // Virtual-hosted style: bucket is in the hostname
+        (bucket_endpoint, uri_path.to_string())
+    } else {
+        // Path-style: bucket goes in the URI path
+        let path = format!("/{bucket}{uri_path}");
+        (ctx.endpoint_url.clone(), path)
+    };
+
+    // Build the full URL with URL-encoded query params
+    let base_url = effective_endpoint.trim_end_matches('/');
+    let query_string = if query_params.is_empty() {
+        String::new()
+    } else {
+        let qs = query_params
+            .iter()
+            .map(|(k, v)| format!("{}={}", url_encode(k), url_encode(v)))
+            .collect::<Vec<_>>()
+            .join("&");
+        format!("?{}", qs)
+    };
+    let full_url = format!("{}{}{}", base_url, effective_path, query_string);
+
+    // Extract host from the endpoint URL
+    let host = url::Url::parse(base_url)
+        .context("Invalid S3 endpoint URL")?
+        .host_str()
+        .unwrap_or("")
+        .to_string();
+
+    // Build headers for signing
+    let body_bytes = body.unwrap_or(b"");
+    let mut headers: Vec<(String, String)> = vec![("host".to_string(), host)];
+    for (k, v) in extra_headers {
+        headers.push((k.to_string(), v.to_string()));
+    }
+
+    // Sign the request
+    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+    let signing_params = SigningParams::from_credentials(&ctx.credentials, &ctx.region, "s3", &datetime);
+
+    let qs_for_signing = if query_params.is_empty() {
+        String::new()
+    } else {
+        query_params
+            .iter()
+            .map(|(k, v)| format!("{}={}", k, v))
+            .collect::<Vec<_>>()
+            .join("&")
+    };
+
+    sigv4::sign_request(
+        method,
+        &effective_path,
+        &qs_for_signing,
+        &mut headers,
+        body_bytes,
+        &signing_params,
+    )?;
+
+    // Build the HTTP request
+    let mut request = HttpRequest::new(method, &full_url);
+    for (k, v) in &headers {
+        request.add_header(k, v);
+    }
+    if !body_bytes.is_empty() {
+        request.body = body_bytes.to_vec();
+    }
+
+    if ctx.debug {
+        eprintln!("[debug] S3 bucket API call: {} {}", method, full_url);
+    }
+
+    // Send the request
+    let client = HttpClient::new()?;
+    let response = client.send(&request).await?;
+
+    if ctx.debug {
+        eprintln!("[debug] S3 response status: {}", response.status);
+    }
+
+    Ok(response)
+}
+
+/// URL-encode a query parameter value for use in S3 API URLs.
+fn url_encode(input: &str) -> String {
+    use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
+    const ENCODE_SET: &AsciiSet = &NON_ALPHANUMERIC
+        .remove(b'-')
+        .remove(b'_')
+        .remove(b'.')
+        .remove(b'~');
+    utf8_percent_encode(input, ENCODE_SET).to_string()
+}
+
 // ---------------------------------------------------------------------------
 // Subcommand handlers
 // ---------------------------------------------------------------------------
@@ -416,16 +538,16 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_ls_with_path_returns_not_yet_implemented() {
-        // ls with a path arg should fail as not yet implemented
+    fn test_dispatch_ls_with_invalid_path_returns_error() {
+        // ls with an invalid (non-s3://) path arg should fail with a parse error
         let ctx = dummy_context();
         let rt = tokio::runtime::Runtime::new().unwrap();
-        let args = vec!["s3://my-bucket/".to_string()];
+        let args = vec!["not-an-s3-url".to_string()];
         let result = rt.block_on(dispatch_s3_subcommand("ls", &args, &ctx));
         assert!(result.is_err());
         assert!(
-            result.unwrap_err().to_string().contains("s3 ls with path argument is not yet implemented"),
-            "Should indicate ls with path is not yet implemented"
+            result.unwrap_err().to_string().contains("Invalid S3 URL"),
+            "Should indicate invalid S3 URL"
         );
     }
 

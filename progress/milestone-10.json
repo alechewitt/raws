@@ -23,8 +23,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["ListObjectsV2 with pagination, virtual-hosted style, PRE prefixes, --recursive support, URL-encoded query params, 24 tests, E2E verified"]
   },
   {
     "id": "s3-cp-upload",
