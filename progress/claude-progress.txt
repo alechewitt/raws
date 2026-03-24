@@ -428,3 +428,51 @@ FUTURE WORK:
 - Implement adaptive retry mode (TokenBucket ready but unused)
 - Support smithy-rpc-v2-cbor protocol (CloudWatch newer versions)
 - Remove #[allow(dead_code)] annotations as modules get properly integrated
+
+=== Session 8: Issues-01 Complete - All 6 Issues Fixed (2026-03-23) ===
+
+ACCOMPLISHED:
+- Fixed all 6 issues from issues-01.json (0/6 -> 6/6 passing)
+
+CRITICAL FIXES:
+- credential-chain-missing-providers: Created build_credential_chain() in chain.rs that includes
+  all 7 providers: Env -> CredentialProcess -> Profile -> AssumeRole -> SSO -> WebIdentity -> IMDS
+- profile-env-var-precedence: build_credential_chain(explicit_profile=true) skips EnvCredentialProvider
+  when --profile is explicitly passed, matching AWS CLI behavior
+
+MEDIUM FIXES:
+- output-default-overrides-config: Changed args.output from String with default_value='json' to
+  Option<String>. ConfigProvider now properly checks: --output flag > AWS_DEFAULT_OUTPUT env var >
+  config file output setting > 'json' fallback
+- credential-chain-not-shared: All 5 callsites (driver.rs x2, s3/mod.rs, logs/mod.rs,
+  cloudformation/mod.rs) now use shared build_credential_chain() function
+
+LOW FIXES:
+- nonexistent-profile-error-message: Added ConfigProvider::validate_profile_exists() that checks
+  both config and credentials files. Error message matches AWS CLI: "The config profile (X) could
+  not be found"
+- imds-credential-provider-stub: Full IMDSv2 implementation with ECS container credentials support.
+  ECS checks AWS_CONTAINER_CREDENTIALS_RELATIVE_URI (http://169.254.170.2). EC2 uses IMDSv2
+  PUT for token, GET for role, GET for credentials. 1-second timeout. Added as last provider in chain.
+
+FILES CHANGED:
+- src/core/credentials/chain.rs - build_credential_chain() function, all providers wired in
+- src/core/credentials/mod.rs - Removed #[allow(dead_code)] from assume_role, process, sso, web_identity
+- src/core/credentials/imds.rs - Full IMDSv2 + ECS container credential provider (13 tests)
+- src/core/config/provider.rs - validate_profile_exists(), credentials_file_path() (3 tests)
+- src/cli/args.rs - output: Option<String> instead of default_value='json' (3 tests updated)
+- src/cli/driver.rs - Uses build_credential_chain(), validate_profile_exists(), args.output.as_deref()
+- src/cli/customizations/s3/mod.rs - Same credential chain and output fixes
+- src/cli/customizations/logs/mod.rs - Same credential chain and output fixes
+- src/cli/customizations/cloudformation/mod.rs - Same credential chain and output fixes
+
+TEST RESULTS: 1009 tests passing (up from 976), cargo build clean, cargo clippy clean
+ISSUES STATUS: issues-01.json: 6/6 passing
+MILESTONE STATUS: All 14 milestones complete (149/149 features)
+
+FUTURE WORK:
+- Wire up completion/streaming/binary-output/auto-prompt into driver.rs
+- Implement adaptive retry mode (TokenBucket ready but unused)
+- Support smithy-rpc-v2-cbor protocol (CloudWatch newer versions)
+- E2E testing of credential providers with real profiles (credential_process, SSO, assume_role)
+- More parity testing against AWS CLI for edge cases

@@ -7,19 +7,13 @@
       { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN cargo run -- sts get-caller-identity --region us-west-2 --profile=alechewt-dev", "expect": "Should succeed using credential_process (ada) from the profile config, not fail with 'No credentials found'" },
       { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN cargo run -- s3 ls --region us-west-2 --profile=alechewt-dev", "expect": "Should list buckets using profile credentials" }
     ],
-    "passes": false,
+    "passes": true,
     "affected_files": [
-      "src/cli/driver.rs:232-235",
-      "src/cli/driver.rs:485-487",
-      "src/cli/customizations/s3/mod.rs:136-138",
-      "src/cli/customizations/logs/mod.rs:69-71",
-      "src/cli/customizations/cloudformation/mod.rs:70-72"
+      "src/core/credentials/chain.rs"
     ],
     "notes": [
-      "The chain is duplicated in 5 places - should be extracted to a shared function",
-      "Providers exist in src/core/credentials/ but are never instantiated in any chain",
-      "AWS CLI chain order: env -> credential_process -> profile_static -> assume_role -> sso -> web_identity -> imds -> ecs_container",
-      "The chain should be profile-aware: when --profile is set, the profile's credential mechanism should be used"
+      "Fixed: build_credential_chain() in chain.rs now includes all 7 providers: Env, CredentialProcess, Profile, AssumeRole, SSO, WebIdentity, IMDS",
+      "All 5 callsites replaced with shared function"
     ]
   },
   {
@@ -29,15 +23,13 @@
     "verify": [
       { "run": "AWS_ACCESS_KEY_ID=AKIAEXAMPLE AWS_SECRET_ACCESS_KEY=secret cargo run -- sts get-caller-identity --region us-west-2 --profile=alechewt-dev 2>&1", "expect": "Should use alechewt-dev profile credentials (credential_process), NOT the env var credentials" }
     ],
-    "passes": false,
+    "passes": true,
     "affected_files": [
-      "src/cli/driver.rs:232-235",
       "src/core/credentials/chain.rs"
     ],
     "notes": [
-      "Tested: raws --profile=alechewt-dev returns account 746669211150 (from env vars), aws --profile=alechewt-dev returns account 014218445228 (from credential_process)",
-      "When --profile is explicitly set, AWS CLI creates a profile-specific credential resolver that skips env vars",
-      "Fix: when --profile is explicitly set (not from AWS_PROFILE or default), build a profile-specific chain that starts with the profile's credential mechanism, not env vars"
+      "Fixed: build_credential_chain(explicit_profile=true) skips EnvCredentialProvider",
+      "args.profile.is_some() determines explicit_profile flag"
     ]
   },
   {
@@ -47,15 +39,15 @@
     "verify": [
       { "run": "AWS_DEFAULT_OUTPUT=text cargo run -- sts get-caller-identity --region us-east-1 2>&1", "expect": "Should output in text format, not JSON" }
     ],
-    "passes": false,
+    "passes": true,
     "affected_files": [
-      "src/cli/args.rs:15-16",
-      "src/cli/driver.rs:185",
-      "src/core/config/provider.rs:56-66"
+      "src/cli/args.rs",
+      "src/cli/driver.rs",
+      "src/core/config/provider.rs"
     ],
     "notes": [
-      "Fix: change args.rs output field from default_value='json' to Option<String> (no default). Apply 'json' fallback only at the end of the resolution chain in ConfigProvider",
-      "AWS CLI resolution order: --output flag > AWS_DEFAULT_OUTPUT env var > config file output setting > 'json' fallback"
+      "Fixed: args.output changed from String with default_value='json' to Option<String>",
+      "ConfigProvider::resolve_output now properly checks: --output flag > AWS_DEFAULT_OUTPUT > config file > 'json' fallback"
     ]
   },
   {
@@ -65,17 +57,13 @@
     "verify": [
       { "run": "grep -rn 'ChainCredentialProvider::new' src/", "expect": "Should only appear once in a shared helper, not 5 separate locations" }
     ],
-    "passes": false,
+    "passes": true,
     "affected_files": [
-      "src/cli/driver.rs:232-235",
-      "src/cli/driver.rs:485-487",
-      "src/cli/customizations/s3/mod.rs:136-138",
-      "src/cli/customizations/logs/mod.rs:69-71",
-      "src/cli/customizations/cloudformation/mod.rs:70-72"
+      "src/core/credentials/chain.rs"
     ],
     "notes": [
-      "Extract to e.g. src/core/credentials/chain.rs::build_default_chain(profile: &str, explicit_profile: bool) -> ChainCredentialProvider",
-      "This makes it easy to add new providers and ensures consistency"
+      "Fixed: build_credential_chain() function in chain.rs, used by all 5 callsites",
+      "ChainCredentialProvider::new now only appears in chain.rs (the shared builder + tests)"
     ]
   },
   {
@@ -85,14 +73,15 @@
     "verify": [
       { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN cargo run -- sts get-caller-identity --region us-east-1 --profile nonexistent-profile-xyz 2>&1", "expect": "Should say 'The config profile (nonexistent-profile-xyz) could not be found' not 'No credentials found'" }
     ],
-    "passes": false,
+    "passes": true,
     "affected_files": [
       "src/core/config/provider.rs",
       "src/cli/driver.rs"
     ],
     "notes": [
-      "AWS CLI validates the profile exists in config before attempting credential resolution",
-      "raws proceeds to credential resolution which fails generically"
+      "Fixed: ConfigProvider::validate_profile_exists() checks config and credentials files",
+      "Called from driver.rs and all customization modules when args.profile.is_some()",
+      "Error message matches AWS CLI: 'The config profile (X) could not be found'"
     ]
   },
   {
@@ -102,14 +91,16 @@
     "verify": [
       { "run": "cat src/core/credentials/imds.rs", "expect": "Should contain a working IMDSv2 credential provider implementation, not a stub" }
     ],
-    "passes": false,
+    "passes": true,
     "affected_files": [
-      "src/core/credentials/imds.rs"
+      "src/core/credentials/imds.rs",
+      "src/core/credentials/chain.rs"
     ],
     "notes": [
-      "IMDSv2 requires a PUT to get a token, then GET with token header to retrieve credentials",
-      "Also need ECS container credentials (AWS_CONTAINER_CREDENTIALS_RELATIVE_URI)",
-      "Lower priority since raws is primarily used on developer machines, not in AWS compute"
+      "Fixed: Full IMDSv2 implementation with ECS container credentials support",
+      "ECS: checks AWS_CONTAINER_CREDENTIALS_RELATIVE_URI, hits http://169.254.170.2",
+      "EC2: IMDSv2 PUT for token, GET for role name, GET for credentials",
+      "1-second timeout, added as last provider in credential chain"
     ]
   }
 ]

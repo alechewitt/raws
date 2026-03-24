@@ -12,8 +12,8 @@ pub struct GlobalArgs {
     pub profile: Option<String>,
 
     /// Output format: json, table, text, yaml, yaml-stream
-    #[arg(long, global = true, default_value = "json")]
-    pub output: String,
+    #[arg(long, global = true)]
+    pub output: Option<String>,
 
     /// Enable debug output
     #[arg(long, global = true)]
@@ -98,7 +98,7 @@ mod tests {
             "raws", "--output", "table", "ec2", "describe-instances",
         ])
         .unwrap();
-        assert_eq!(args.output, "table");
+        assert_eq!(args.output, Some("table".to_string()));
     }
 
     #[test]
@@ -107,7 +107,7 @@ mod tests {
             "raws", "sts", "get-caller-identity",
         ])
         .unwrap();
-        assert_eq!(args.output, "json");
+        assert_eq!(args.output, None);
     }
 
     #[test]
@@ -142,7 +142,7 @@ mod tests {
         .unwrap();
         assert_eq!(args.region, Some("eu-west-1".to_string()));
         assert_eq!(args.profile, Some("prod".to_string()));
-        assert_eq!(args.output, "text");
+        assert_eq!(args.output, Some("text".to_string()));
         assert!(args.debug);
         assert_eq!(args.service, Some("sts".to_string()));
         assert_eq!(args.operation, Some("get-caller-identity".to_string()));

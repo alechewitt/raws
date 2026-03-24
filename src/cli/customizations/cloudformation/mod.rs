@@ -9,9 +9,7 @@ use anyhow::{bail, Context, Result};
 
 use crate::cli::args::GlobalArgs;
 use crate::core::config::provider::ConfigProvider;
-use crate::core::credentials::chain::ChainCredentialProvider;
-use crate::core::credentials::env::EnvCredentialProvider;
-use crate::core::credentials::profile::ProfileCredentialProvider;
+use crate::core::credentials::chain::build_credential_chain;
 use crate::core::credentials::CredentialProvider;
 use crate::core::endpoint::resolver;
 
@@ -52,9 +50,13 @@ async fn handle_deploy(args: &GlobalArgs) -> Result<()> {
     // Load config
     let config = ConfigProvider::new(
         args.region.as_deref(),
-        Some(args.output.as_str()),
+        args.output.as_deref(),
         args.profile.as_deref(),
     )?;
+
+    if args.profile.is_some() {
+        ConfigProvider::validate_profile_exists(&config.profile)?;
+    }
 
     let region = config
         .region
@@ -67,9 +69,8 @@ async fn handle_deploy(args: &GlobalArgs) -> Result<()> {
         .to_string();
 
     // Resolve credentials
-    let mut providers: Vec<Box<dyn CredentialProvider>> = vec![Box::new(EnvCredentialProvider)];
-    providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
-    let chain = ChainCredentialProvider::new(providers);
+    let explicit_profile = args.profile.is_some();
+    let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
     let credentials = chain
         .resolve()
         .context("Failed to resolve AWS credentials")?;

@@ -12,9 +12,7 @@ use crate::cli::formatter;
 use crate::cli::jmespath;
 use crate::core::auth::sigv4::{self, SigningParams};
 use crate::core::config::provider::ConfigProvider;
-use crate::core::credentials::chain::ChainCredentialProvider;
-use crate::core::credentials::env::EnvCredentialProvider;
-use crate::core::credentials::profile::ProfileCredentialProvider;
+use crate::core::credentials::chain::build_credential_chain;
 use crate::core::credentials::CredentialProvider;
 use crate::core::endpoint::resolver;
 use crate::core::http::client::{HttpClient, HttpClientConfig};
@@ -182,9 +180,14 @@ pub async fn run() -> Result<()> {
     // 1. Load config (resolves region, profile, output format)
     let config = ConfigProvider::new(
         args.region.as_deref(),
-        Some(args.output.as_str()),
+        args.output.as_deref(),
         args.profile.as_deref(),
     )?;
+
+    // Validate that an explicitly-specified profile exists
+    if args.profile.is_some() {
+        ConfigProvider::validate_profile_exists(&config.profile)?;
+    }
 
     let region = config
         .region
@@ -229,10 +232,8 @@ pub async fn run() -> Result<()> {
             session_token: None,
         }
     } else {
-        let mut providers: Vec<Box<dyn CredentialProvider>> =
-            vec![Box::new(EnvCredentialProvider)];
-        providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
-        let chain = ChainCredentialProvider::new(providers);
+        let explicit_profile = args.profile.is_some();
+        let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
         let resolved = chain.resolve()
             .context("Failed to resolve AWS credentials")?;
         if args.debug {
@@ -468,9 +469,13 @@ async fn handle_wait_command(
     // Load config (region, credentials)
     let config = ConfigProvider::new(
         args.region.as_deref(),
-        Some(args.output.as_str()),
+        args.output.as_deref(),
         args.profile.as_deref(),
     )?;
+
+    if args.profile.is_some() {
+        ConfigProvider::validate_profile_exists(&config.profile)?;
+    }
 
     let region = config.region.as_deref()
         .ok_or_else(|| anyhow::anyhow!(
@@ -482,9 +487,8 @@ async fn handle_wait_command(
         if args.debug { eprintln!("[debug] --no-sign-request: skipping credential resolution"); }
         crate::core::credentials::Credentials { access_key_id: String::new(), secret_access_key: String::new(), session_token: None }
     } else {
-        let mut providers: Vec<Box<dyn CredentialProvider>> = vec![Box::new(EnvCredentialProvider)];
-        providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
-        let chain = ChainCredentialProvider::new(providers);
+        let explicit_profile = args.profile.is_some();
+        let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
         chain.resolve().context("Failed to resolve AWS credentials")?
     };
 
@@ -2207,7 +2211,7 @@ mod tests {
         );
 
         // Verify the formatted error message that the driver would produce
-        let status = 403;
+        let _status = 403;
         let op_name = "GetCallerIdentity";
         let formatted = format!("An error occurred ({}) when calling the {} operation: {}", code, op_name, message);
         assert!(

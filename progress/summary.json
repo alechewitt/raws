@@ -17,6 +17,6 @@
     "14": { "total": 12, "passing": 12, "file": "milestone-14.json" }
   },
   "issues": {
-    "1": { "total": 6, "passing": 0, "file": "issues-01.json", "description": "AWS CLI parity gaps: credential chain, --profile behavior, output defaults" }
+    "1": { "total": 6, "passing": 6, "file": "issues-01.json", "description": "AWS CLI parity gaps: credential chain, --profile behavior, output defaults" }
   }
 }

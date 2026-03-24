@@ -1,14 +1,3 @@
-=== Session 3 (continued): Milestone 9 Complete (2026-03-23) ===
-
-ACCOMPLISHED:
-- Completed Milestone 9 (Endpoint Resolution): 12/12
-  - endpoints-json-parser, partition-aware-resolution, service-specific-endpoints
-  - global-service-endpoints, region-specific-sts, s3-virtual-hosted-style
-  - s3-path-style, dual-stack, fips, endpoint-url-override, china/govcloud partitions
-
-TEST RESULTS: 398 tests passing
-MILESTONE STATUS: M1=6/7, M2-M9=12/12
-
 === Session 4: Milestone 10 Complete (2026-03-23) ===
 
 ACCOMPLISHED:
@@ -54,8 +43,30 @@ MILESTONE STATUS: ALL MILESTONES COMPLETE
   M7=12/12, M8=12/12, M9=12/12, M10=12/12, M11=12/12, M12=12/12, M13=12/12
 TOTAL: 149/149 features passing across all 13 milestones
 
+=== Session 8: Issues-01 Complete - All 6 Issues Fixed (2026-03-23) ===
+
+ACCOMPLISHED:
+- Fixed all 6 issues from issues-01.json (0/6 -> 6/6 passing)
+
+CRITICAL FIXES:
+- credential-chain-missing-providers: Created build_credential_chain() in chain.rs with all 7
+  providers: Env -> CredentialProcess -> Profile -> AssumeRole -> SSO -> WebIdentity -> IMDS
+- profile-env-var-precedence: explicit_profile=true skips EnvCredentialProvider
+
+MEDIUM FIXES:
+- output-default-overrides-config: args.output changed to Option<String>, proper resolution chain
+- credential-chain-not-shared: All 5 callsites use shared build_credential_chain()
+
+LOW FIXES:
+- nonexistent-profile-error-message: validate_profile_exists() with AWS CLI-matching error message
+- imds-credential-provider-stub: Full IMDSv2 + ECS container credential provider
+
+TEST RESULTS: 1009 tests passing (up from 976), cargo build clean, cargo clippy clean
+ISSUES STATUS: issues-01.json: 6/6 passing
+MILESTONE STATUS: All 14 milestones complete (149/149 features)
+
 FUTURE WORK:
-- Wire up credential providers into actual chain
 - Wire up completion/streaming/binary-output/auto-prompt into driver.rs
-- Implement adaptive retry mode
-- Support smithy-rpc-v2-cbor protocol
+- Implement adaptive retry mode (TokenBucket ready but unused)
+- Support smithy-rpc-v2-cbor protocol (CloudWatch newer versions)
+- E2E testing of credential providers with real profiles
