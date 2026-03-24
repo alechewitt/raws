@@ -314,3 +314,60 @@ DESIGN DECISIONS:
 
 MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12, M8=12/12, M9=12/12, M10=12/12, M11=12/12
 Current milestone: 12 (next to create)
+
+=== Session 5: Milestones 12-13 (2026-03-23) ===
+
+ACCOMPLISHED:
+- Completed Milestone 12 (Customizations Parity): 12/12
+  - configure-get: read config values with dotted name support (12 tests)
+  - configure-set: write to credentials or config file based on key type (8 tests)
+  - configure-list: show config sources with masked credentials (10 tests)
+  - configure-list-profiles: list all profiles from config+credentials, BTreeSet dedup+sort (6 tests)
+  - configure-export-credentials: output in env/env-no-export/json formats (7 tests)
+  - configure-subcommand-dispatch: all 5 subcommands wired into driver, default interactive fallback
+  - s3-presign: SigV4 query string signing, virtual-hosted + path-style for dotted buckets (22 tests)
+  - cloudformation-deploy: CfnClient with query protocol, DescribeStacks/CreateChangeSet/ExecuteChangeSet (21 tests)
+  - logs-tail: LogsClient with JSON protocol, FilterLogEvents, --follow with event dedup (32 tests)
+  - ec2-wait-enhancements: WaiterProgress with generic Write, evaluate_acceptors_detailed (12 tests)
+  - sts-decode-authorization-message: post-processing hook pretty-prints decoded JSON (5 tests)
+  - route53-alias-customizations: strips /hostedzone/, /delegationset/, /change/ prefixes (8 tests)
+
+- Started Milestone 13 (Full Compatibility): 3/12
+  - credential-process-provider: executes command, parses JSON credentials, added to all chains (9 tests)
+  - no-sign-request: --no-sign-request skips SigV4 signing in all dispatchers (6 tests)
+  - exit-code-parity: CliExitError enum, classify_exit_code, SIGINT handler exits 130 (13 tests)
+
+- Fixed flaky export-credentials tests (refactored to avoid env var races)
+
+NEW FILES:
+- src/cli/customizations/cloudformation/mod.rs + deploy.rs - CloudFormation deploy command
+- src/cli/customizations/logs/mod.rs + tail.rs - CloudWatch Logs tail command
+- src/cli/customizations/route53.rs - Route53 parameter prefix stripping
+- src/cli/customizations/s3/presign.rs - S3 presigned URL generation
+- src/core/credentials/process.rs - credential_process support
+- progress/milestone-12.json, progress/milestone-13.json
+
+TEST RESULTS:
+- 799 tests passing (up from 639 after M11)
+- cargo build succeeds
+- No flaky tests remaining
+
+DESIGN DECISIONS:
+- Configure subcommands share existing INI read/write infrastructure
+- S3 presign builds SigV4 query string params directly (no HTTP call needed)
+- CloudFormation deploy makes raw query protocol calls (no service model needed)
+- Logs tail uses JSON protocol (X-Amz-Target header) with polling loop
+- WaiterProgress uses generic Write for testability (stderr in prod, Vec<u8> in tests)
+- CliExitError: 3-tier classification (downcast -> RawsError -> message heuristic)
+- credential_process: uses sh -c for command execution, reads from both config and credentials files
+
+MILESTONE STATUS: M1=6/7, M2-M12=12/12, M13=3/12
+Current milestone: 13 (Full Compatibility)
+
+NEXT SESSION PRIORITIES:
+1. M13: YAML output format
+2. M13: Assume-role credential provider
+3. M13: SSO credential provider
+4. M13: Web identity token provider
+5. M13: Shell completion
+6. M13: Response streaming and binary output

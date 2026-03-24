@@ -18,17 +18,32 @@ ACCOMPLISHED:
   - 196 new tests across 8 new S3 module files
 
 - Completed Milestone 11 (Robustness): 12/12
-  - retry-exponential-backoff: classify_error(), should_retry(), calculate_backoff() with splitmix jitter
-  - retry-integration: dispatch_with_retry() wraps all 5 protocol dispatchers
-  - adaptive-retry-mode: Legacy/Standard/Adaptive with token bucket
-  - waiter-support: load_waiters(), evaluate_acceptors(), minimal JMESPath
-  - waiter-cli-dispatch: handle_wait_command() for `raws <service> wait <name>`
-  - connection/request-timeout: HttpClientConfig, --cli-connect-timeout, --cli-read-timeout
-  - network-error-handling: classify_network_error() with user-friendly messages
-  - signing-key-cache: Mutex-based cache by date/region/service/secret_key
-  - max-attempts/retry-mode config: env vars + ~/.aws/config resolution
-  - s3-transfer-retry: per-part retry with 3 attempts, exponential backoff
+  - retry-exponential-backoff, adaptive-retry-mode, waiter-support
+  - connection/request-timeout, network-error-handling, signing-key-cache
+  - max-attempts/retry-mode config, s3-transfer-retry
 
 TEST RESULTS: 639 tests passing (up from 398)
 MILESTONE STATUS: M1=6/7, M2-M11=12/12
-Current milestone: 12 (next to create)
+
+=== Session 5: Milestones 12-13 (2026-03-23) ===
+
+ACCOMPLISHED:
+- Completed Milestone 12 (Customizations Parity): 12/12
+  - configure get/set/list/list-profiles/export-credentials + dispatch
+  - s3 presign (SigV4 query string signing)
+  - cloudformation deploy (CfnClient with query protocol)
+  - logs tail (LogsClient with JSON protocol, --follow)
+  - waiter progress enhancements (detailed failure messages)
+  - sts decode-authorization-message (pretty-print decoded JSON)
+  - route53 alias customizations (strip /hostedzone/ prefix)
+
+- Started Milestone 13 (Full Compatibility): 3/12
+  - credential-process-provider (execute command, parse JSON)
+  - --no-sign-request (skip signing for anonymous access)
+  - exit-code-parity (0/1/2/130/255 matching AWS CLI)
+
+TEST RESULTS: 799 tests passing (up from 639)
+MILESTONE STATUS: M1=6/7, M2-M12=12/12, M13=3/12
+Current milestone: 13 (Full Compatibility)
+
+NEXT: YAML output, assume-role, SSO, web-identity, shell completion, streaming
