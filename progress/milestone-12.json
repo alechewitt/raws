@@ -86,8 +86,8 @@
         "cargo build  # verify it compiles",
         "raws cloudformation deploy --help 2>&1 || true  # should show usage"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CfnClient with query protocol. DescribeStacks/CreateChangeSet/DescribeChangeSet/ExecuteChangeSet. 21 unit tests."
     },
     {
       "id": "logs-tail",

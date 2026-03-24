@@ -465,13 +465,21 @@ fn resolve_export_credentials(profile: &str) -> Result<(String, String, Option<S
 /// Build the output string for `configure export-credentials`, separated for testability.
 fn build_export_credentials_output(profile: &str, format: &str) -> Result<String> {
     let (access_key, secret_key, session_token) = resolve_export_credentials(profile)?;
+    format_export_credentials(&access_key, &secret_key, session_token.as_deref(), format)
+}
 
+fn format_export_credentials(
+    access_key: &str,
+    secret_key: &str,
+    session_token: Option<&str>,
+    format: &str,
+) -> Result<String> {
     match format {
         "env" => {
             let mut out = String::new();
             out.push_str(&std::format!("export AWS_ACCESS_KEY_ID={}\n", access_key));
             out.push_str(&std::format!("export AWS_SECRET_ACCESS_KEY={}\n", secret_key));
-            if let Some(token) = &session_token {
+            if let Some(token) = session_token {
                 out.push_str(&std::format!("export AWS_SESSION_TOKEN={}\n", token));
             }
             Ok(out)
@@ -480,7 +488,7 @@ fn build_export_credentials_output(profile: &str, format: &str) -> Result<String
             let mut out = String::new();
             out.push_str(&std::format!("AWS_ACCESS_KEY_ID={}\n", access_key));
             out.push_str(&std::format!("AWS_SECRET_ACCESS_KEY={}\n", secret_key));
-            if let Some(token) = &session_token {
+            if let Some(token) = session_token {
                 out.push_str(&std::format!("AWS_SESSION_TOKEN={}\n", token));
             }
             Ok(out)
@@ -489,13 +497,11 @@ fn build_export_credentials_output(profile: &str, format: &str) -> Result<String
             let mut out = String::from("{\n");
             out.push_str(&std::format!("    \"AccessKeyId\": \"{}\",\n", access_key));
             out.push_str(&std::format!("    \"SecretAccessKey\": \"{}\",\n", secret_key));
-            match &session_token {
+            match session_token {
                 Some(token) => {
                     out.push_str(&std::format!("    \"SessionToken\": \"{}\"\n", token));
                 }
                 None => {
-                    // Remove trailing comma from SecretAccessKey line
-                    // Rebuild without trailing comma
                     out.clear();
                     out.push_str("{\n");
                     out.push_str(&std::format!("    \"AccessKeyId\": \"{}\",\n", access_key));
@@ -1370,155 +1376,59 @@ mod tests {
     }
 
     // --- configure export-credentials tests ---
+    // These tests use format_export_credentials directly to avoid env var races.
 
     #[test]
-    fn test_build_export_credentials_env_format() {
-        // Set up env vars for this test
-        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
-        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
-        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
-
-        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIATESTKEY123");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretTestKey456");
-        std::env::set_var("AWS_SESSION_TOKEN", "testToken789");
-
-        let result = build_export_credentials_output("default", "env").unwrap();
+    fn test_format_export_credentials_env_format() {
+        let result = format_export_credentials(
+            "AKIATESTKEY123", "secretTestKey456", Some("testToken789"), "env"
+        ).unwrap();
         assert!(result.contains("export AWS_ACCESS_KEY_ID=AKIATESTKEY123"));
         assert!(result.contains("export AWS_SECRET_ACCESS_KEY=secretTestKey456"));
         assert!(result.contains("export AWS_SESSION_TOKEN=testToken789"));
-
-        // Restore
-        match saved_ak {
-            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
-            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
-        }
-        match saved_sk {
-            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
-            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
-        }
-        match saved_st {
-            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
-            None => std::env::remove_var("AWS_SESSION_TOKEN"),
-        }
     }
 
     #[test]
-    fn test_build_export_credentials_env_no_export_format() {
-        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
-        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
-        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
-
-        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIATEST");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretTest");
-        std::env::remove_var("AWS_SESSION_TOKEN");
-
-        let result = build_export_credentials_output("default", "env-no-export").unwrap();
+    fn test_format_export_credentials_env_no_export_format() {
+        let result = format_export_credentials(
+            "AKIATEST", "secretTest", None, "env-no-export"
+        ).unwrap();
         assert!(result.contains("AWS_ACCESS_KEY_ID=AKIATEST\n"));
         assert!(result.contains("AWS_SECRET_ACCESS_KEY=secretTest\n"));
         assert!(!result.contains("export"));
         assert!(!result.contains("SESSION_TOKEN"));
-
-        // Restore
-        match saved_ak {
-            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
-            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
-        }
-        match saved_sk {
-            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
-            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
-        }
-        match saved_st {
-            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
-            None => std::env::remove_var("AWS_SESSION_TOKEN"),
-        }
     }
 
     #[test]
-    fn test_build_export_credentials_json_format() {
-        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
-        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
-        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
-
-        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIAJSON");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretJson");
-        std::env::set_var("AWS_SESSION_TOKEN", "tokenJson");
-
-        let result = build_export_credentials_output("default", "json").unwrap();
+    fn test_format_export_credentials_json_format() {
+        let result = format_export_credentials(
+            "AKIAJSON", "secretJson", Some("tokenJson"), "json"
+        ).unwrap();
         assert!(result.contains("\"AccessKeyId\": \"AKIAJSON\""));
         assert!(result.contains("\"SecretAccessKey\": \"secretJson\""));
         assert!(result.contains("\"SessionToken\": \"tokenJson\""));
         assert!(result.starts_with('{'));
         assert!(result.trim_end().ends_with('}'));
-
-        // Restore
-        match saved_ak {
-            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
-            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
-        }
-        match saved_sk {
-            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
-            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
-        }
-        match saved_st {
-            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
-            None => std::env::remove_var("AWS_SESSION_TOKEN"),
-        }
     }
 
     #[test]
-    fn test_build_export_credentials_json_no_token() {
-        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
-        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
-        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
-
-        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIANOTOKEN");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretNoToken");
-        std::env::remove_var("AWS_SESSION_TOKEN");
-
-        let result = build_export_credentials_output("default", "json").unwrap();
+    fn test_format_export_credentials_json_no_token() {
+        let result = format_export_credentials(
+            "AKIANOTOKEN", "secretNoToken", None, "json"
+        ).unwrap();
         assert!(result.contains("\"AccessKeyId\": \"AKIANOTOKEN\""));
         assert!(result.contains("\"SecretAccessKey\": \"secretNoToken\""));
         assert!(!result.contains("SessionToken"));
         // Verify valid JSON structure: no trailing comma before }
         assert!(!result.contains(",\n}"));
-
-        // Restore
-        match saved_ak {
-            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
-            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
-        }
-        match saved_sk {
-            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
-            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
-        }
-        match saved_st {
-            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
-            None => std::env::remove_var("AWS_SESSION_TOKEN"),
-        }
     }
 
     #[test]
-    fn test_build_export_credentials_unknown_format() {
-        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
-        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
-
-        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIATEST");
-        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secret");
-
-        let result = build_export_credentials_output("default", "xml");
+    fn test_format_export_credentials_unknown_format() {
+        let result = format_export_credentials("AKIATEST", "secret", None, "xml");
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("Unknown format 'xml'"));
-
-        // Restore
-        match saved_ak {
-            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
-            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
-        }
-        match saved_sk {
-            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
-            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
-        }
     }
 
     #[test]

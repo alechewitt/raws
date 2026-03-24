@@ -4,6 +4,7 @@ use std::path::Path;
 
 use crate::cli::args::GlobalArgs;
 use crate::cli::commands::configure;
+use crate::cli::customizations::cloudformation as cfn_commands;
 use crate::cli::customizations::s3 as s3_commands;
 use crate::cli::formatter;
 use crate::cli::jmespath;
@@ -106,6 +107,12 @@ pub async fn run() -> Result<()> {
             bail!("Usage: raws {service} <operation> [--params...]\n\nMissing operation name.");
         }
     };
+
+    // Handle "raws cloudformation deploy": custom high-level command that
+    // orchestrates changeset creation, polling, and execution.
+    if service == "cloudformation" && cfn_commands::is_custom_command(operation) {
+        return cfn_commands::handle_cloudformation_command(&args, operation).await;
+    }
 
     // Load the service model early so help commands work without region/credentials.
     // Map CLI service names to model directory names (e.g., s3api -> s3)
