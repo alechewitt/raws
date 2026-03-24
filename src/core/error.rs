@@ -1,6 +1,7 @@
 use std::fmt;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum RawsError {
     Credential(String),
     Config(String),
@@ -43,24 +44,25 @@ impl std::error::Error for RawsError {}
 
 /// CLI exit error types for mapping to AWS CLI-compatible exit codes.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum CliExitError {
     /// HTTP 4xx client error -> exit 1
-    ClientError(String),
+    Client(String),
     /// Usage/argument error (missing args, unknown service) -> exit 2
-    UsageError(String),
+    Usage(String),
     /// Waiter failure or timeout -> exit 255
-    WaiterError(String),
+    Waiter(String),
     /// HTTP 5xx server error or internal error -> exit 255
-    ServerError(String),
+    Server(String),
 }
 
 impl fmt::Display for CliExitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CliExitError::ClientError(msg) => write!(f, "{msg}"),
-            CliExitError::UsageError(msg) => write!(f, "{msg}"),
-            CliExitError::WaiterError(msg) => write!(f, "{msg}"),
-            CliExitError::ServerError(msg) => write!(f, "{msg}"),
+            CliExitError::Client(msg) => write!(f, "{msg}"),
+            CliExitError::Usage(msg) => write!(f, "{msg}"),
+            CliExitError::Waiter(msg) => write!(f, "{msg}"),
+            CliExitError::Server(msg) => write!(f, "{msg}"),
         }
     }
 }
@@ -79,18 +81,16 @@ pub fn classify_exit_code(err: &anyhow::Error) -> i32 {
     // 1. Check for explicit CliExitError
     if let Some(cli_err) = err.downcast_ref::<CliExitError>() {
         return match cli_err {
-            CliExitError::ClientError(_) => 1,
-            CliExitError::UsageError(_) => 2,
-            CliExitError::WaiterError(_) => 255,
-            CliExitError::ServerError(_) => 255,
+            CliExitError::Client(_) => 1,
+            CliExitError::Usage(_) => 2,
+            CliExitError::Waiter(_) => 255,
+            CliExitError::Server(_) => 255,
         };
     }
 
     // 2. Check for RawsError::Service with HTTP status
-    if let Some(raws_err) = err.downcast_ref::<RawsError>() {
-        if let RawsError::Service { status, .. } = raws_err {
-            return if *status >= 400 && *status < 500 { 1 } else { 255 };
-        }
+    if let Some(RawsError::Service { status, .. }) = err.downcast_ref::<RawsError>() {
+        return if *status >= 400 && *status < 500 { 1 } else { 255 };
     }
 
     // 3. Message-based heuristic fallback
@@ -123,25 +123,25 @@ mod tests {
 
     #[test]
     fn test_classify_client_error() {
-        let err = anyhow::Error::new(CliExitError::ClientError("Not found".into()));
+        let err = anyhow::Error::new(CliExitError::Client("Not found".into()));
         assert_eq!(classify_exit_code(&err), 1);
     }
 
     #[test]
     fn test_classify_usage_error() {
-        let err = anyhow::Error::new(CliExitError::UsageError("Missing arg".into()));
+        let err = anyhow::Error::new(CliExitError::Usage("Missing arg".into()));
         assert_eq!(classify_exit_code(&err), 2);
     }
 
     #[test]
     fn test_classify_waiter_error() {
-        let err = anyhow::Error::new(CliExitError::WaiterError("Waiter failed".into()));
+        let err = anyhow::Error::new(CliExitError::Waiter("Waiter failed".into()));
         assert_eq!(classify_exit_code(&err), 255);
     }
 
     #[test]
     fn test_classify_server_error() {
-        let err = anyhow::Error::new(CliExitError::ServerError("Internal".into()));
+        let err = anyhow::Error::new(CliExitError::Server("Internal".into()));
         assert_eq!(classify_exit_code(&err), 255);
     }
 

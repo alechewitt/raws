@@ -60,7 +60,7 @@ impl HttpClient {
             builder = builder.body(request.body.clone());
         }
 
-        let response = builder.send().await.map_err(|e| classify_network_error(e))?;
+        let response = builder.send().await.map_err(classify_network_error)?;
         let status = response.status().as_u16();
 
         let mut headers = HashMap::new();

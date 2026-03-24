@@ -292,7 +292,7 @@ fn get_role_credentials(config: &SsoConfig, token: &str) -> Result<Credentials> 
             .await
             .context("Failed to read SSO GetRoleCredentials response body")?;
 
-        if status < 200 || status >= 300 {
+        if !(200..300).contains(&status) {
             bail!(
                 "SSO GetRoleCredentials failed with status {}: {}",
                 status,

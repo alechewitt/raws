@@ -255,7 +255,7 @@ pub fn parse_waiters(json_str: &str) -> Result<HashMap<String, WaiterConfig>> {
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|a| parse_acceptor(a))
+                    .filter_map(parse_acceptor)
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
@@ -315,6 +315,7 @@ fn parse_acceptor(value: &Value) -> Option<Acceptor> {
 
 /// Evaluate acceptors in order against a response. Returns the state of the first matching
 /// acceptor, or `None` if no acceptor matches (implying an implicit retry).
+#[allow(dead_code)]
 pub fn evaluate_acceptors(
     acceptors: &[Acceptor],
     response: &Value,
@@ -484,7 +485,7 @@ fn split_jmespath_segments(expr: &str) -> Vec<String> {
             '[' => {
                 // Consume until ']'
                 current.push('[');
-                while let Some(inner) = chars.next() {
+                for inner in chars.by_ref() {
                     current.push(inner);
                     if inner == ']' {
                         break;

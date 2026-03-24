@@ -70,7 +70,7 @@ fn base64_decode(input: &str) -> Result<Vec<u8>> {
     }
 
     // Validate length: base64 encoded data length must be a multiple of 4
-    if cleaned.len() % 4 != 0 {
+    if !cleaned.len().is_multiple_of(4) {
         bail!(
             "Invalid base64 input: length {} is not a multiple of 4",
             cleaned.len()

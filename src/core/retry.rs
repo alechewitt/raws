@@ -79,7 +79,7 @@ const THROTTLE_ERROR_CODES: &[&str] = &[
 /// * `status`           -- HTTP status code (ignored when `is_network_error` is true).
 /// * `error_code`       -- Optional AWS error code from the response body.
 /// * `is_network_error` -- `true` when the request never received a response
-///                         (connection refused, timeout, DNS failure, etc).
+///   (connection refused, timeout, DNS failure, etc).
 pub fn classify_error(
     status: u16,
     error_code: Option<&str>,
@@ -198,7 +198,7 @@ const MAX_DELAY_MS: u64 = 20_000;
 /// This is useful for tests that want to verify bounds without randomness.
 pub fn calculate_backoff_max(attempt: u32, base_delay_ms: u64, max_delay_ms: u64) -> Duration {
     // Guard against overflow: cap the shift to 63.
-    let shift = (attempt.saturating_sub(1)).min(63) as u32;
+    let shift = (attempt.saturating_sub(1)).min(63);
     let power = 1u64.checked_shl(shift).unwrap_or(u64::MAX);
     let computed = base_delay_ms.saturating_mul(power);
     let capped = computed.min(max_delay_ms);
@@ -245,6 +245,7 @@ pub fn calculate_backoff(attempt: u32, base_delay_ms: u64, max_delay_ms: u64) ->
 /// * Starts with 500 tokens.
 /// * Costs 5 tokens per retry after a throttling error.
 /// * Refills 1 token per successful request.
+#[allow(dead_code)]
 pub struct TokenBucket {
     tokens: AtomicI64,
     max_tokens: i64,
@@ -252,6 +253,7 @@ pub struct TokenBucket {
     refill_amount: i64,
 }
 
+#[allow(dead_code)]
 impl TokenBucket {
     /// Create a new token bucket with default parameters.
     pub fn new() -> Self {

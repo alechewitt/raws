@@ -161,7 +161,7 @@ impl AssumeRoleProvider {
                 .await
                 .context("Failed to read STS AssumeRole response body")?;
 
-            if status < 200 || status >= 300 {
+            if !(200..300).contains(&status) {
                 bail!(
                     "STS AssumeRole failed with status {}: {}",
                     status,
@@ -180,7 +180,7 @@ impl AssumeRoleProvider {
 fn url_encode(value: &str) -> String {
     percent_encoding::utf8_percent_encode(
         value,
-        &percent_encoding::NON_ALPHANUMERIC,
+        percent_encoding::NON_ALPHANUMERIC,
     )
     .to_string()
 }

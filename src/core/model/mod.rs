@@ -9,6 +9,7 @@ pub struct ServiceModel {
     pub metadata: ServiceMetadata,
     pub operations: HashMap<String, Operation>,
     pub shapes: HashMap<String, Value>,
+    #[allow(dead_code)]
     pub raw: Value,
 }
 
@@ -17,7 +18,9 @@ pub struct ServiceMetadata {
     pub api_version: String,
     pub endpoint_prefix: String,
     pub protocol: String,
+    #[allow(dead_code)]
     pub service_id: String,
+    #[allow(dead_code)]
     pub signature_version: String,
     pub target_prefix: Option<String>,
     pub json_version: Option<String>,
@@ -32,6 +35,7 @@ pub struct Operation {
     pub input_shape: Option<String>,
     pub output_shape: Option<String>,
     pub result_wrapper: Option<String>,
+    #[allow(dead_code)]
     pub errors: Vec<String>,
     pub documentation: Option<String>,
 }

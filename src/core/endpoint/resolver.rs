@@ -39,6 +39,7 @@ pub struct EndpointVariantTags {
 /// Called from driver.rs with (endpoint_prefix, region, global_endpoint).
 /// The `global_endpoint` parameter from the service model metadata is used as
 /// a fallback hint; endpoints.json is the primary source of truth.
+#[allow(dead_code)]
 pub fn resolve_endpoint(
     endpoint_prefix: &str,
     region: &str,
@@ -89,6 +90,7 @@ pub fn resolve_endpoint_with_variants(
 }
 
 /// Resolve an endpoint given parsed endpoints.json data (backward-compatible, no variant tags).
+#[allow(dead_code)]
 pub fn resolve_endpoint_from_data(
     endpoints: &Value,
     service: &str,

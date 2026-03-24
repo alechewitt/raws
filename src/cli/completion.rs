@@ -1,5 +1,4 @@
 use anyhow::{bail, Result};
-use std::path::Path;
 
 use crate::core::model::{loader, pascal_to_kebab};
 
@@ -61,10 +60,7 @@ fn resolve_models_dir() -> std::path::PathBuf {
 /// does not exist, so callers can degrade gracefully.
 pub fn list_services() -> Vec<String> {
     let models_dir = resolve_models_dir();
-    match loader::discover_services(&models_dir) {
-        Ok(services) => services,
-        Err(_) => Vec::new(),
-    }
+    loader::discover_services(&models_dir).unwrap_or_default()
 }
 
 /// List operations for a given service in kebab-case CLI form.
@@ -202,6 +198,7 @@ fn generate_fish_completion() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn test_generate_bash_contains_complete() {

@@ -15,10 +15,12 @@ pub struct PaginatorConfig {
     /// The output field(s) whose values should be aggregated (merged) across pages.
     pub result_key: Vec<String>,
     /// Optional: the input parameter name for limiting page size.
+    #[allow(dead_code)]
     pub limit_key: Option<String>,
     /// Optional: output field indicating if there are more results (e.g., "IsTruncated").
     pub more_results: Option<String>,
     /// Optional: keys that should NOT be aggregated — just use the value from the last page.
+    #[allow(dead_code)]
     pub non_aggregate_keys: Vec<String>,
 }
 

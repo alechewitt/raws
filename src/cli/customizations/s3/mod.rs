@@ -43,6 +43,7 @@ pub struct S3CommandContext {
     /// The resolved S3 endpoint URL (e.g., `https://s3.us-east-1.amazonaws.com`).
     pub endpoint_url: String,
     /// Output format (json, text, table).
+    #[allow(dead_code)]
     pub output_format: String,
     /// Whether debug output is enabled.
     pub debug: bool,
