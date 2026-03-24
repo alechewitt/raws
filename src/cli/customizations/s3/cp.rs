@@ -902,6 +902,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -927,6 +929,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -953,6 +957,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -983,6 +989,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1016,6 +1024,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1045,6 +1055,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1104,6 +1116,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1133,6 +1147,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1163,6 +1179,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1375,6 +1393,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1405,6 +1425,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1435,6 +1457,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();
@@ -1465,6 +1489,8 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+
+            no_sign_request: false,
         };
 
         let rt = tokio::runtime::Runtime::new().unwrap();

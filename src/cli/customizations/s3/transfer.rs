@@ -125,6 +125,7 @@ async fn upload_parts(
         let credentials = ctx.credentials.clone();
         let endpoint_url = ctx.endpoint_url.clone();
         let debug = ctx.debug;
+        let no_sign_request_flag = ctx.no_sign_request;
 
         let handle = tokio::spawn(async move {
             let task_ctx = S3CommandContext {
@@ -133,6 +134,7 @@ async fn upload_parts(
                 endpoint_url,
                 output_format: "json".to_string(),
                 debug,
+                no_sign_request: no_sign_request_flag,
             };
 
             let result =

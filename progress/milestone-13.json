@@ -1,0 +1,90 @@
+{
+  "milestone": 13,
+  "name": "Full Compatibility",
+  "features": [
+    {
+      "id": "yaml-output-format",
+      "description": "Implement --output yaml and --output yaml-stream formatters.",
+      "verify": ["cargo test -- yaml", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "assume-role-credential-provider",
+      "description": "Implement assume-role credential provider that reads role_arn and source_profile from config, calls STS AssumeRole.",
+      "verify": ["cargo test -- assume_role", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "credential-process-provider",
+      "description": "Implement credential_process support: execute command, parse JSON output for credentials.",
+      "verify": ["cargo test -- credential_process", "cargo build"],
+      "passes": true,
+      "notes": "Reads from config and credentials files. Uses sh -c to execute. Added to all credential chains. 9 unit tests."
+    },
+    {
+      "id": "sso-credential-provider",
+      "description": "Implement SSO credential provider that reads sso_start_url, sso_account_id, sso_role_name from config.",
+      "verify": ["cargo test -- sso", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "web-identity-token-provider",
+      "description": "Implement web identity token credential provider for EKS/IRSA.",
+      "verify": ["cargo test -- web_identity", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "ca-bundle-and-proxy-support",
+      "description": "Implement --ca-bundle / AWS_CA_BUNDLE and HTTP_PROXY/HTTPS_PROXY support.",
+      "verify": ["cargo test -- proxy", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "shell-completion",
+      "description": "Implement shell completion generation for bash, zsh, and fish.",
+      "verify": ["cargo test -- completion", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "response-streaming",
+      "description": "Implement response streaming for operations with streaming output shapes.",
+      "verify": ["cargo test -- streaming", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "binary-output-handling",
+      "description": "Implement proper binary output handling for operations that return binary data.",
+      "verify": ["cargo test -- binary_output", "cargo build"],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "exit-code-parity",
+      "description": "Implement exit code parity with AWS CLI: 0 success, 1 client error, 2 usage error, 130 SIGINT, 255 internal/waiter.",
+      "verify": ["cargo test -- exit_code", "cargo build"],
+      "passes": true,
+      "notes": "CliExitError enum, classify_exit_code with downcast + message heuristic. SIGINT handler. 13 unit tests."
+    },
+    {
+      "id": "no-sign-request",
+      "description": "Implement --no-sign-request flag that skips SigV4 signing. Also --no-verify-ssl.",
+      "verify": ["cargo test -- no_sign", "cargo build"],
+      "passes": true,
+      "notes": "Skips credential resolution and signing in all protocol dispatchers and S3 commands. 6 unit tests."
+    },
+    {
+      "id": "cli-auto-prompt",
+      "description": "Implement --cli-auto-prompt for interactive parameter prompting when required parameters are missing.",
+      "verify": ["cargo test -- auto_prompt", "cargo build"],
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

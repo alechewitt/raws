@@ -46,6 +46,8 @@ pub struct S3CommandContext {
     pub output_format: String,
     /// Whether debug output is enabled.
     pub debug: bool,
+    /// Whether to skip SigV4 signing (--no-sign-request).
+    pub no_sign_request: bool,
 }
 
 /// Entry point for S3 high-level commands.
@@ -84,10 +86,14 @@ pub async fn handle_s3_command(args: &GlobalArgs) -> Result<()> {
     if ctx.debug {
         eprintln!("[debug] s3 subcommand={subcommand}");
         eprintln!("[debug] region={} endpoint={}", ctx.region, ctx.endpoint_url);
-        eprintln!(
-            "[debug] credentials resolved: access_key={}...",
-            &ctx.credentials.access_key_id[..8.min(ctx.credentials.access_key_id.len())]
-        );
+        if ctx.no_sign_request {
+            eprintln!("[debug] --no-sign-request: skipping credential resolution");
+        } else {
+            eprintln!(
+                "[debug] credentials resolved: access_key={}...",
+                &ctx.credentials.access_key_id[..8.min(ctx.credentials.access_key_id.len())]
+            );
+        }
     }
 
     // Dispatch to the appropriate subcommand handler
@@ -122,13 +128,15 @@ fn build_s3_context(args: &GlobalArgs) -> Result<S3CommandContext> {
         .unwrap_or("json")
         .to_string();
 
-    // 2. Resolve credentials
-    let mut providers: Vec<Box<dyn CredentialProvider>> = vec![Box::new(EnvCredentialProvider)];
-    providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
-    let chain = ChainCredentialProvider::new(providers);
-    let credentials = chain
-        .resolve()
-        .context("Failed to resolve AWS credentials")?;
+    // 2. Resolve credentials (skip if --no-sign-request)
+    let credentials = if args.no_sign_request {
+        Credentials { access_key_id: String::new(), secret_access_key: String::new(), session_token: None }
+    } else {
+        let mut providers: Vec<Box<dyn CredentialProvider>> = vec![Box::new(EnvCredentialProvider)];
+        providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
+        let chain = ChainCredentialProvider::new(providers);
+        chain.resolve().context("Failed to resolve AWS credentials")?
+    };
 
     // 3. Resolve endpoint URL (with dualstack/FIPS variant support)
     let variant_tags = resolver::EndpointVariantTags {
@@ -151,6 +159,7 @@ fn build_s3_context(args: &GlobalArgs) -> Result<S3CommandContext> {
         endpoint_url,
         output_format,
         debug: args.debug,
+        no_sign_request: args.no_sign_request,
     })
 }
 
@@ -244,33 +253,15 @@ pub async fn s3_api_call(
         headers.push((k.to_string(), v.to_string()));
     }
 
-    // Sign the request
-    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-    let signing_params = SigningParams::from_credentials(
-        &ctx.credentials,
-        &ctx.region,
-        "s3",
-        &datetime,
-    );
-
-    let qs_for_signing = if query_params.is_empty() {
-        String::new()
-    } else {
-        query_params
-            .iter()
-            .map(|(k, v)| format!("{}={}", k, v))
-            .collect::<Vec<_>>()
-            .join("&")
-    };
-
-    sigv4::sign_request(
-        method,
-        uri_path,
-        &qs_for_signing,
-        &mut headers,
-        body_bytes,
-        &signing_params,
-    )?;
+    // Sign the request (skip if --no-sign-request)
+    if !ctx.no_sign_request {
+        let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let signing_params = SigningParams::from_credentials(&ctx.credentials, &ctx.region, "s3", &datetime);
+        let qs_for_signing = if query_params.is_empty() { String::new() } else {
+            query_params.iter().map(|(k, v)| format!("{}={}", k, v)).collect::<Vec<_>>().join("&")
+        };
+        sigv4::sign_request(method, uri_path, &qs_for_signing, &mut headers, body_bytes, &signing_params)?;
+    }
 
     // Build the HTTP request
     let mut request = HttpRequest::new(method, &full_url);
@@ -360,28 +351,15 @@ pub async fn s3_bucket_api_call(
         headers.push((k.to_string(), v.to_string()));
     }
 
-    // Sign the request
-    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-    let signing_params = SigningParams::from_credentials(&ctx.credentials, &ctx.region, "s3", &datetime);
-
-    let qs_for_signing = if query_params.is_empty() {
-        String::new()
-    } else {
-        query_params
-            .iter()
-            .map(|(k, v)| format!("{}={}", k, v))
-            .collect::<Vec<_>>()
-            .join("&")
-    };
-
-    sigv4::sign_request(
-        method,
-        &effective_path,
-        &qs_for_signing,
-        &mut headers,
-        body_bytes,
-        &signing_params,
-    )?;
+    // Sign the request (skip if --no-sign-request)
+    if !ctx.no_sign_request {
+        let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let signing_params = SigningParams::from_credentials(&ctx.credentials, &ctx.region, "s3", &datetime);
+        let qs_for_signing = if query_params.is_empty() { String::new() } else {
+            query_params.iter().map(|(k, v)| format!("{}={}", k, v)).collect::<Vec<_>>().join("&")
+        };
+        sigv4::sign_request(method, &effective_path, &qs_for_signing, &mut headers, body_bytes, &signing_params)?;
+    }
 
     // Build the HTTP request
     let mut request = HttpRequest::new(method, &full_url);
@@ -589,6 +567,7 @@ mod tests {
             endpoint_url: "https://s3.us-east-1.amazonaws.com".to_string(),
             output_format: "json".to_string(),
             debug: false,
+            no_sign_request: false,
         }
     }
 

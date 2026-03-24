@@ -47,6 +47,14 @@ pub struct GlobalArgs {
     #[arg(long, global = true)]
     pub cli_read_timeout: Option<u64>,
 
+    /// Do not sign requests (for anonymous/public access)
+    #[arg(long, global = true)]
+    pub no_sign_request: bool,
+
+    /// Do not verify SSL certificates
+    #[arg(long, global = true)]
+    pub no_verify_ssl: bool,
+
     /// Service name (e.g., sts, s3, ec2)
     pub service: Option<String>,
 
@@ -227,5 +235,42 @@ mod tests {
         .unwrap();
         assert!(!args.use_dualstack_endpoint);
         assert!(!args.use_fips_endpoint);
+    }
+
+    #[test]
+    fn test_global_args_no_sign_request() {
+        let args = GlobalArgs::try_parse_from(["raws", "--no-sign-request", "s3api", "list-objects-v2", "--bucket", "pub"]).unwrap();
+        assert!(args.no_sign_request);
+    }
+
+    #[test]
+    fn test_global_args_no_sign_request_default_false() {
+        let args = GlobalArgs::try_parse_from(["raws", "sts", "get-caller-identity"]).unwrap();
+        assert!(!args.no_sign_request);
+    }
+
+    #[test]
+    fn test_global_args_no_verify_ssl() {
+        let args = GlobalArgs::try_parse_from(["raws", "--no-verify-ssl", "s3api", "list-buckets"]).unwrap();
+        assert!(args.no_verify_ssl);
+    }
+
+    #[test]
+    fn test_global_args_no_verify_ssl_default_false() {
+        let args = GlobalArgs::try_parse_from(["raws", "sts", "get-caller-identity"]).unwrap();
+        assert!(!args.no_verify_ssl);
+    }
+
+    #[test]
+    fn test_global_args_no_sign_and_no_verify_combined() {
+        let args = GlobalArgs::try_parse_from(["raws", "--no-sign-request", "--no-verify-ssl", "s3api", "get-object", "--bucket", "pub", "--key", "k"]).unwrap();
+        assert!(args.no_sign_request);
+        assert!(args.no_verify_ssl);
+    }
+
+    #[test]
+    fn test_global_args_no_sign_request_after_service() {
+        let args = GlobalArgs::try_parse_from(["raws", "s3api", "list-objects-v2", "--no-sign-request", "--bucket", "pub"]).unwrap();
+        assert!(args.no_sign_request);
     }
 }

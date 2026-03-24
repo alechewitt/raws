@@ -218,19 +218,28 @@ pub async fn run() -> Result<()> {
         eprintln!("[debug] input: {input}");
     }
 
-    // 5. Resolve credentials
-    let mut providers: Vec<Box<dyn CredentialProvider>> =
-        vec![Box::new(EnvCredentialProvider)];
-
-    providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
-
-    let chain = ChainCredentialProvider::new(providers);
-    let creds = chain.resolve()
-        .context("Failed to resolve AWS credentials")?;
-
-    if args.debug {
-        eprintln!("[debug] credentials resolved: access_key={}...", &creds.access_key_id[..8.min(creds.access_key_id.len())]);
-    }
+    // 5. Resolve credentials (skip if --no-sign-request)
+    let creds = if args.no_sign_request {
+        if args.debug {
+            eprintln!("[debug] --no-sign-request: skipping credential resolution");
+        }
+        crate::core::credentials::Credentials {
+            access_key_id: String::new(),
+            secret_access_key: String::new(),
+            session_token: None,
+        }
+    } else {
+        let mut providers: Vec<Box<dyn CredentialProvider>> =
+            vec![Box::new(EnvCredentialProvider)];
+        providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
+        let chain = ChainCredentialProvider::new(providers);
+        let resolved = chain.resolve()
+            .context("Failed to resolve AWS credentials")?;
+        if args.debug {
+            eprintln!("[debug] credentials resolved: access_key={}...", &resolved.access_key_id[..8.min(resolved.access_key_id.len())]);
+        }
+        resolved
+    };
 
     // 6. Resolve endpoint URL (with dualstack/FIPS variant support)
     let variant_tags = resolver::EndpointVariantTags {
@@ -316,6 +325,7 @@ pub async fn run() -> Result<()> {
                 args.debug,
                 &retry_config,
                 &http_config,
+                args.no_sign_request,
             )
             .await?;
 
@@ -359,6 +369,7 @@ pub async fn run() -> Result<()> {
             args.debug,
             &retry_config,
             &http_config,
+            args.no_sign_request,
         )
         .await?
     };
@@ -440,12 +451,16 @@ async fn handle_wait_command(
             "No region specified. Use --region, AWS_REGION, or configure a default region."
         ))?;
 
-    // Resolve credentials
-    let mut providers: Vec<Box<dyn CredentialProvider>> =
-        vec![Box::new(EnvCredentialProvider)];
-    providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
-    let chain = ChainCredentialProvider::new(providers);
-    let creds = chain.resolve().context("Failed to resolve AWS credentials")?;
+    // Resolve credentials (skip if --no-sign-request)
+    let creds = if args.no_sign_request {
+        if args.debug { eprintln!("[debug] --no-sign-request: skipping credential resolution"); }
+        crate::core::credentials::Credentials { access_key_id: String::new(), secret_access_key: String::new(), session_token: None }
+    } else {
+        let mut providers: Vec<Box<dyn CredentialProvider>> = vec![Box::new(EnvCredentialProvider)];
+        providers.push(Box::new(ProfileCredentialProvider::new(&config.profile)));
+        let chain = ChainCredentialProvider::new(providers);
+        chain.resolve().context("Failed to resolve AWS credentials")?
+    };
 
     // Resolve endpoint
     let model_service = resolve_service_name(service);
@@ -492,7 +507,7 @@ async fn handle_wait_command(
         }
 
         let outcome = dispatch_request(
-            protocol, &endpoint_url, service_model, op, &input, &creds, region, args.debug, &http_config,
+            protocol, &endpoint_url, service_model, op, &input, &creds, region, args.debug, &http_config, args.no_sign_request,
         ).await;
 
         // Evaluate acceptors with detailed match info
@@ -564,6 +579,7 @@ async fn dispatch_with_retry(
     debug: bool,
     retry_config: &retry::RetryConfig,
     http_config: &HttpClientConfig,
+    no_sign_request: bool,
 ) -> Result<serde_json::Value> {
     let mut attempt = 0u32;
 
@@ -571,7 +587,7 @@ async fn dispatch_with_retry(
         attempt += 1;
 
         let outcome = dispatch_request(
-            protocol, endpoint_url, model, op, input, creds, region, debug, http_config,
+            protocol, endpoint_url, model, op, input, creds, region, debug, http_config, no_sign_request,
         )
         .await;
 
@@ -629,22 +645,23 @@ async fn dispatch_request(
     region: &str,
     debug: bool,
     http_config: &HttpClientConfig,
+    no_sign_request: bool,
 ) -> DispatchOutcome {
     match protocol {
         "query" => {
-            dispatch_query_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
+            dispatch_query_protocol(endpoint_url, model, op, input, creds, region, debug, http_config, no_sign_request).await
         }
         "ec2" => {
-            dispatch_ec2_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
+            dispatch_ec2_protocol(endpoint_url, model, op, input, creds, region, debug, http_config, no_sign_request).await
         }
         "json" => {
-            dispatch_json_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
+            dispatch_json_protocol(endpoint_url, model, op, input, creds, region, debug, http_config, no_sign_request).await
         }
         "rest-json" => {
-            dispatch_rest_json_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
+            dispatch_rest_json_protocol(endpoint_url, model, op, input, creds, region, debug, http_config, no_sign_request).await
         }
         "rest-xml" => {
-            dispatch_rest_xml_protocol(endpoint_url, model, op, input, creds, region, debug, http_config).await
+            dispatch_rest_xml_protocol(endpoint_url, model, op, input, creds, region, debug, http_config, no_sign_request).await
         }
         _ => DispatchOutcome {
             result: Err(anyhow::anyhow!(
@@ -659,6 +676,7 @@ async fn dispatch_request(
 }
 
 /// Dispatch a request using the AWS Query protocol.
+#[allow(clippy::too_many_arguments)]
 async fn dispatch_query_protocol(
     endpoint_url: &str,
     model: &model::ServiceModel,
@@ -668,6 +686,7 @@ async fn dispatch_query_protocol(
     region: &str,
     debug: bool,
     http_config: &HttpClientConfig,
+    no_sign_request: bool,
 ) -> DispatchOutcome {
     // Serialize the query request body
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
@@ -704,28 +723,20 @@ async fn dispatch_query_protocol(
         "application/x-www-form-urlencoded; charset=utf-8",
     );
 
-    // Sign the request with SigV4
-    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-    let signing_service = &model.metadata.endpoint_prefix;
-
-    let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
-
-    let uri_path = parsed_url.path();
-    let query_string = parsed_url.query().unwrap_or("");
-
-    if let Err(e) = sigv4::sign_request(
-        &request.method,
-        uri_path,
-        query_string,
-        &mut request.headers,
-        &request.body,
-        &signing_params,
-    ) {
-        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    // Sign the request with SigV4 (skip if --no-sign-request)
+    if !no_sign_request {
+        let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
+        let uri_path = parsed_url.path();
+        let query_string = parsed_url.query().unwrap_or("");
+        if let Err(e) = sigv4::sign_request(&request.method, uri_path, query_string, &mut request.headers, &request.body, &signing_params) {
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+        }
     }
 
     if debug {
-        eprintln!("[debug] signed request, sending to {endpoint_url}");
+        eprintln!("[debug] {} sending to {endpoint_url}", if no_sign_request { "unsigned request," } else { "signed request," });
     }
 
     // Send HTTP request
@@ -784,6 +795,7 @@ async fn dispatch_query_protocol(
 ///
 /// EC2 uses the same query serializer as standard query protocol, but has a
 /// different error XML format: `<Response><Errors><Error>...</Error></Errors></Response>`
+#[allow(clippy::too_many_arguments)]
 async fn dispatch_ec2_protocol(
     endpoint_url: &str,
     model: &model::ServiceModel,
@@ -793,6 +805,7 @@ async fn dispatch_ec2_protocol(
     region: &str,
     debug: bool,
     http_config: &HttpClientConfig,
+    no_sign_request: bool,
 ) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
     let body_str = match query::serialize_query_request(
@@ -827,22 +840,19 @@ async fn dispatch_ec2_protocol(
         "application/x-www-form-urlencoded; charset=utf-8",
     );
 
-    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-    let signing_service = &model.metadata.endpoint_prefix;
-    let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
-
-    let uri_path = parsed_url.path();
-    let query_string = parsed_url.query().unwrap_or("");
-
-    if let Err(e) = sigv4::sign_request(
-        &request.method, uri_path, query_string,
-        &mut request.headers, &request.body, &signing_params,
-    ) {
-        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    if !no_sign_request {
+        let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
+        let uri_path = parsed_url.path();
+        let query_string = parsed_url.query().unwrap_or("");
+        if let Err(e) = sigv4::sign_request(&request.method, uri_path, query_string, &mut request.headers, &request.body, &signing_params) {
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+        }
     }
 
     if debug {
-        eprintln!("[debug] signed request, sending to {endpoint_url}");
+        eprintln!("[debug] {} sending to {endpoint_url}", if no_sign_request { "unsigned request," } else { "signed request," });
     }
 
     let http_client = match HttpClient::with_config(http_config) {
@@ -892,6 +902,7 @@ async fn dispatch_ec2_protocol(
 /// Dispatch a request using the AWS JSON protocol.
 ///
 /// Used by services like DynamoDB, KMS, CloudTrail.
+#[allow(clippy::too_many_arguments)]
 async fn dispatch_json_protocol(
     endpoint_url: &str,
     model: &model::ServiceModel,
@@ -901,6 +912,7 @@ async fn dispatch_json_protocol(
     region: &str,
     debug: bool,
     http_config: &HttpClientConfig,
+    no_sign_request: bool,
 ) -> DispatchOutcome {
     let target_prefix = model.metadata.target_prefix.as_deref().unwrap_or("");
     let target_header = json_protocol::build_target_header(target_prefix, &op.name);
@@ -933,22 +945,19 @@ async fn dispatch_json_protocol(
     request.add_header("content-type", &content_type);
     request.add_header("x-amz-target", &target_header);
 
-    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-    let signing_service = &model.metadata.endpoint_prefix;
-    let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
-
-    let uri_path = parsed_url.path();
-    let query_string = parsed_url.query().unwrap_or("");
-
-    if let Err(e) = sigv4::sign_request(
-        "POST", uri_path, query_string,
-        &mut request.headers, &request.body, &signing_params,
-    ) {
-        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    if !no_sign_request {
+        let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
+        let uri_path = parsed_url.path();
+        let query_string = parsed_url.query().unwrap_or("");
+        if let Err(e) = sigv4::sign_request("POST", uri_path, query_string, &mut request.headers, &request.body, &signing_params) {
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+        }
     }
 
     if debug {
-        eprintln!("[debug] signed request, sending to {endpoint_url}");
+        eprintln!("[debug] {} sending to {endpoint_url}", if no_sign_request { "unsigned request," } else { "signed request," });
     }
 
     let http_client = match HttpClient::with_config(http_config) {
@@ -991,6 +1000,7 @@ async fn dispatch_json_protocol(
 /// Dispatch a request using the REST-JSON protocol.
 ///
 /// Used by services like Lambda, API Gateway, Kinesis.
+#[allow(clippy::too_many_arguments)]
 async fn dispatch_rest_json_protocol(
     endpoint_url: &str,
     model: &model::ServiceModel,
@@ -1000,6 +1010,7 @@ async fn dispatch_rest_json_protocol(
     region: &str,
     debug: bool,
     http_config: &HttpClientConfig,
+    no_sign_request: bool,
 ) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
 
@@ -1064,26 +1075,23 @@ async fn dispatch_rest_json_protocol(
         request.body = body.as_bytes().to_vec();
     }
 
-    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-    let signing_service = &model.metadata.endpoint_prefix;
-    let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
-
-    let signing_url = match url::Url::parse(&full_url) {
-        Ok(u) => u,
-        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
-    };
-    let signing_uri_path = signing_url.path();
-    let signing_query_string = signing_url.query().unwrap_or("");
-
-    if let Err(e) = sigv4::sign_request(
-        &request.method, signing_uri_path, signing_query_string,
-        &mut request.headers, &request.body, &signing_params,
-    ) {
-        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    if !no_sign_request {
+        let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
+        let signing_url = match url::Url::parse(&full_url) {
+            Ok(u) => u,
+            Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+        };
+        let signing_uri_path = signing_url.path();
+        let signing_query_string = signing_url.query().unwrap_or("");
+        if let Err(e) = sigv4::sign_request(&request.method, signing_uri_path, signing_query_string, &mut request.headers, &request.body, &signing_params) {
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+        }
     }
 
     if debug {
-        eprintln!("[debug] signed request, sending to {full_url}");
+        eprintln!("[debug] {} sending to {full_url}", if no_sign_request { "unsigned request," } else { "signed request," });
     }
 
     let http_client = match HttpClient::with_config(http_config) {
@@ -1133,6 +1141,7 @@ async fn dispatch_rest_json_protocol(
 /// Dispatch a request using the REST-XML protocol.
 ///
 /// Used by services like S3, Route53, CloudFront.
+#[allow(clippy::too_many_arguments)]
 async fn dispatch_rest_xml_protocol(
     endpoint_url: &str,
     model: &model::ServiceModel,
@@ -1142,6 +1151,7 @@ async fn dispatch_rest_xml_protocol(
     region: &str,
     debug: bool,
     http_config: &HttpClientConfig,
+    no_sign_request: bool,
 ) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
 
@@ -1208,26 +1218,23 @@ async fn dispatch_rest_xml_protocol(
         request.add_header("content-type", "application/xml");
     }
 
-    let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-    let signing_service = &model.metadata.endpoint_prefix;
-    let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
-
-    let signing_url = match url::Url::parse(&full_url) {
-        Ok(u) => u,
-        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
-    };
-    let signing_uri_path = signing_url.path();
-    let signing_query_string = signing_url.query().unwrap_or("");
-
-    if let Err(e) = sigv4::sign_request(
-        &request.method, signing_uri_path, signing_query_string,
-        &mut request.headers, &request.body, &signing_params,
-    ) {
-        return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+    if !no_sign_request {
+        let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
+        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
+        let signing_url = match url::Url::parse(&full_url) {
+            Ok(u) => u,
+            Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+        };
+        let signing_uri_path = signing_url.path();
+        let signing_query_string = signing_url.query().unwrap_or("");
+        if let Err(e) = sigv4::sign_request(&request.method, signing_uri_path, signing_query_string, &mut request.headers, &request.body, &signing_params) {
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+        }
     }
 
     if debug {
-        eprintln!("[debug] signed request, sending to {full_url}");
+        eprintln!("[debug] {} sending to {full_url}", if no_sign_request { "unsigned request," } else { "signed request," });
     }
 
     let http_client = match HttpClient::with_config(http_config) {
