@@ -487,7 +487,7 @@ mod tests {
     #[test]
     fn test_format_creation_date_roundtrip_utc() {
         // Verify the conversion uses chrono properly by checking it's a valid datetime
-        use chrono::{DateTime, Local, Utc};
+        use chrono::{DateTime, Local};
         let input = "2023-01-15T10:30:45.000Z";
         let result = format_creation_date(input);
 

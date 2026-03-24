@@ -360,11 +360,11 @@ mod tests {
         });
         let output = format_yaml(&value).unwrap();
         assert!(output.contains("Buckets:\n"));
-        // serde_json::Map iterates in sorted key order: CreationDate before Name
-        assert!(output.contains("- CreationDate: '2023-01-01T00:00:00+00:00'\n"));
-        assert!(output.contains("  Name: 'my-bucket-1'\n"));
-        assert!(output.contains("- CreationDate: '2023-06-15T00:00:00+00:00'\n"));
-        assert!(output.contains("  Name: 'my-bucket-2'"));
+        // With preserve_order, json! macro preserves insertion order: Name before CreationDate
+        assert!(output.contains("- Name: 'my-bucket-1'\n"));
+        assert!(output.contains("  CreationDate: '2023-01-01T00:00:00+00:00'\n"));
+        assert!(output.contains("- Name: 'my-bucket-2'\n"));
+        assert!(output.contains("  CreationDate: '2023-06-15T00:00:00+00:00'"));
     }
 
     #[test]
@@ -504,17 +504,17 @@ mod tests {
             ]
         });
         let output = format_yaml(&value).unwrap();
-        // serde_json sorts keys alphabetically: Instances before ReservationId
+        // With preserve_order, json! preserves insertion order: ReservationId before Instances
         assert!(output.contains("Reservations:\n"));
-        assert!(output.contains("- Instances:\n"));
+        assert!(output.contains("- ReservationId: 'r-0123456789abcdef0'\n"));
+        assert!(output.contains("  Instances:\n"));
         assert!(output.contains("  - InstanceId: 'i-abc123'\n"));
         assert!(output.contains("    State:\n"));
         assert!(output.contains("      Code: 16\n"));
         assert!(output.contains("      Name: running\n"));
         assert!(output.contains("    Tags:\n"));
         assert!(output.contains("    - Key: Name\n"));
-        assert!(output.contains("      Value: 'web-server'\n"));
-        assert!(output.contains("  ReservationId: 'r-0123456789abcdef0'"));
+        assert!(output.contains("      Value: 'web-server'"));
     }
 
     #[test]

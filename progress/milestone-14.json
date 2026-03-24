@@ -1,0 +1,113 @@
+[
+  {
+    "id": "preserve-key-order",
+    "description": "Enable serde_json preserve_order feature so JSON output keys match model member order (matching AWS CLI output)",
+    "verify": [
+      { "run": "cargo run -- sts get-caller-identity", "expect": "Keys in order: UserId, Account, Arn (not alphabetical)" }
+    ],
+    "passes": true,
+    "notes": ["Session 8: Added preserve_order feature to serde_json. XML protocol parsers already iterated model members in order, so this was sufficient."]
+  },
+  {
+    "id": "timestamp-normalization",
+    "description": "Normalize timestamps to AWS CLI format: ISO 8601 with +00:00 offset, no .000 milliseconds, epoch seconds converted to ISO strings",
+    "verify": [
+      { "run": "cargo run -- s3api list-buckets --region us-east-1", "expect": "CreationDate uses +00:00 format, not .000Z" },
+      { "run": "cargo test core::protocol::tests", "expect": "All timestamp normalization tests pass" }
+    ],
+    "passes": true,
+    "notes": ["Session 8: Added normalize_timestamp() and epoch_to_iso() in protocol/mod.rs. XML parsers normalize during parse, JSON/REST-JSON use model-aware post-processing walk in driver.rs."]
+  },
+  {
+    "id": "pagination-field-stripping",
+    "description": "Strip pagination-related fields (output_token, more_results) from single-page auto-paginated responses to match AWS CLI",
+    "verify": [
+      { "run": "cargo run -- iam list-users --region us-east-1", "expect": "No IsTruncated or Marker fields in output" },
+      { "run": "cargo run -- lambda list-functions --region us-east-1", "expect": "No NextMarker field in output" }
+    ],
+    "passes": true,
+    "notes": ["Session 8: Fixed merge_pages to strip output_token and more_results fields even for single-page results."]
+  },
+  {
+    "id": "json-protocol-key-ordering",
+    "description": "JSON and REST-JSON protocol responses should have keys in model member order (not API response order)",
+    "verify": [
+      { "run": "cargo run -- dynamodb list-tables --region us-east-1", "expect": "Keys match AWS CLI output order" },
+      { "run": "cargo run -- kms list-keys --region us-east-1", "expect": "Keys match AWS CLI output order" }
+    ],
+    "passes": false,
+    "notes": ["JSON/REST-JSON responses currently use API response key order, which may differ from model order"]
+  },
+  {
+    "id": "json-protocol-timestamp-epoch",
+    "description": "JSON protocol epoch timestamps (numbers) are converted to ISO 8601 strings matching AWS CLI format",
+    "verify": [
+      { "run": "cargo test core::protocol::tests::test_normalize_timestamps_epoch_to_iso", "expect": "Epoch numbers converted to ISO strings" }
+    ],
+    "passes": true,
+    "notes": ["Session 8: normalize_timestamps_in_value walks model shapes and converts timestamp numbers to ISO strings"]
+  },
+  {
+    "id": "paginator-result-key-only",
+    "description": "Auto-paginated responses only include result_key and non_aggregate_keys fields (strip all other response fields like KeyCount)",
+    "verify": [
+      { "run": "cargo run -- kms list-keys --region us-east-1", "expect": "Only Keys in output, no KeyCount or Truncated" }
+    ],
+    "passes": false,
+    "notes": ["Currently strips output_token and more_results but keeps other non-result-key fields like KeyCount"]
+  },
+  {
+    "id": "empty-list-omission",
+    "description": "Omit empty lists and null values from output when the AWS CLI omits them",
+    "verify": [
+      { "run": "diff <(cargo run -- s3api list-buckets --region us-east-1 2>&1) <(aws s3api list-buckets --region us-east-1 2>&1)", "expect": "Outputs are identical" }
+    ],
+    "passes": false,
+    "notes": ["S3 list-buckets: AWS CLI includes Prefix:null that raws omits. Need to investigate per-service behavior."]
+  },
+  {
+    "id": "text-output-parity",
+    "description": "Text output format (--output text) matches AWS CLI exactly for common operations",
+    "verify": [
+      { "run": "diff <(cargo run -- sts get-caller-identity --output text 2>&1) <(aws sts get-caller-identity --output text 2>&1)", "expect": "Outputs are identical" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "table-output-parity",
+    "description": "Table output format (--output table) matches AWS CLI exactly for common operations",
+    "verify": [
+      { "run": "diff <(cargo run -- sts get-caller-identity --output table 2>&1) <(aws sts get-caller-identity --output table 2>&1)", "expect": "Outputs are identical" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "error-message-parity",
+    "description": "Error messages for common failures match AWS CLI format and exit codes",
+    "verify": [
+      { "run": "cargo run -- s3api get-object --bucket nonexistent-bucket --key test --region us-east-1 2>&1; echo $?", "expect": "Error message and exit code match AWS CLI" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "help-text-generation",
+    "description": "Help text (--help) for services and operations is generated from model documentation",
+    "verify": [
+      { "run": "cargo run -- sts get-caller-identity help 2>&1", "expect": "Shows operation description from model" }
+    ],
+    "passes": false,
+    "notes": []
+  },
+  {
+    "id": "no-paginate-flag",
+    "description": "--no-paginate flag bypasses auto-pagination and shows raw API response",
+    "verify": [
+      { "run": "cargo run -- kms list-keys --region us-east-1 --no-paginate 2>&1", "expect": "Shows raw response including Truncated field" }
+    ],
+    "passes": false,
+    "notes": []
+  }
+]

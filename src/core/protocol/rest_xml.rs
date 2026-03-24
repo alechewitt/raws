@@ -890,8 +890,12 @@ fn parse_shape_from_xml(
         "structure" => parse_structure_from_xml(node, shape_def, shapes),
         "list" => parse_list_from_xml(node, shape_def, shapes),
         "map" => parse_map_from_xml(node, shape_def, shapes),
-        "string" | "timestamp" | "blob" => {
+        "string" | "blob" => {
             Ok(Value::String(node.text.clone().unwrap_or_default()))
+        }
+        "timestamp" => {
+            let raw = node.text.clone().unwrap_or_default();
+            Ok(Value::String(super::normalize_timestamp(&raw)))
         }
         "integer" | "long" => {
             let text = node.text.clone().unwrap_or_default();
@@ -1798,7 +1802,7 @@ mod tests {
         assert_eq!(buckets[0]["Name"].as_str().unwrap(), "quotes");
         assert_eq!(
             buckets[0]["CreationDate"].as_str().unwrap(),
-            "2006-02-03T16:45:09.000Z"
+            "2006-02-03T16:45:09+00:00"
         );
         assert_eq!(buckets[1]["Name"].as_str().unwrap(), "samples");
     }

@@ -374,8 +374,17 @@ pub async fn run() -> Result<()> {
         .await?
     };
 
-    // 9a. Apply service-specific output customizations (e.g., pretty-print decoded JSON fields)
+    // 9a. Normalize timestamps in the response to match AWS CLI format
     let mut response_value = response_value;
+    if let Some(ref output_shape) = op.output_shape {
+        crate::core::protocol::normalize_timestamps_in_value(
+            &mut response_value,
+            output_shape,
+            &service_model.shapes,
+        );
+    }
+
+    // 9b. Apply service-specific output customizations (e.g., pretty-print decoded JSON fields)
     apply_output_customizations(service, operation, &mut response_value);
 
     // 9. Apply --query JMESPath filter if provided

@@ -17,7 +17,7 @@ quick-xml = { version = "0.36", features = ["serialize"] }
 reqwest = { version = "0.12", features = ["rustls-tls", "blocking"], default-features = false }
 ring = "0.17"
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
 tokio = { version = "1", features = ["full"] }
 regex = "1"
 url = "2"

@@ -124,7 +124,17 @@ pub fn merge_pages(
         return Value::Object(serde_json::Map::new());
     }
     if pages.len() == 1 {
-        return pages[0].clone();
+        // Single page: still need to strip pagination fields for parity with AWS CLI
+        let mut result = pages[0].clone();
+        if let Some(obj) = result.as_object_mut() {
+            for token in &config.output_token {
+                obj.remove(token);
+            }
+            if let Some(ref mr) = config.more_results {
+                obj.remove(mr);
+            }
+        }
+        return result;
     }
 
     // Start with the last page as the base (non-aggregate keys come from the last page)
