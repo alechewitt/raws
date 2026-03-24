@@ -6,6 +6,7 @@ use crate::cli::args::GlobalArgs;
 use crate::cli::commands::configure;
 use crate::cli::customizations::cloudformation as cfn_commands;
 use crate::cli::customizations::logs as logs_commands;
+use crate::cli::customizations::route53::apply_route53_customizations;
 use crate::cli::customizations::s3 as s3_commands;
 use crate::cli::formatter;
 use crate::cli::jmespath;
@@ -208,7 +209,10 @@ pub async fn run() -> Result<()> {
     }
 
     // 4. Parse operation-specific arguments into JSON input
-    let input = parse_operation_args(&args.args)?;
+    let mut input = parse_operation_args(&args.args)?;
+
+    // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
+    apply_route53_customizations(model_service, &mut input);
 
     if args.debug {
         eprintln!("[debug] input: {input}");
@@ -359,6 +363,10 @@ pub async fn run() -> Result<()> {
         .await?
     };
 
+    // 9a. Apply service-specific output customizations (e.g., pretty-print decoded JSON fields)
+    let mut response_value = response_value;
+    apply_output_customizations(service, operation, &mut response_value);
+
     // 9. Apply --query JMESPath filter if provided
     let final_value = if let Some(ref query_expr) = args.query {
         jmespath::evaluate(query_expr, &response_value)
@@ -459,7 +467,10 @@ async fn handle_wait_command(
     let http_config = build_http_config(args);
 
     // Parse operation-specific arguments
-    let input = parse_operation_args(&remaining_args)?;
+    let mut input = parse_operation_args(&remaining_args)?;
+
+    // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
+    apply_route53_customizations(model_service, &mut input);
 
     if args.debug {
         eprintln!("[debug] waiter: {} (operation={}, delay={}s, max_attempts={})",
@@ -1260,6 +1271,23 @@ async fn dispatch_rest_xml_protocol(
             }
         };
         DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
+    }
+}
+
+/// Apply service-specific output customizations to the response JSON.
+///
+/// For example, the STS `DecodeAuthorizationMessage` response contains a
+/// `DecodedMessage` field that is a JSON string (escaped).  The AWS CLI
+/// automatically pretty-prints this decoded JSON.  We replicate that behavior
+/// here by parsing the string into a JSON value so that formatters render it
+/// as a nested object rather than an escaped string.
+fn apply_output_customizations(service: &str, operation: &str, response: &mut serde_json::Value) {
+    if service == "sts" && operation == "decode-authorization-message" {
+        if let Some(msg) = response.get("DecodedMessage").and_then(|v| v.as_str()) {
+            if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(msg) {
+                response["DecodedMessage"] = parsed;
+            }
+        }
     }
 }
 
@@ -2655,5 +2683,86 @@ mod tests {
             &input,
         );
         assert_eq!(result, "?tagging");
+    }
+
+    // ---------------------------------------------------------------
+    // apply_output_customizations tests (STS DecodeAuthorizationMessage)
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_sts_decode_authorization_message_pretty_prints_decoded_message() {
+        let escaped_json = r#"{"allowed":true,"explicitDeny":false,"matchedStatements":[]}"#;
+        let mut response = serde_json::json!({
+            "DecodedMessage": escaped_json
+        });
+
+        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+
+        // DecodedMessage should now be a parsed JSON object, not a string
+        assert!(
+            response["DecodedMessage"].is_object(),
+            "DecodedMessage should be a parsed JSON object, got: {}",
+            response["DecodedMessage"]
+        );
+        assert_eq!(response["DecodedMessage"]["allowed"], serde_json::json!(true));
+        assert_eq!(response["DecodedMessage"]["explicitDeny"], serde_json::json!(false));
+        assert!(response["DecodedMessage"]["matchedStatements"].is_array());
+    }
+
+    #[test]
+    fn test_non_sts_response_not_modified() {
+        let mut response = serde_json::json!({
+            "DecodedMessage": r#"{"some":"json"}"#
+        });
+        let original = response.clone();
+
+        // Different service: should not modify the response
+        apply_output_customizations("iam", "decode-authorization-message", &mut response);
+        assert_eq!(response, original);
+
+        // Different operation: should not modify the response
+        apply_output_customizations("sts", "get-caller-identity", &mut response);
+        assert_eq!(response, original);
+    }
+
+    #[test]
+    fn test_sts_decode_authorization_message_malformed_left_as_is() {
+        let malformed = "this is not valid json {{{";
+        let mut response = serde_json::json!({
+            "DecodedMessage": malformed
+        });
+
+        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+
+        // Malformed JSON string should be left as-is
+        assert_eq!(
+            response["DecodedMessage"].as_str(),
+            Some(malformed),
+            "Malformed DecodedMessage should remain unchanged"
+        );
+    }
+
+    #[test]
+    fn test_sts_decode_authorization_message_missing_field() {
+        // Response without DecodedMessage field should not be modified
+        let mut response = serde_json::json!({
+            "SomeOtherField": "value"
+        });
+        let original = response.clone();
+
+        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+        assert_eq!(response, original);
+    }
+
+    #[test]
+    fn test_sts_decode_authorization_message_non_string_field() {
+        // DecodedMessage is already a non-string value (edge case): should not be modified
+        let mut response = serde_json::json!({
+            "DecodedMessage": 42
+        });
+        let original = response.clone();
+
+        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+        assert_eq!(response, original);
     }
 }

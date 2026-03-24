@@ -116,8 +116,8 @@
         "cargo test -- decode_auth",
         "cargo build  # verify it compiles"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Post-processing hook in driver. Parses escaped JSON DecodedMessage into pretty-printed object. 5 tests."
     },
     {
       "id": "route53-alias-customizations",
@@ -126,8 +126,8 @@
         "cargo test -- route53",
         "cargo build  # verify it compiles"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Strips /hostedzone/, /delegationset/, /change/ prefixes from Route53 params. 8 tests."
     }
   ]
 }
