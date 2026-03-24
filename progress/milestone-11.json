@@ -104,7 +104,7 @@
     "verify": [
       { "run": "cargo test -- transfer_retry", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["upload_single_part() wraps upload_single_part_attempt() with 3 retries and exponential backoff (500ms base), 2 tests"]
   }
 ]

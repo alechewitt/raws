@@ -11,6 +11,6 @@
     "8": { "total": 12, "passing": 12, "file": "milestone-08.json" },
     "9": { "total": 12, "passing": 12, "file": "milestone-09.json" },
     "10": { "total": 12, "passing": 12, "file": "milestone-10.json" },
-    "11": { "total": 12, "passing": 0, "file": "milestone-11.json" }
+    "11": { "total": 12, "passing": 12, "file": "milestone-11.json" }
   }
 }

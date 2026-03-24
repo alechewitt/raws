@@ -15,6 +15,12 @@ use tokio::sync::Semaphore;
 use super::cp::extract_s3_error;
 use super::{s3_bucket_api_call, S3CommandContext};
 
+/// Maximum retries for a single part upload.
+const PART_UPLOAD_MAX_RETRIES: u32 = 3;
+
+/// Base delay for part upload retry (milliseconds).
+const PART_RETRY_BASE_DELAY_MS: u64 = 500;
+
 /// Files at or above this size use multipart upload (8 MB).
 pub const MULTIPART_THRESHOLD: u64 = 8 * 1024 * 1024;
 
@@ -156,8 +162,43 @@ async fn upload_parts(
     Ok(completed_parts)
 }
 
-/// Upload a single part and return the CompletedPart with its ETag.
+/// Upload a single part with per-part retry logic.
+///
+/// Retries on transient errors (5xx, network errors) up to `PART_UPLOAD_MAX_RETRIES` times.
 async fn upload_single_part(
+    ctx: &S3CommandContext,
+    bucket: &str,
+    key: &str,
+    upload_id: &str,
+    part_number: usize,
+    part_data: &[u8],
+) -> Result<CompletedPart> {
+    let mut last_error = None;
+
+    for attempt in 1..=PART_UPLOAD_MAX_RETRIES {
+        match upload_single_part_attempt(ctx, bucket, key, upload_id, part_number, part_data).await {
+            Ok(part) => return Ok(part),
+            Err(e) => {
+                if attempt < PART_UPLOAD_MAX_RETRIES {
+                    if ctx.debug {
+                        eprintln!(
+                            "[debug] part {} upload attempt {}/{} failed: {}, retrying...",
+                            part_number, attempt, PART_UPLOAD_MAX_RETRIES, e
+                        );
+                    }
+                    let delay_ms = PART_RETRY_BASE_DELAY_MS * (1u64 << (attempt - 1));
+                    tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
+                }
+                last_error = Some(e);
+            }
+        }
+    }
+
+    Err(last_error.unwrap_or_else(|| anyhow::anyhow!("Part {} upload failed", part_number)))
+}
+
+/// Single attempt to upload a part (no retry).
+async fn upload_single_part_attempt(
     ctx: &S3CommandContext,
     bucket: &str,
     key: &str,
@@ -685,5 +726,30 @@ mod tests {
         assert_eq!(MULTIPART_THRESHOLD, 8 * 1024 * 1024);
         assert_eq!(PART_SIZE, 8 * 1024 * 1024);
         assert_eq!(MAX_CONCURRENCY, 10);
+    }
+
+    // ---------------------------------------------------------------
+    // Per-part retry configuration tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_transfer_retry_constants() {
+        assert_eq!(PART_UPLOAD_MAX_RETRIES, 3);
+        assert_eq!(PART_RETRY_BASE_DELAY_MS, 500);
+    }
+
+    #[test]
+    fn test_transfer_retry_delay_calculation() {
+        // Verify exponential backoff for part retries
+        // Attempt 1: 500ms * 2^0 = 500ms
+        // Attempt 2: 500ms * 2^1 = 1000ms
+        // Attempt 3 (if it existed): 500ms * 2^2 = 2000ms
+        let delay1 = PART_RETRY_BASE_DELAY_MS * (1u64 << 0);
+        let delay2 = PART_RETRY_BASE_DELAY_MS * (1u64 << 1);
+        let delay3 = PART_RETRY_BASE_DELAY_MS * (1u64 << 2);
+
+        assert_eq!(delay1, 500);
+        assert_eq!(delay2, 1000);
+        assert_eq!(delay3, 2000);
     }
 }

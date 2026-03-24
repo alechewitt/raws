@@ -272,3 +272,45 @@ NEXT SESSION PRIORITIES:
 4. M11: Connection and request timeouts
 5. M11: Signing key cache
 6. M11: S3 transfer retry
+
+=== Session 4 (continued): Milestone 11 Complete (2026-03-23) ===
+
+ACCOMPLISHED:
+- Completed Milestone 11 (Robustness): 12/12
+  - retry-exponential-backoff: RetryConfig, RetryClassification, RetryDecision types, classify_error(), should_retry(), calculate_backoff() with splitmix jitter (13 tests)
+  - retry-integration: dispatch_with_retry() wraps all 5 protocol dispatchers, DispatchOutcome carries status/error_code/is_network_error
+  - adaptive-retry-mode: RetryMode::Legacy (5 attempts), Standard (3, default), Adaptive (3 + token bucket 500/5/1)
+  - waiter-support: WaiterConfig, Acceptor, load_waiters(), evaluate_acceptors(), minimal JMESPath evaluator (12 tests)
+  - waiter-cli-dispatch: handle_wait_command() intercepts 'wait' subcommand, loads waiters-2.json, polls with acceptors
+  - connection-timeout: HttpClientConfig with connect_timeout (default 60s), --cli-connect-timeout CLI arg (5 tests)
+  - request-timeout: --cli-read-timeout CLI arg, wired through build_http_config -> HttpClient::with_config
+  - network-error-handling: classify_network_error() for DNS/connection refused/timeout/TLS with user-friendly messages
+  - signing-key-cache: Mutex<Option<SigningKeyCacheEntry>>, caches by secret_key+date+region+service (5 tests)
+  - max-attempts-config: resolve_retry_config() reads AWS_MAX_ATTEMPTS env + max_attempts from config (6 tests)
+  - retry-mode-config: parse_retry_mode() case-insensitive, reads AWS_RETRY_MODE env + retry_mode from config (3 tests)
+  - s3-transfer-retry: upload_single_part() wraps upload_single_part_attempt() with 3 retries, exponential backoff 500ms base (2 tests)
+
+MODIFIED FILES:
+- src/core/retry.rs - Complete rewrite: retry types, classification, backoff, token bucket, config resolution (20 tests)
+- src/core/waiter.rs - Complete rewrite: waiter types, loading, evaluation, JMESPath (12 tests)
+- src/cli/driver.rs - DispatchOutcome, dispatch_with_retry(), handle_wait_command(), build_http_config()
+- src/core/http/client.rs - HttpClientConfig, HttpClient::with_config(), classify_network_error() (5 tests)
+- src/cli/args.rs - --cli-connect-timeout, --cli-read-timeout global args
+- src/core/auth/sigv4.rs - SigningKeyCacheEntry, signing_key_cached(), cache in sign_request() (5 tests)
+- src/core/config/provider.rs - get_value() for arbitrary config keys
+- src/cli/customizations/s3/transfer.rs - Per-part retry with exponential backoff (2 tests)
+
+TEST RESULTS:
+- 639 tests passing (up from 594 after M10)
+- cargo build succeeds
+
+DESIGN DECISIONS:
+- Retry wraps existing dispatch without massive refactoring via DispatchOutcome struct
+- Self-contained JMESPath in waiter module (no cross-module dependency)
+- HttpClientConfig threaded through entire dispatch chain
+- Signing key cache: Mutex-based for thread safety, no external crate
+- resolve_retry_config_inner() accepts explicit env values for testability (avoids env var mutation)
+- Splitmix hash for jitter (no rand crate dependency)
+
+MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12, M8=12/12, M9=12/12, M10=12/12, M11=12/12
+Current milestone: 12 (next to create)

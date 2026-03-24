@@ -1,12 +1,3 @@
-=== Session 2: Milestones 4-7 Complete (2026-03-23) ===
-
-ACCOMPLISHED:
-- Completed M4-M7 (HTTP Client, Query Protocol, All Protocols, Full Service Dispatch)
-- E2E verified: 12 services across all protocols (STS, DynamoDB, S3, Lambda, EC2, IAM, etc.)
-
-TEST RESULTS: 181 tests passing
-MILESTONE STATUS: M1=6/7, M2=12/12, M3=10/10, M4=12/12, M5=12/12, M6=12/12, M7=12/12
-
 === Session 3: Milestones 8-9 Complete (2026-03-23) ===
 
 ACCOMPLISHED:
@@ -19,23 +10,25 @@ ACCOMPLISHED:
 TEST RESULTS: 398 tests passing
 MILESTONE STATUS: M1=6/7, M2-M9=12/12
 
-=== Session 4: Milestone 10 Complete (2026-03-23) ===
+=== Session 4: Milestones 10-11 Complete (2026-03-23) ===
 
 ACCOMPLISHED:
 - Completed Milestone 10 (S3 High-Level Commands): 12/12
-  - s3-command-framework: dispatch, S3CommandContext, s3_api_call/s3_bucket_api_call helpers
-  - s3-ls-buckets/objects: ListBuckets/ListObjectsV2, pagination, PRE prefixes, --recursive
-  - s3-cp: upload (PutObject), download (GetObject), S3-to-S3 (CopyObject)
-  - s3-mv: copy + delete source
-  - s3-rm: single + recursive delete
-  - s3-mb-rb: CreateBucket/DeleteBucket, LocationConstraint, rb --force
-  - s3-recursive-flag: recursive upload/download/copy with dir walking
-  - s3-sync: local<->S3, S3<->S3, size+mtime comparison, --delete
-  - s3-multipart-upload: 8MB threshold, 10 concurrent parts via Semaphore
+  - s3-command-framework, ls, cp, mv, rm, mb/rb, sync, multipart upload
+  - 196 new tests across 8 new S3 module files
 
-NEW FILES: src/cli/customizations/s3/{mod,ls,cp,mv,rm,mb,sync,transfer}.rs
-TEST RESULTS: 594 tests passing (up from 398)
-MILESTONE STATUS: M1=6/7, M2-M10=12/12
-Current milestone: 11 (Robustness)
+- Completed Milestone 11 (Robustness): 12/12
+  - retry-exponential-backoff: classify_error(), should_retry(), calculate_backoff() with splitmix jitter
+  - retry-integration: dispatch_with_retry() wraps all 5 protocol dispatchers
+  - adaptive-retry-mode: Legacy/Standard/Adaptive with token bucket
+  - waiter-support: load_waiters(), evaluate_acceptors(), minimal JMESPath
+  - waiter-cli-dispatch: handle_wait_command() for `raws <service> wait <name>`
+  - connection/request-timeout: HttpClientConfig, --cli-connect-timeout, --cli-read-timeout
+  - network-error-handling: classify_network_error() with user-friendly messages
+  - signing-key-cache: Mutex-based cache by date/region/service/secret_key
+  - max-attempts/retry-mode config: env vars + ~/.aws/config resolution
+  - s3-transfer-retry: per-part retry with 3 attempts, exponential backoff
 
-NEXT: M11 - Retry logic, adaptive retry, waiters, timeouts, signing key cache, S3 transfer retry
+TEST RESULTS: 639 tests passing (up from 398)
+MILESTONE STATUS: M1=6/7, M2-M11=12/12
+Current milestone: 12 (next to create)
