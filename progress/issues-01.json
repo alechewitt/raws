@@ -1,0 +1,115 @@
+[
+  {
+    "id": "credential-chain-missing-providers",
+    "description": "Credential chain only includes EnvCredentialProvider and ProfileCredentialProvider. The CredentialProcessProvider, AssumeRoleProvider, SsoCredentialProvider, and WebIdentityTokenProvider are all implemented but never wired into the chain. This means --profile fails for any profile using credential_process, SSO, assume_role, or web_identity.",
+    "severity": "critical",
+    "verify": [
+      { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN cargo run -- sts get-caller-identity --region us-west-2 --profile=alechewt-dev", "expect": "Should succeed using credential_process (ada) from the profile config, not fail with 'No credentials found'" },
+      { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN cargo run -- s3 ls --region us-west-2 --profile=alechewt-dev", "expect": "Should list buckets using profile credentials" }
+    ],
+    "passes": false,
+    "affected_files": [
+      "src/cli/driver.rs:232-235",
+      "src/cli/driver.rs:485-487",
+      "src/cli/customizations/s3/mod.rs:136-138",
+      "src/cli/customizations/logs/mod.rs:69-71",
+      "src/cli/customizations/cloudformation/mod.rs:70-72"
+    ],
+    "notes": [
+      "The chain is duplicated in 5 places - should be extracted to a shared function",
+      "Providers exist in src/core/credentials/ but are never instantiated in any chain",
+      "AWS CLI chain order: env -> credential_process -> profile_static -> assume_role -> sso -> web_identity -> imds -> ecs_container",
+      "The chain should be profile-aware: when --profile is set, the profile's credential mechanism should be used"
+    ]
+  },
+  {
+    "id": "profile-env-var-precedence",
+    "description": "When --profile is specified, raws still uses environment variable credentials (AWS_ACCESS_KEY_ID etc.) instead of the profile's credential mechanism. AWS CLI uses the profile's credentials when --profile is explicitly provided. This causes raws to return data from the wrong AWS account.",
+    "severity": "critical",
+    "verify": [
+      { "run": "AWS_ACCESS_KEY_ID=AKIAEXAMPLE AWS_SECRET_ACCESS_KEY=secret cargo run -- sts get-caller-identity --region us-west-2 --profile=alechewt-dev 2>&1", "expect": "Should use alechewt-dev profile credentials (credential_process), NOT the env var credentials" }
+    ],
+    "passes": false,
+    "affected_files": [
+      "src/cli/driver.rs:232-235",
+      "src/core/credentials/chain.rs"
+    ],
+    "notes": [
+      "Tested: raws --profile=alechewt-dev returns account 746669211150 (from env vars), aws --profile=alechewt-dev returns account 014218445228 (from credential_process)",
+      "When --profile is explicitly set, AWS CLI creates a profile-specific credential resolver that skips env vars",
+      "Fix: when --profile is explicitly set (not from AWS_PROFILE or default), build a profile-specific chain that starts with the profile's credential mechanism, not env vars"
+    ]
+  },
+  {
+    "id": "output-default-overrides-config",
+    "description": "The --output flag has default_value='json' in clap args, which means ConfigProvider always receives Some('json') and never checks the config file or AWS_DEFAULT_OUTPUT env var for the output format. Users who set output=text in their ~/.aws/config profile will always get JSON output.",
+    "severity": "medium",
+    "verify": [
+      { "run": "AWS_DEFAULT_OUTPUT=text cargo run -- sts get-caller-identity --region us-east-1 2>&1", "expect": "Should output in text format, not JSON" }
+    ],
+    "passes": false,
+    "affected_files": [
+      "src/cli/args.rs:15-16",
+      "src/cli/driver.rs:185",
+      "src/core/config/provider.rs:56-66"
+    ],
+    "notes": [
+      "Fix: change args.rs output field from default_value='json' to Option<String> (no default). Apply 'json' fallback only at the end of the resolution chain in ConfigProvider",
+      "AWS CLI resolution order: --output flag > AWS_DEFAULT_OUTPUT env var > config file output setting > 'json' fallback"
+    ]
+  },
+  {
+    "id": "credential-chain-not-shared",
+    "description": "The credential chain construction is duplicated in 5 places across the codebase (driver.rs x2, s3/mod.rs, logs/mod.rs, cloudformation/mod.rs). Each copy must be kept in sync. Should be extracted to a shared build_credential_chain() function.",
+    "severity": "medium",
+    "verify": [
+      { "run": "grep -rn 'ChainCredentialProvider::new' src/", "expect": "Should only appear once in a shared helper, not 5 separate locations" }
+    ],
+    "passes": false,
+    "affected_files": [
+      "src/cli/driver.rs:232-235",
+      "src/cli/driver.rs:485-487",
+      "src/cli/customizations/s3/mod.rs:136-138",
+      "src/cli/customizations/logs/mod.rs:69-71",
+      "src/cli/customizations/cloudformation/mod.rs:70-72"
+    ],
+    "notes": [
+      "Extract to e.g. src/core/credentials/chain.rs::build_default_chain(profile: &str, explicit_profile: bool) -> ChainCredentialProvider",
+      "This makes it easy to add new providers and ensures consistency"
+    ]
+  },
+  {
+    "id": "nonexistent-profile-error-message",
+    "description": "When a nonexistent profile is used, raws says 'No credentials found' instead of telling the user the profile doesn't exist. AWS CLI says 'The config profile (X) could not be found' and exits immediately without trying other credential sources.",
+    "severity": "low",
+    "verify": [
+      { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN cargo run -- sts get-caller-identity --region us-east-1 --profile nonexistent-profile-xyz 2>&1", "expect": "Should say 'The config profile (nonexistent-profile-xyz) could not be found' not 'No credentials found'" }
+    ],
+    "passes": false,
+    "affected_files": [
+      "src/core/config/provider.rs",
+      "src/cli/driver.rs"
+    ],
+    "notes": [
+      "AWS CLI validates the profile exists in config before attempting credential resolution",
+      "raws proceeds to credential resolution which fails generically"
+    ]
+  },
+  {
+    "id": "imds-credential-provider-stub",
+    "description": "The IMDS (EC2 Instance Metadata Service) credential provider is a stub file with no implementation. raws cannot resolve credentials on EC2 instances, ECS tasks, or Lambda functions that rely on instance/task role credentials.",
+    "severity": "low",
+    "verify": [
+      { "run": "cat src/core/credentials/imds.rs", "expect": "Should contain a working IMDSv2 credential provider implementation, not a stub" }
+    ],
+    "passes": false,
+    "affected_files": [
+      "src/core/credentials/imds.rs"
+    ],
+    "notes": [
+      "IMDSv2 requires a PUT to get a token, then GET with token header to retrieve credentials",
+      "Also need ECS container credentials (AWS_CONTAINER_CREDENTIALS_RELATIVE_URI)",
+      "Lower priority since raws is primarily used on developer machines, not in AWS compute"
+    ]
+  }
+]

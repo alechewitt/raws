@@ -31,8 +31,9 @@ cat progress/claude-progress-recent.txt
 git log --oneline -20
 ```
 
-Read `progress/summary.json` to find the current milestone, then read only
-that milestone's feature file (e.g., `progress/milestone-03.json`).
+Read `progress/summary.json` to find the current milestone and any open issues,
+then read the current milestone's feature file (e.g., `progress/milestone-03.json`)
+and any issues files (e.g., `progress/issues-01.json`).
 
 ### STEP 2: VERIFY THE BUILD (MANDATORY)
 
@@ -57,18 +58,28 @@ Pick 1-2 features marked `"passes": true` and manually verify they still work.
 - This includes: compilation errors, test failures, clippy warnings, runtime
   panics, incorrect output, missing error handling (unwrap() in non-test code)
 
-### STEP 4: CHOOSE ONE FEATURE TO IMPLEMENT
+### STEP 4: CHOOSE ONE FEATURE OR ISSUE TO IMPLEMENT
 
-Read the current milestone's feature file and find the first feature with
-`"passes": false`.
+Check `progress/summary.json` for both milestones and issues. Issues files
+(e.g., `progress/issues-01.json`) track known bugs and AWS CLI parity gaps
+that were found through manual testing. They use the same format as milestone
+files (`id`, `description`, `verify`, `passes`, `notes`) plus a `severity`
+field (`critical`, `medium`, `low`) and an `affected_files` field.
 
 **Priority order:**
-1. Lowest milestone number first
-2. Within a milestone, earlier in the list first (dependencies come first)
-3. Never skip to a later milestone if the current one has unfinished features
+1. **Critical issues first** — issues with `"severity": "critical"` take
+   priority over new milestone features, as they represent broken user-facing
+   behavior
+2. **Medium issues** — fix these before starting new milestone features
+3. **Milestone features** — lowest milestone number first, earlier in list first
+4. **Low issues** — fix alongside or after milestone work
+5. Never skip to a later milestone if the current one has unfinished features
    UNLESS remaining features are blocked on something outside your control
 
-Focus on ONE feature at a time.
+Read the issues files and the current milestone's feature file, then find the
+first item with `"passes": false` according to the priority order above.
+
+Focus on ONE feature/issue at a time.
 
 ### STEP 5: IMPLEMENT THE FEATURE (IMPLEMENTATION SUB-AGENT)
 
@@ -155,14 +166,16 @@ Delegate review to a **separate** sub-agent with the following prompt:
 
 **If the review agent returns PASS:** proceed to Step 7.
 
-### STEP 7: UPDATE FEATURE FILES
+### STEP 7: UPDATE FEATURE/ISSUE FILES
 
 After the review agent returns PASS:
-1. Set `"passes": false` to `"passes": true` in the milestone feature file
+1. Set `"passes": false` to `"passes": true` in the relevant file (milestone
+   feature file or issues file)
 2. Append to `"notes"` if there's useful context for future sessions
-3. Update `progress/summary.json`: increment the `passing` count for this milestone
+3. Update `progress/summary.json`: increment the `passing` count for the
+   relevant milestone or issues entry
 
-**Never** remove features or edit `id`, `description`, or `verify` fields.
+**Never** remove features/issues or edit `id`, `description`, or `verify` fields.
 
 ### STEP 8: COMMIT YOUR PROGRESS
 
@@ -267,6 +280,45 @@ These files are the primary way you communicate with future sessions. Be detaile
 **NEVER end a session with broken compilation.** If something is broken and
 you're running low on context, revert: `git stash` or `git checkout -- .`
 
+### REPORTING NEW ISSUES
+
+If during your work (regression checks, AWS CLI comparisons, manual testing,
+or code review) you discover a bug or parity gap that is NOT already tracked
+in an existing issues file, create a new issues file:
+
+```
+progress/issues-XX.json
+```
+
+where `XX` is the next available number (check `progress/summary.json` for
+existing issues entries). Use the same format as `progress/issues-01.json`:
+
+```json
+[
+  {
+    "id": "short-kebab-id",
+    "description": "Clear description of the bug or parity gap",
+    "severity": "critical | medium | low",
+    "verify": [
+      { "run": "command to reproduce", "expect": "what should happen" }
+    ],
+    "passes": false,
+    "affected_files": ["src/path/to/file.rs:line-range"],
+    "notes": ["Context, root cause analysis, suggested fix approach"]
+  }
+]
+```
+
+After creating the file, add it to `progress/summary.json` under the `issues`
+key. Do not add issues to milestone feature files — those track planned work,
+issues files track discovered bugs.
+
 ---
+
+**Remember:** You have unlimited time across many sessions. Focus on
+quality over speed. The code must be correct, well-structured, and compile
+cleanly. Every session should leave the project in a compiling state.
+
+----
 
 Begin by running Step 1.
