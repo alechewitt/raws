@@ -79,6 +79,11 @@ impl ConfigProvider {
         Ok(None)
     }
 
+    /// Read an arbitrary key from the config file for the resolved profile.
+    pub fn get_value(&self, key: &str) -> Option<String> {
+        Self::get_config_value(&self.profile, key).ok().flatten()
+    }
+
     fn config_file_path() -> PathBuf {
         if let Ok(p) = std::env::var("AWS_CONFIG_FILE") {
             return PathBuf::from(p);

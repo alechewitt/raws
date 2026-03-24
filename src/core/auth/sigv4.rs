@@ -1,8 +1,59 @@
 use anyhow::Result;
 use ring::digest;
 use ring::hmac;
+use std::sync::Mutex;
 
 use crate::core::credentials::Credentials;
+
+// ---------------------------------------------------------------------------
+// Signing key cache
+// ---------------------------------------------------------------------------
+
+/// Cache entry for a derived SigV4 signing key.
+///
+/// The signing key depends on (secret_key, date, region, service). If all four
+/// match, the key can be reused without recomputing the 4-step HMAC chain.
+struct SigningKeyCacheEntry {
+    secret_key: String,
+    date: String,
+    region: String,
+    service: String,
+    key: Vec<u8>,
+}
+
+/// Global signing key cache. Thread-safe via Mutex.
+static SIGNING_KEY_CACHE: Mutex<Option<SigningKeyCacheEntry>> = Mutex::new(None);
+
+/// Get a signing key, using the cache if the parameters match.
+///
+/// Returns the cached key if date/region/service/secret_key all match;
+/// otherwise derives a new key, caches it, and returns it.
+pub fn signing_key_cached(secret_key: &str, date: &str, region: &str, service: &str) -> Vec<u8> {
+    let mut cache = SIGNING_KEY_CACHE.lock().unwrap();
+
+    if let Some(ref entry) = *cache {
+        if entry.secret_key == secret_key
+            && entry.date == date
+            && entry.region == region
+            && entry.service == service
+        {
+            return entry.key.clone();
+        }
+    }
+
+    // Cache miss: derive new key
+    let key = signing_key(secret_key, date, region, service);
+
+    *cache = Some(SigningKeyCacheEntry {
+        secret_key: secret_key.to_string(),
+        date: date.to_string(),
+        region: region.to_string(),
+        service: service.to_string(),
+        key: key.clone(),
+    });
+
+    key
+}
 
 pub fn sha256_hex(data: &[u8]) -> String {
     let digest = digest::digest(&digest::SHA256, data);
@@ -196,7 +247,7 @@ pub fn sign_request(
     let cr = canonical_request(method, uri, query, headers, &payload_hash);
     let scope = params.scope();
     let sts = string_to_sign(params.datetime, &scope, &cr);
-    let key = signing_key(params.secret_key, params.date(), params.region, params.service);
+    let key = signing_key_cached(params.secret_key, params.date(), params.region, params.service);
     let sig = calculate_signature(&key, &sts);
 
     let (_, signed_hdrs) = canonical_headers(headers);
@@ -372,5 +423,48 @@ mod tests {
             auth,
             "AWS4-HMAC-SHA256 Credential=AKIDEXAMPLE/20230101/us-east-1/sts/aws4_request, SignedHeaders=content-type;host;x-amz-date, Signature=abcdef1234567890"
         );
+    }
+
+    // ---------------------------------------------------------------
+    // Signing key cache tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_signing_key_cache_returns_correct_key() {
+        let key1 = signing_key_cached("secret1", "20230101", "us-east-1", "sts");
+        let expected = signing_key("secret1", "20230101", "us-east-1", "sts");
+        assert_eq!(key1, expected);
+    }
+
+    #[test]
+    fn test_signing_key_cache_hit_same_params() {
+        // First call computes, second should return same result (cache hit)
+        let key1 = signing_key_cached("secret2", "20230202", "us-west-2", "iam");
+        let key2 = signing_key_cached("secret2", "20230202", "us-west-2", "iam");
+        assert_eq!(key1, key2);
+    }
+
+    #[test]
+    fn test_signing_key_cache_miss_different_date() {
+        let key1 = signing_key_cached("secret3", "20230101", "us-east-1", "sts");
+        let key2 = signing_key_cached("secret3", "20230102", "us-east-1", "sts");
+        assert_ne!(key1, key2);
+        // Verify key2 is correct for the new date
+        let expected = signing_key("secret3", "20230102", "us-east-1", "sts");
+        assert_eq!(key2, expected);
+    }
+
+    #[test]
+    fn test_signing_key_cache_miss_different_region() {
+        let key1 = signing_key_cached("secret4", "20230301", "us-east-1", "s3");
+        let key2 = signing_key_cached("secret4", "20230301", "eu-west-1", "s3");
+        assert_ne!(key1, key2);
+    }
+
+    #[test]
+    fn test_signing_key_cache_miss_different_service() {
+        let key1 = signing_key_cached("secret5", "20230401", "us-east-1", "sts");
+        let key2 = signing_key_cached("secret5", "20230401", "us-east-1", "iam");
+        assert_ne!(key1, key2);
     }
 }

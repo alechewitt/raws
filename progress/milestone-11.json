@@ -68,8 +68,8 @@
     "verify": [
       { "run": "cargo build", "expect": "compiles" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["classify_network_error() in http/client.rs: DNS, connection refused, timeout, TLS/SSL, with user-friendly messages and hints"]
   },
   {
     "id": "signing-key-cache",
@@ -77,8 +77,8 @@
     "verify": [
       { "run": "cargo test -- signing_key_cache", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["signing_key_cached() with Mutex<Option<SigningKeyCacheEntry>>, caches by secret_key+date+region+service, used in sign_request(), 5 tests"]
   },
   {
     "id": "max-attempts-config",
@@ -86,8 +86,8 @@
     "verify": [
       { "run": "cargo test -- max_attempts", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["resolve_retry_config() reads AWS_MAX_ATTEMPTS env + max_attempts from config, env overrides config, validates >= 1, 6 tests"]
   },
   {
     "id": "retry-mode-config",
@@ -95,8 +95,8 @@
     "verify": [
       { "run": "cargo test -- retry_mode", "expect": "tests pass" }
     ],
-    "passes": false,
-    "notes": []
+    "passes": true,
+    "notes": ["parse_retry_mode() case-insensitive, resolve_retry_config() reads AWS_RETRY_MODE env + retry_mode from config, wired in driver, 3 tests"]
   },
   {
     "id": "s3-transfer-retry",

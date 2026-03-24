@@ -328,6 +328,75 @@ impl Default for TokenBucket {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Config resolution from environment and ~/.aws/config
+// ---------------------------------------------------------------------------
+
+/// Parse a retry mode string into a RetryMode enum.
+///
+/// Recognized values: "legacy", "standard", "adaptive" (case-insensitive).
+pub fn parse_retry_mode(s: &str) -> Option<RetryMode> {
+    match s.to_lowercase().as_str() {
+        "legacy" => Some(RetryMode::Legacy),
+        "standard" => Some(RetryMode::Standard),
+        "adaptive" => Some(RetryMode::Adaptive),
+        _ => None,
+    }
+}
+
+/// Build a RetryConfig by checking (in priority order):
+///
+/// 1. `AWS_MAX_ATTEMPTS` env var
+/// 2. `max_attempts` in `~/.aws/config` for the given profile
+/// 3. `AWS_RETRY_MODE` env var
+/// 4. `retry_mode` in `~/.aws/config` for the given profile
+/// 5. Default: standard mode, 3 attempts
+///
+/// `config_max_attempts` and `config_retry_mode` should be pre-read from
+/// the config file by the caller.
+pub fn resolve_retry_config(
+    config_max_attempts: Option<&str>,
+    config_retry_mode: Option<&str>,
+) -> RetryConfig {
+    resolve_retry_config_inner(
+        config_max_attempts,
+        config_retry_mode,
+        std::env::var("AWS_MAX_ATTEMPTS").ok().as_deref(),
+        std::env::var("AWS_RETRY_MODE").ok().as_deref(),
+    )
+}
+
+/// Inner implementation that accepts explicit env values for testability.
+fn resolve_retry_config_inner(
+    config_max_attempts: Option<&str>,
+    config_retry_mode: Option<&str>,
+    env_max_attempts: Option<&str>,
+    env_retry_mode: Option<&str>,
+) -> RetryConfig {
+    // Resolve retry mode: env var takes priority over config
+    let mode = env_retry_mode
+        .and_then(parse_retry_mode)
+        .or_else(|| config_retry_mode.and_then(parse_retry_mode))
+        .unwrap_or(RetryMode::Standard);
+
+    let mut config = RetryConfig::from_mode(mode);
+
+    // Resolve max_attempts (overrides mode default): env var takes priority
+    if let Some(max) = env_max_attempts
+        .and_then(|v| v.parse::<u32>().ok())
+        .filter(|&v| v >= 1)
+    {
+        config.max_attempts = max;
+    } else if let Some(max) = config_max_attempts
+        .and_then(|v| v.parse::<u32>().ok())
+        .filter(|&v| v >= 1)
+    {
+        config.max_attempts = max;
+    }
+
+    config
+}
+
 // ===========================================================================
 // Tests
 // ===========================================================================
@@ -496,6 +565,77 @@ mod tests {
     #[test]
     fn test_retry_default_config() {
         let config = RetryConfig::default();
+        assert_eq!(config.mode, RetryMode::Standard);
+        assert_eq!(config.max_attempts, 3);
+    }
+
+    // -- Config resolution tests --------------------------------------------
+
+    #[test]
+    fn test_retry_mode_parse() {
+        assert_eq!(parse_retry_mode("standard"), Some(RetryMode::Standard));
+        assert_eq!(parse_retry_mode("Standard"), Some(RetryMode::Standard));
+        assert_eq!(parse_retry_mode("STANDARD"), Some(RetryMode::Standard));
+        assert_eq!(parse_retry_mode("legacy"), Some(RetryMode::Legacy));
+        assert_eq!(parse_retry_mode("adaptive"), Some(RetryMode::Adaptive));
+        assert_eq!(parse_retry_mode("unknown"), None);
+        assert_eq!(parse_retry_mode(""), None);
+    }
+
+    #[test]
+    fn test_max_attempts_config_from_config_file() {
+        // Clear env vars so they don't interfere
+        std::env::remove_var("AWS_MAX_ATTEMPTS");
+        std::env::remove_var("AWS_RETRY_MODE");
+
+        let config = resolve_retry_config(Some("5"), None);
+        assert_eq!(config.max_attempts, 5);
+        assert_eq!(config.mode, RetryMode::Standard);
+    }
+
+    #[test]
+    fn test_max_attempts_from_config_value() {
+        // Test with config values only (no env vars dependency)
+        let config = resolve_retry_config_inner(Some("5"), None, None, None);
+        assert_eq!(config.max_attempts, 5);
+        assert_eq!(config.mode, RetryMode::Standard);
+    }
+
+    #[test]
+    fn test_max_attempts_env_overrides_config() {
+        // Use the inner function with explicit env-like values
+        let config = resolve_retry_config_inner(Some("5"), None, Some("10"), None);
+        assert_eq!(config.max_attempts, 10);
+    }
+
+    #[test]
+    fn test_retry_mode_from_config_value() {
+        let config = resolve_retry_config_inner(None, Some("legacy"), None, None);
+        assert_eq!(config.mode, RetryMode::Legacy);
+        assert_eq!(config.max_attempts, 5); // legacy default
+    }
+
+    #[test]
+    fn test_retry_mode_env_overrides_config() {
+        let config = resolve_retry_config_inner(None, Some("legacy"), None, Some("adaptive"));
+        assert_eq!(config.mode, RetryMode::Adaptive);
+        assert_eq!(config.max_attempts, 3); // adaptive default
+    }
+
+    #[test]
+    fn test_max_attempts_invalid_values_ignored() {
+        // Zero is invalid
+        let config = resolve_retry_config_inner(Some("0"), None, None, None);
+        assert_eq!(config.max_attempts, 3); // falls back to default
+
+        // Non-numeric is invalid
+        let config = resolve_retry_config_inner(Some("abc"), None, None, None);
+        assert_eq!(config.max_attempts, 3);
+    }
+
+    #[test]
+    fn test_resolve_retry_config_defaults() {
+        let config = resolve_retry_config_inner(None, None, None, None);
         assert_eq!(config.mode, RetryMode::Standard);
         assert_eq!(config.max_attempts, 3);
     }

@@ -60,7 +60,7 @@ impl HttpClient {
             builder = builder.body(request.body.clone());
         }
 
-        let response = builder.send().await?;
+        let response = builder.send().await.map_err(|e| classify_network_error(e))?;
         let status = response.status().as_u16();
 
         let mut headers = HashMap::new();
@@ -78,6 +78,59 @@ impl HttpClient {
             body,
         })
     }
+}
+
+/// Classify a reqwest error into a user-friendly error message.
+///
+/// Provides clear messages for common network failures:
+/// - DNS resolution failures
+/// - Connection refused
+/// - TLS/SSL errors
+/// - Connection timeouts
+/// - Read timeouts
+fn classify_network_error(err: reqwest::Error) -> anyhow::Error {
+    let url = err.url().map(|u| u.as_str()).unwrap_or("<unknown>");
+
+    if err.is_connect() {
+        let inner = format!("{err}");
+        if inner.contains("dns error") || inner.contains("resolve") || inner.contains("getaddrinfo") || inner.contains("Name or service not known") {
+            return anyhow::anyhow!(
+                "Could not resolve hostname for {}. Check your network connection and verify the endpoint URL is correct.",
+                url
+            );
+        }
+        if inner.contains("Connection refused") || inner.contains("connection refused") {
+            return anyhow::anyhow!(
+                "Connection refused to {}. The service may be unavailable or the endpoint URL may be incorrect.",
+                url
+            );
+        }
+        return anyhow::anyhow!(
+            "Could not connect to {}. Check your network connection. Details: {}",
+            url, err
+        );
+    }
+
+    if err.is_timeout() {
+        return anyhow::anyhow!(
+            "Request to {} timed out. You can increase the timeout with --cli-connect-timeout or --cli-read-timeout.",
+            url
+        );
+    }
+
+    // Check for TLS errors in the error chain
+    let err_str = format!("{err}");
+    if err_str.contains("tls") || err_str.contains("ssl") || err_str.contains("certificate")
+        || err_str.contains("TLS") || err_str.contains("SSL") || err_str.contains("Certificate")
+    {
+        return anyhow::anyhow!(
+            "TLS/SSL error connecting to {}. This may indicate a certificate issue or network interception. Details: {}",
+            url, err
+        );
+    }
+
+    // Generic fallback
+    anyhow::anyhow!("Network error connecting to {}: {}", url, err)
 }
 
 #[cfg(test)]

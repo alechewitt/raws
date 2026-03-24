@@ -222,8 +222,13 @@ pub async fn run() -> Result<()> {
         }
     }
 
-    // 8. Build retry config and HTTP client config
-    let retry_config = retry::RetryConfig::default();
+    // 8. Build retry config (from env vars and config file) and HTTP client config
+    let config_max_attempts = config.get_value("max_attempts");
+    let config_retry_mode = config.get_value("retry_mode");
+    let retry_config = retry::resolve_retry_config(
+        config_max_attempts.as_deref(),
+        config_retry_mode.as_deref(),
+    );
 
     let http_config = build_http_config(&args);
 
