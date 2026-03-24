@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use heck::ToKebabCase;
 use serde_json::Value;
 use std::collections::HashMap;
+use std::io::Write;
 use std::path::Path;
 
 /// Configuration for a single waiter, loaded from waiters-2.json.
@@ -54,6 +55,155 @@ pub enum AcceptorState {
     Failure,
     /// Expected transient condition; continue polling.
     Retry,
+}
+
+/// Detailed result of acceptor evaluation, including which acceptor matched.
+#[derive(Debug, Clone)]
+pub struct AcceptorMatch {
+    /// The resulting state from the matching acceptor.
+    pub state: AcceptorState,
+    /// The expected value of the matching acceptor (used for descriptive messages).
+    pub expected: Value,
+    /// The JMESPath argument of the matching acceptor, if any.
+    pub argument: Option<String>,
+    /// The matcher type of the matching acceptor.
+    pub matcher: MatcherType,
+}
+
+/// Progress reporter for waiter operations.
+///
+/// Writes status messages to stderr during the wait loop.
+pub struct WaiterProgress<W: Write> {
+    writer: W,
+    waiter_cli_name: String,
+    max_attempts: u32,
+}
+
+impl<W: Write> WaiterProgress<W> {
+    /// Create a new progress reporter.
+    pub fn new(writer: W, waiter_cli_name: &str, max_attempts: u32) -> Self {
+        Self {
+            writer,
+            waiter_cli_name: waiter_cli_name.to_string(),
+            max_attempts,
+        }
+    }
+
+    /// Print the initial "Waiting for..." message.
+    pub fn starting(&mut self) {
+        let _ = writeln!(
+            self.writer,
+            "Waiting for {}...",
+            self.waiter_cli_name
+        );
+    }
+
+    /// Print attempt progress after each poll.
+    pub fn poll_attempt(&mut self, attempt: u32) {
+        let _ = writeln!(
+            self.writer,
+            "Waiting for {}... (attempt {}/{})",
+            self.waiter_cli_name, attempt, self.max_attempts
+        );
+    }
+
+    /// Print success message.
+    pub fn succeeded(&mut self) {
+        let _ = writeln!(
+            self.writer,
+            "Waiter {} succeeded",
+            self.waiter_cli_name
+        );
+    }
+
+    /// Print a timeout message when max attempts are exceeded.
+    pub fn timed_out(&mut self) {
+        let _ = writeln!(
+            self.writer,
+            "Waiter {} timed out after {} attempts",
+            self.waiter_cli_name, self.max_attempts
+        );
+    }
+
+    /// Print a failure message with details from the matching acceptor.
+    pub fn failed(&mut self, acceptor_match: &AcceptorMatch, response: &Value) {
+        let detail = format_failure_detail(
+            &self.waiter_cli_name,
+            acceptor_match,
+            response,
+        );
+        let _ = writeln!(self.writer, "{}", detail);
+    }
+}
+
+/// Format a human-friendly failure detail message from a waiter failure acceptor match.
+///
+/// This inspects the acceptor's matcher type, argument, and the response to build a
+/// descriptive message such as:
+///   "Waiter instance-running failed: Instance entered terminated state"
+pub fn format_failure_detail(
+    waiter_cli_name: &str,
+    acceptor_match: &AcceptorMatch,
+    response: &Value,
+) -> String {
+    let base = format!("Waiter {} failed", waiter_cli_name);
+
+    match &acceptor_match.matcher {
+        MatcherType::PathAll | MatcherType::PathAny | MatcherType::Path => {
+            // Try to extract what actual value was observed
+            if let Some(ref arg) = acceptor_match.argument {
+                let observed = evaluate_jmespath(arg, response);
+                let expected_str = format_value_brief(&acceptor_match.expected);
+                let observed_str = format_value_brief(&observed);
+                format!(
+                    "{}: {} matched expected value {}. Observed: {}",
+                    base, arg, expected_str, observed_str
+                )
+            } else {
+                format!("{}: failure condition matched", base)
+            }
+        }
+        MatcherType::Error => {
+            let code = acceptor_match
+                .expected
+                .as_str()
+                .unwrap_or("unknown error");
+            format!("{}: received error {}", base, code)
+        }
+        MatcherType::Status => {
+            let status = acceptor_match
+                .expected
+                .as_u64()
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "unknown".to_string());
+            format!("{}: received HTTP status {}", base, status)
+        }
+    }
+}
+
+/// Format a JSON value briefly for display in progress/error messages.
+fn format_value_brief(v: &Value) -> String {
+    match v {
+        Value::String(s) => format!("\"{}\"", s),
+        Value::Array(arr) if arr.len() <= 5 => {
+            let items: Vec<String> = arr.iter().map(format_value_brief).collect();
+            format!("[{}]", items.join(", "))
+        }
+        Value::Array(arr) => {
+            let items: Vec<String> = arr.iter().take(3).map(format_value_brief).collect();
+            format!("[{}, ... ({} total)]", items.join(", "), arr.len())
+        }
+        Value::Null => "null".to_string(),
+        other => other.to_string(),
+    }
+}
+
+/// Format a timeout error message for display.
+pub fn format_timeout_message(waiter_cli_name: &str, max_attempts: u32) -> String {
+    format!(
+        "Waiter {} timed out after {} attempts",
+        waiter_cli_name, max_attempts
+    )
 }
 
 /// Load waiter definitions from waiters-2.json in the given service version directory.
@@ -174,6 +324,28 @@ pub fn evaluate_acceptors(
     for acceptor in acceptors {
         if match_acceptor(acceptor, response, status, error_code) {
             return Some(acceptor.state.clone());
+        }
+    }
+    None
+}
+
+/// Evaluate acceptors in order and return detailed information about the matching acceptor.
+///
+/// Returns `None` if no acceptor matches (implying an implicit retry).
+pub fn evaluate_acceptors_detailed(
+    acceptors: &[Acceptor],
+    response: &Value,
+    status: u16,
+    error_code: Option<&str>,
+) -> Option<AcceptorMatch> {
+    for acceptor in acceptors {
+        if match_acceptor(acceptor, response, status, error_code) {
+            return Some(AcceptorMatch {
+                state: acceptor.state.clone(),
+                expected: acceptor.expected.clone(),
+                argument: acceptor.argument.clone(),
+                matcher: acceptor.matcher.clone(),
+            });
         }
     }
     None
@@ -789,5 +961,262 @@ mod tests {
         });
         let result3 = evaluate_jmespath("Reservations[].Instances[].State.Name", &data3);
         assert_eq!(result3, json!([]));
+    }
+
+    // ---------------------------------------------------------------
+    // 13. WaiterProgress: starting message
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_waiter_progress_starting_message() {
+        let mut buf = Vec::new();
+        {
+            let mut progress = WaiterProgress::new(&mut buf, "instance-running", 40);
+            progress.starting();
+        }
+        let output = String::from_utf8(buf).unwrap();
+        assert_eq!(output, "Waiting for instance-running...\n");
+    }
+
+    // ---------------------------------------------------------------
+    // 14. WaiterProgress: poll attempt message
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_waiter_progress_poll_attempt_message() {
+        let mut buf = Vec::new();
+        {
+            let mut progress = WaiterProgress::new(&mut buf, "instance-running", 40);
+            progress.poll_attempt(3);
+        }
+        let output = String::from_utf8(buf).unwrap();
+        assert_eq!(
+            output,
+            "Waiting for instance-running... (attempt 3/40)\n"
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // 15. WaiterProgress: success message
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_waiter_progress_success_message() {
+        let mut buf = Vec::new();
+        {
+            let mut progress = WaiterProgress::new(&mut buf, "table-exists", 25);
+            progress.succeeded();
+        }
+        let output = String::from_utf8(buf).unwrap();
+        assert_eq!(output, "Waiter table-exists succeeded\n");
+    }
+
+    // ---------------------------------------------------------------
+    // 16. WaiterProgress: timeout message
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_waiter_progress_timeout_message() {
+        let mut buf = Vec::new();
+        {
+            let mut progress = WaiterProgress::new(&mut buf, "instance-running", 40);
+            progress.timed_out();
+        }
+        let output = String::from_utf8(buf).unwrap();
+        assert_eq!(
+            output,
+            "Waiter instance-running timed out after 40 attempts\n"
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // 17. format_timeout_message standalone function
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_format_timeout_message() {
+        assert_eq!(
+            format_timeout_message("instance-running", 40),
+            "Waiter instance-running timed out after 40 attempts"
+        );
+        assert_eq!(
+            format_timeout_message("table-exists", 25),
+            "Waiter table-exists timed out after 25 attempts"
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // 18. Failure detail: path-based acceptor with observed state
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_failure_detail_path_acceptor() {
+        let acceptor_match = AcceptorMatch {
+            state: AcceptorState::Failure,
+            expected: json!("terminated"),
+            argument: Some("Reservations[].Instances[].State.Name".to_string()),
+            matcher: MatcherType::PathAny,
+        };
+
+        let response = json!({
+            "Reservations": [
+                {
+                    "Instances": [
+                        {"State": {"Name": "running"}},
+                        {"State": {"Name": "terminated"}}
+                    ]
+                }
+            ]
+        });
+
+        let detail = format_failure_detail("instance-running", &acceptor_match, &response);
+        assert!(detail.starts_with("Waiter instance-running failed:"));
+        assert!(detail.contains("Reservations[].Instances[].State.Name"));
+        assert!(detail.contains("\"terminated\""));
+        assert!(detail.contains("Observed:"));
+    }
+
+    // ---------------------------------------------------------------
+    // 19. Failure detail: error code acceptor
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_failure_detail_error_acceptor() {
+        let acceptor_match = AcceptorMatch {
+            state: AcceptorState::Failure,
+            expected: json!("InvalidInstanceID.NotFound"),
+            argument: None,
+            matcher: MatcherType::Error,
+        };
+
+        let detail = format_failure_detail("instance-running", &acceptor_match, &json!({}));
+        assert_eq!(
+            detail,
+            "Waiter instance-running failed: received error InvalidInstanceID.NotFound"
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // 20. Failure detail: status code acceptor
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_failure_detail_status_acceptor() {
+        let acceptor_match = AcceptorMatch {
+            state: AcceptorState::Failure,
+            expected: json!(500),
+            argument: None,
+            matcher: MatcherType::Status,
+        };
+
+        let detail = format_failure_detail("instance-running", &acceptor_match, &json!({}));
+        assert_eq!(
+            detail,
+            "Waiter instance-running failed: received HTTP status 500"
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // 21. evaluate_acceptors_detailed returns match info
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_evaluate_acceptors_detailed_returns_match() {
+        let acceptors = vec![
+            Acceptor {
+                matcher: MatcherType::PathAny,
+                expected: json!("terminated"),
+                state: AcceptorState::Failure,
+                argument: Some("Reservations[].Instances[].State.Name".to_string()),
+            },
+            Acceptor {
+                matcher: MatcherType::PathAll,
+                expected: json!("running"),
+                state: AcceptorState::Success,
+                argument: Some("Reservations[].Instances[].State.Name".to_string()),
+            },
+        ];
+
+        let response = json!({
+            "Reservations": [
+                {
+                    "Instances": [
+                        {"State": {"Name": "terminated"}}
+                    ]
+                }
+            ]
+        });
+
+        let result = evaluate_acceptors_detailed(&acceptors, &response, 200, None);
+        assert!(result.is_some());
+        let m = result.unwrap();
+        assert_eq!(m.state, AcceptorState::Failure);
+        assert_eq!(m.expected, json!("terminated"));
+        assert_eq!(m.matcher, MatcherType::PathAny);
+    }
+
+    // ---------------------------------------------------------------
+    // 22. evaluate_acceptors_detailed returns None when no match
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_evaluate_acceptors_detailed_no_match() {
+        let acceptors = vec![Acceptor {
+            matcher: MatcherType::Path,
+            expected: json!("ACTIVE"),
+            state: AcceptorState::Success,
+            argument: Some("Status".to_string()),
+        }];
+
+        let response = json!({"Status": "CREATING"});
+        let result = evaluate_acceptors_detailed(&acceptors, &response, 200, None);
+        assert!(result.is_none());
+    }
+
+    // ---------------------------------------------------------------
+    // 23. WaiterProgress: failure message via .failed()
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_waiter_progress_failure_output() {
+        let mut buf = Vec::new();
+        {
+            let mut progress = WaiterProgress::new(&mut buf, "instance-running", 40);
+            let acceptor_match = AcceptorMatch {
+                state: AcceptorState::Failure,
+                expected: json!("terminated"),
+                argument: Some("Reservations[].Instances[].State.Name".to_string()),
+                matcher: MatcherType::PathAny,
+            };
+            let response = json!({
+                "Reservations": [{
+                    "Instances": [{"State": {"Name": "terminated"}}]
+                }]
+            });
+            progress.failed(&acceptor_match, &response);
+        }
+        let output = String::from_utf8(buf).unwrap();
+        assert!(output.starts_with("Waiter instance-running failed:"));
+        assert!(output.contains("\"terminated\""));
+    }
+
+    // ---------------------------------------------------------------
+    // 24. format_value_brief formatting
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_format_value_brief() {
+        assert_eq!(format_value_brief(&json!("running")), "\"running\"");
+        assert_eq!(format_value_brief(&json!(42)), "42");
+        assert_eq!(format_value_brief(&Value::Null), "null");
+        assert_eq!(format_value_brief(&json!(true)), "true");
+        assert_eq!(
+            format_value_brief(&json!(["a", "b"])),
+            "[\"a\", \"b\"]"
+        );
+        // Large array is truncated
+        let large = json!(["a", "b", "c", "d", "e", "f", "g"]);
+        let brief = format_value_brief(&large);
+        assert!(brief.contains("... (7 total)"));
     }
 }

@@ -5,6 +5,7 @@ use std::path::Path;
 use crate::cli::args::GlobalArgs;
 use crate::cli::commands::configure;
 use crate::cli::customizations::cloudformation as cfn_commands;
+use crate::cli::customizations::logs as logs_commands;
 use crate::cli::customizations::s3 as s3_commands;
 use crate::cli::formatter;
 use crate::cli::jmespath;
@@ -112,6 +113,12 @@ pub async fn run() -> Result<()> {
     // orchestrates changeset creation, polling, and execution.
     if service == "cloudformation" && cfn_commands::is_custom_command(operation) {
         return cfn_commands::handle_cloudformation_command(&args, operation).await;
+    }
+
+    // Handle "raws logs tail": custom command that tails CloudWatch Logs
+    // using FilterLogEvents API with optional --follow for continuous polling.
+    if service == "logs" && logs_commands::is_custom_command(operation) {
+        return logs_commands::handle_logs_command(&args, operation).await;
     }
 
     // Load the service model early so help commands work without region/credentials.
@@ -459,6 +466,14 @@ async fn handle_wait_command(
             waiter_name, waiter_config.operation, waiter_config.delay, waiter_config.max_attempts);
     }
 
+    // Set up progress reporter
+    let mut progress = waiter::WaiterProgress::new(
+        std::io::stderr(),
+        waiter_cli_name,
+        waiter_config.max_attempts,
+    );
+    progress.starting();
+
     // Poll loop
     for attempt in 1..=waiter_config.max_attempts {
         if args.debug {
@@ -469,34 +484,35 @@ async fn handle_wait_command(
             protocol, &endpoint_url, service_model, op, &input, &creds, region, args.debug, &http_config,
         ).await;
 
-        // Evaluate acceptors
+        // Evaluate acceptors with detailed match info
         let response = match &outcome.result {
             Ok(val) => val.clone(),
             Err(_) => serde_json::json!({}),
         };
 
-        let acceptor_state = waiter::evaluate_acceptors(
+        let acceptor_match = waiter::evaluate_acceptors_detailed(
             &waiter_config.acceptors,
             &response,
             outcome.status,
             outcome.error_code.as_deref(),
         );
 
-        match acceptor_state {
-            Some(waiter::AcceptorState::Success) => {
+        match acceptor_match {
+            Some(ref m) if m.state == waiter::AcceptorState::Success => {
                 if args.debug {
                     eprintln!("[debug] waiter: success on attempt {attempt}");
                 }
+                progress.succeeded();
                 return Ok(());
             }
-            Some(waiter::AcceptorState::Failure) => {
-                bail!(
-                    "Waiter {} failed: acceptor matched failure condition on attempt {}/{}",
-                    waiter_cli_name, attempt, waiter_config.max_attempts
-                );
+            Some(ref m) if m.state == waiter::AcceptorState::Failure => {
+                progress.failed(m, &response);
+                let detail = waiter::format_failure_detail(waiter_cli_name, m, &response);
+                bail!("{}", detail);
             }
-            Some(waiter::AcceptorState::Retry) | None => {
-                // Continue polling
+            _ => {
+                // Retry or no match: show progress and continue polling
+                progress.poll_attempt(attempt);
                 if attempt < waiter_config.max_attempts {
                     tokio::time::sleep(std::time::Duration::from_secs(waiter_config.delay)).await;
                 }
@@ -504,9 +520,10 @@ async fn handle_wait_command(
         }
     }
 
+    progress.timed_out();
     bail!(
-        "Waiter {} exceeded max attempts ({})",
-        waiter_cli_name, waiter_config.max_attempts
+        "{}",
+        waiter::format_timeout_message(waiter_cli_name, waiter_config.max_attempts)
     );
 }
 

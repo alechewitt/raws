@@ -96,8 +96,8 @@
         "cargo test -- logs_tail",
         "cargo build  # verify it compiles"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "LogsClient with JSON protocol. FilterLogEvents API. Supports --follow with dedup. 32 unit tests."
     },
     {
       "id": "ec2-wait-enhancements",
@@ -106,8 +106,8 @@
         "cargo test -- waiter",
         "cargo build  # verify it compiles"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "WaiterProgress with generic Write. evaluate_acceptors_detailed for rich error messages. 12 new tests."
     },
     {
       "id": "sts-decode-authorization-message",
