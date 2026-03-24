@@ -181,7 +181,6 @@ pub fn merge_pages(
     }
 
     // Remove output_token fields from the final merged result
-    // (they represent the pagination cursor, which is meaningless after full pagination)
     for token in &config.output_token {
         merged_obj.remove(token);
     }

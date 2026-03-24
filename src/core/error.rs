@@ -46,23 +46,23 @@ impl std::error::Error for RawsError {}
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum CliExitError {
-    /// HTTP 4xx client error -> exit 1
-    Client(String),
+    /// AWS service error (API returned error) -> exit 254
+    ServiceError(String),
     /// Usage/argument error (missing args, unknown service) -> exit 2
     Usage(String),
     /// Waiter failure or timeout -> exit 255
     Waiter(String),
-    /// HTTP 5xx server error or internal error -> exit 255
-    Server(String),
+    /// Client-side error (config, credentials, internal) -> exit 255
+    ClientError(String),
 }
 
 impl fmt::Display for CliExitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CliExitError::Client(msg) => write!(f, "{msg}"),
+            CliExitError::ServiceError(msg) => write!(f, "{msg}"),
             CliExitError::Usage(msg) => write!(f, "{msg}"),
             CliExitError::Waiter(msg) => write!(f, "{msg}"),
-            CliExitError::Server(msg) => write!(f, "{msg}"),
+            CliExitError::ClientError(msg) => write!(f, "{msg}"),
         }
     }
 }
@@ -81,16 +81,18 @@ pub fn classify_exit_code(err: &anyhow::Error) -> i32 {
     // 1. Check for explicit CliExitError
     if let Some(cli_err) = err.downcast_ref::<CliExitError>() {
         return match cli_err {
-            CliExitError::Client(_) => 1,
+            CliExitError::ServiceError(_) => 254,
             CliExitError::Usage(_) => 2,
             CliExitError::Waiter(_) => 255,
-            CliExitError::Server(_) => 255,
+            CliExitError::ClientError(_) => 255,
         };
     }
 
-    // 2. Check for RawsError::Service with HTTP status
-    if let Some(RawsError::Service { status, .. }) = err.downcast_ref::<RawsError>() {
-        return if *status >= 400 && *status < 500 { 1 } else { 255 };
+    // 2. Check for RawsError::Service with HTTP status -> 254 (service error)
+    if err.downcast_ref::<RawsError>().is_some() {
+        if let Some(RawsError::Service { .. }) = err.downcast_ref::<RawsError>() {
+            return 254;
+        }
     }
 
     // 3. Message-based heuristic fallback
@@ -106,15 +108,13 @@ pub fn classify_exit_code(err: &anyhow::Error) -> i32 {
     if msg.contains("Waiter") && (msg.contains("failed") || msg.contains("timed out")) {
         return 255;
     }
-    if msg.contains("HTTP 4") || msg.contains("(HTTP 4") {
-        return 1;
-    }
-    if msg.contains("HTTP 5") || msg.contains("(HTTP 5") {
-        return 255;
+    // "An error occurred" is the standard AWS error format
+    if msg.contains("An error occurred") && msg.contains("when calling the") {
+        return 254;
     }
 
-    // Default: exit 1 for any unclassified error
-    1
+    // Default: exit 255 for any unclassified error (client error)
+    255
 }
 
 #[cfg(test)]
@@ -122,9 +122,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_classify_client_error() {
-        let err = anyhow::Error::new(CliExitError::Client("Not found".into()));
-        assert_eq!(classify_exit_code(&err), 1);
+    fn test_classify_service_error() {
+        let err = anyhow::Error::new(CliExitError::ServiceError("Not found".into()));
+        assert_eq!(classify_exit_code(&err), 254);
     }
 
     #[test]
@@ -140,8 +140,8 @@ mod tests {
     }
 
     #[test]
-    fn test_classify_server_error() {
-        let err = anyhow::Error::new(CliExitError::Server("Internal".into()));
+    fn test_classify_client_error() {
+        let err = anyhow::Error::new(CliExitError::ClientError("Internal".into()));
         assert_eq!(classify_exit_code(&err), 255);
     }
 
@@ -152,7 +152,7 @@ mod tests {
             message: "Access denied".into(),
             status: 403,
         });
-        assert_eq!(classify_exit_code(&err), 1);
+        assert_eq!(classify_exit_code(&err), 254);
     }
 
     #[test]
@@ -162,7 +162,7 @@ mod tests {
             message: "Internal".into(),
             status: 500,
         });
-        assert_eq!(classify_exit_code(&err), 255);
+        assert_eq!(classify_exit_code(&err), 254);
     }
 
     #[test]
@@ -190,20 +190,14 @@ mod tests {
     }
 
     #[test]
-    fn test_classify_message_http_4xx() {
-        let err = anyhow::anyhow!("AWS Error (HTTP 404): NoSuchBucket");
-        assert_eq!(classify_exit_code(&err), 1);
+    fn test_classify_message_aws_error() {
+        let err = anyhow::anyhow!("An error occurred (NoSuchBucket) when calling the GetObject operation: not found");
+        assert_eq!(classify_exit_code(&err), 254);
     }
 
     #[test]
-    fn test_classify_message_http_5xx() {
-        let err = anyhow::anyhow!("AWS Error (HTTP 500): InternalServerError");
-        assert_eq!(classify_exit_code(&err), 255);
-    }
-
-    #[test]
-    fn test_classify_unknown_defaults_to_1() {
+    fn test_classify_unknown_defaults_to_255() {
         let err = anyhow::anyhow!("Something completely unexpected happened");
-        assert_eq!(classify_exit_code(&err), 1);
+        assert_eq!(classify_exit_code(&err), 255);
     }
 }

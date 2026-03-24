@@ -1,66 +1,79 @@
 use anyhow::Result;
 use serde_json::Value;
 
-pub fn format_table(value: &Value) -> Result<String> {
+#[cfg(test)]
+fn format_table(value: &Value) -> Result<String> {
+    format_table_with_title(value, None)
+}
+
+pub fn format_table_with_title(value: &Value, title: Option<&str>) -> Result<String> {
     let output = match value {
         Value::Null => String::new(),
         Value::Bool(_) | Value::Number(_) | Value::String(_) => {
             // Single scalar: render as a one-cell table
             let s = scalar_to_string(value);
-            let width = s.len() + 4; // 2-space padding each side
+            let total_width = s.len() + 4 + 2; // content + padding + border
+            let widths = vec![total_width];
             let mut out = String::new();
-            out.push_str(&line_break(&[width]));
+            out.push_str(&line_break(&widths));
             out.push('\n');
-            out.push_str(&data_row(&[width], &[&s]));
+            out.push_str(&data_row(&widths, &[&s]));
             out.push('\n');
-            out.push_str(&line_break(&[width]));
+            out.push_str(&line_break(&widths));
             out
         }
         Value::Array(arr) => format_top_level_array(arr),
-        Value::Object(map) => format_top_level_object(map),
+        Value::Object(map) => format_top_level_object(map, title),
     };
     Ok(output)
 }
 
 /// Format a top-level object. The AWS CLI renders each top-level key as a
 /// separate section. Scalar-only objects become a vertical key-value table.
-fn format_top_level_object(map: &serde_json::Map<String, Value>) -> String {
+fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&str>) -> String {
     if map.is_empty() {
         return String::new();
     }
 
+    // Sort keys alphabetically (matching AWS CLI table formatter behavior)
     let mut keys: Vec<&String> = map.keys().collect();
     keys.sort();
 
+    // Separate scalar and non-scalar keys (both sorted)
+    let scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
+    let non_scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| !is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
+
     // Check if all values are scalar -> vertical table
-    let all_scalar = keys.iter().all(|k| is_scalar(&map[k.as_str()]));
-    if all_scalar {
-        let pairs: Vec<(String, String)> = keys
+    if non_scalar_keys.is_empty() {
+        let pairs: Vec<(String, String)> = scalar_keys
             .iter()
             .map(|k| ((*k).clone(), scalar_to_string(&map[k.as_str()])))
             .collect();
-        return render_vertical_table(None, &pairs);
+        return render_vertical_table(title, &pairs);
     }
 
     // Mixed: render scalar pairs as vertical table, then each non-scalar key
     // as its own section
     let mut sections: Vec<String> = Vec::new();
 
-    let scalar_pairs: Vec<(String, String)> = keys
-        .iter()
-        .filter(|k| is_scalar(&map[k.as_str()]))
-        .map(|k| ((*k).clone(), scalar_to_string(&map[k.as_str()])))
-        .collect();
-
-    if !scalar_pairs.is_empty() {
+    if !scalar_keys.is_empty() {
+        let scalar_pairs: Vec<(String, String)> = scalar_keys
+            .iter()
+            .map(|k| ((*k).clone(), scalar_to_string(&map[k.as_str()])))
+            .collect();
         sections.push(render_vertical_table(None, &scalar_pairs));
     }
 
-    for key in &keys {
+    for key in &non_scalar_keys {
         let val = &map[key.as_str()];
-        if is_scalar(val) {
-            continue;
-        }
         match val {
             Value::Array(arr) => {
                 if arr.is_empty() {
@@ -135,52 +148,233 @@ fn format_top_level_array(arr: &[Value]) -> String {
 }
 
 // ---------------------------------------------------------------------------
-// Rendering helpers
+// Column width calculation (matching AWS CLI algorithm)
 // ---------------------------------------------------------------------------
 
-/// Render a horizontal table with a title, column headers, and rows.
+/// Calculate column widths with proportional scaling to match AWS CLI.
 ///
-/// ```text
-/// ---------------------------
-/// |        Title            |
-/// +-----------+-------------+
-/// |  Header1  |  Header2    |
-/// +-----------+-------------+
-/// |  val1     |  val2       |
-/// +-----------+-------------+
-/// ```
+/// Each returned width represents the total characters a column occupies:
+/// - First column: includes left `|` and right `|`
+/// - Subsequent columns: include right `|` only (left shared with previous)
+///
+/// The widths sum to total_width.
+fn calculate_widths(max_content_widths: &[usize], title: Option<&str>) -> (usize, Vec<usize>) {
+    let padding = 4; // 2-space left pad, 2-space right pad conceptually
+    let border = 2; // left | and right |
+
+    let unscaled: Vec<usize> = max_content_widths.iter().map(|w| w + padding).collect();
+    let unscaled_sum: usize = unscaled.iter().sum();
+    let total_from_cols = unscaled_sum + border;
+    let total_from_title = title.map_or(0, |t| t.len() + border);
+    let total_width = std::cmp::max(total_from_cols, total_from_title);
+
+    if unscaled_sum == 0 {
+        return (total_width, unscaled);
+    }
+
+    // Proportionally scale columns so they sum to total_width
+    let scale_factor = total_width as f64 / unscaled_sum as f64;
+    let mut scaled: Vec<usize> = unscaled
+        .iter()
+        .map(|w| (*w as f64 * scale_factor).round() as usize)
+        .collect();
+
+    // Adjust for rounding errors
+    let mut off_by: isize = scaled.iter().sum::<usize>() as isize - total_width as isize;
+    while off_by != 0 {
+        if off_by > 0 {
+            for w in &mut scaled {
+                if off_by == 0 {
+                    break;
+                }
+                *w -= 1;
+                off_by -= 1;
+            }
+        } else {
+            for w in scaled.iter_mut().rev() {
+                if off_by == 0 {
+                    break;
+                }
+                *w += 1;
+                off_by += 1;
+            }
+        }
+    }
+
+    (total_width, scaled)
+}
+
+// ---------------------------------------------------------------------------
+// Rendering helpers (matching AWS CLI table.py)
+// ---------------------------------------------------------------------------
+
+/// Render a full-width dash line: `---...---` of exactly total_width characters.
+fn dash_line(total_width: usize) -> String {
+    "-".repeat(total_width)
+}
+
+/// Render a `+---+---+` separator line.
+/// First column: `+dashes+` (width chars total).
+/// Subsequent: `dashes+` (width chars total).
+fn line_break(widths: &[usize]) -> String {
+    let mut out = String::new();
+    for (i, w) in widths.iter().enumerate() {
+        if i == 0 {
+            out.push('+');
+            out.push_str(&"-".repeat(w.saturating_sub(2)));
+            out.push('+');
+        } else {
+            out.push_str(&"-".repeat(w.saturating_sub(1)));
+            out.push('+');
+        }
+    }
+    out
+}
+
+/// Render a title line: `|  Title  |` centered within total_width.
+fn title_line(title: &str, total_width: usize) -> String {
+    center_text(title, total_width, "|", "|")
+}
+
+/// Center text between edge characters within a given total width.
+/// Matches AWS CLI `center_text()` algorithm.
+fn center_text(text: &str, length: usize, left_edge: &str, right_edge: &str) -> String {
+    let text_len = text.len();
+    let char_start = (length / 2)
+        .saturating_sub(text_len / 2)
+        .saturating_sub(1);
+
+    let mut out = String::new();
+    out.push_str(left_edge);
+    out.push_str(&" ".repeat(char_start));
+    out.push_str(text);
+
+    let length_so_far = left_edge.len() + char_start + text_len;
+    let right_spaces = length.saturating_sub(right_edge.len() + length_so_far);
+    out.push_str(&" ".repeat(right_spaces));
+    out.push_str(right_edge);
+    out
+}
+
+/// Left-align text in a cell. Matches AWS CLI `align_left()` algorithm.
+fn align_left(text: &str, width: usize, left_edge: &str, right_edge: &str) -> String {
+    let text_len = text.len();
+    let left_padding = 2;
+    let computed_length = text_len + left_padding + left_edge.len() + right_edge.len();
+    let padding = if width >= computed_length {
+        left_padding
+    } else {
+        0
+    };
+
+    let mut out = String::new();
+    out.push_str(left_edge);
+    out.push_str(&" ".repeat(padding));
+    out.push_str(text);
+    let length_so_far = left_edge.len() + padding + text_len;
+    let right_spaces = width.saturating_sub(length_so_far + right_edge.len());
+    out.push_str(&" ".repeat(right_spaces));
+    out.push_str(right_edge);
+    out
+}
+
+/// Render a data row with left-aligned text in each cell.
+/// First column: `|  text  pad|`, subsequent: `  text  pad|`.
+fn data_row(widths: &[usize], cells: &[&str]) -> String {
+    let mut out = String::new();
+    for (i, w) in widths.iter().enumerate() {
+        let cell = if i < cells.len() { cells[i] } else { "" };
+        if i == 0 {
+            out.push_str(&align_left(cell, *w, "|", "|"));
+        } else {
+            out.push_str(&align_left(cell, *w, "", "|"));
+        }
+    }
+    out
+}
+
+/// Render a header row with centered text in each cell.
+fn header_row(widths: &[usize], headers: &[String]) -> String {
+    let mut out = String::new();
+    for (i, w) in widths.iter().enumerate() {
+        let header = if i < headers.len() {
+            headers[i].as_str()
+        } else {
+            ""
+        };
+        if i == 0 {
+            out.push_str(&center_text(header, *w, "|", "|"));
+        } else {
+            out.push_str(&center_text(header, *w, "", "|"));
+        }
+    }
+    out
+}
+
+// ---------------------------------------------------------------------------
+// Table renderers
+// ---------------------------------------------------------------------------
+
+/// Render a vertical key-value table with an optional title.
+fn render_vertical_table(title: Option<&str>, pairs: &[(String, String)]) -> String {
+    if pairs.is_empty() {
+        return String::new();
+    }
+
+    let max_key_len = pairs.iter().map(|(k, _)| k.len()).max().unwrap_or(0);
+    let max_val_len = pairs.iter().map(|(_, v)| v.len()).max().unwrap_or(0);
+
+    let (total_width, widths) = calculate_widths(&[max_key_len, max_val_len], title);
+
+    let mut out = String::new();
+
+    if let Some(t) = title {
+        out.push_str(&dash_line(total_width));
+        out.push('\n');
+        out.push_str(&title_line(t, total_width));
+        out.push('\n');
+    }
+
+    out.push_str(&line_break(&widths));
+    out.push('\n');
+
+    for (key, val) in pairs {
+        out.push_str(&data_row(&widths, &[key, val]));
+        out.push('\n');
+    }
+
+    out.push_str(&line_break(&widths));
+
+    out
+}
+
+/// Render a horizontal table with a title, column headers, and rows.
 fn render_horizontal_table(
     title: Option<&str>,
     headers: &[String],
     rows: &[Vec<String>],
 ) -> String {
     let col_count = headers.len();
-    // Compute column widths: max of header and all row values, plus 4 for padding
-    let mut widths: Vec<usize> = headers
-        .iter()
-        .map(|h| h.len() + 4) // 2-space padding each side
-        .collect();
 
+    // Calculate max content widths across headers and all rows
+    let mut max_content: Vec<usize> = headers.iter().map(|h| h.len()).collect();
     for row in rows {
         for (i, cell) in row.iter().enumerate() {
             if i < col_count {
-                let needed = cell.len() + 4;
-                if needed > widths[i] {
-                    widths[i] = needed;
-                }
+                max_content[i] = std::cmp::max(max_content[i], cell.len());
             }
         }
     }
+
+    let (total_width, widths) = calculate_widths(&max_content, title);
 
     let mut out = String::new();
 
     // Title section
     if let Some(t) = title {
-        let total_inner = total_inner_width(&widths);
-        let top_width = total_inner;
-        out.push_str(&dash_line(top_width));
+        out.push_str(&dash_line(total_width));
         out.push('\n');
-        out.push_str(&title_line(t, top_width));
+        out.push_str(&title_line(t, total_width));
         out.push('\n');
     }
 
@@ -209,83 +403,20 @@ fn render_horizontal_table(
     out
 }
 
-/// Render a vertical key-value table with an optional title.
-///
-/// ```text
-/// --------------------
-/// |      Title       |
-/// +--------+---------+
-/// |  Key1  |  Val1   |
-/// |  Key2  |  Val2   |
-/// +--------+---------+
-/// ```
-fn render_vertical_table(title: Option<&str>, pairs: &[(String, String)]) -> String {
-    if pairs.is_empty() {
-        return String::new();
-    }
-
-    let key_width = pairs
-        .iter()
-        .map(|(k, _)| k.len() + 4)
-        .max()
-        .unwrap_or(4);
-    let val_width = pairs
-        .iter()
-        .map(|(_, v)| v.len() + 4)
-        .max()
-        .unwrap_or(4);
-
-    let widths = [key_width, val_width];
-
-    let mut out = String::new();
-
-    if let Some(t) = title {
-        let total_inner = total_inner_width(&widths);
-        out.push_str(&dash_line(total_inner));
-        out.push('\n');
-        out.push_str(&title_line(t, total_inner));
-        out.push('\n');
-    }
-
-    out.push_str(&line_break(&widths));
-    out.push('\n');
-
-    for (key, val) in pairs {
-        out.push_str(&data_row(&widths, &[key, val]));
-        out.push('\n');
-    }
-
-    out.push_str(&line_break(&widths));
-
-    out
-}
-
 /// Render a single-column table for a list of scalars, with title.
-///
-/// ```text
-/// --------------------
-/// |     Title        |
-/// +------------------+
-/// |  value1          |
-/// |  value2          |
-/// +------------------+
-/// ```
 fn render_scalar_list_table(title: &str, values: &[String]) -> String {
     if values.is_empty() {
         return String::new();
     }
 
     let max_val = values.iter().map(|v| v.len()).max().unwrap_or(0);
-    let title_needed = title.len() + 4;
-    let col_width = std::cmp::max(max_val + 4, title_needed);
-    let widths = [col_width];
+    let (total_width, widths) = calculate_widths(&[max_val], Some(title));
 
     let mut out = String::new();
-    let total_inner = total_inner_width(&widths);
 
-    out.push_str(&dash_line(total_inner));
+    out.push_str(&dash_line(total_width));
     out.push('\n');
-    out.push_str(&title_line(title, total_inner));
+    out.push_str(&title_line(title, total_width));
     out.push('\n');
     out.push_str(&line_break(&widths));
     out.push('\n');
@@ -307,8 +438,7 @@ fn render_scalar_list_table_no_title(values: &[String]) -> String {
     }
 
     let max_val = values.iter().map(|v| v.len()).max().unwrap_or(0);
-    let col_width = max_val + 4;
-    let widths = [col_width];
+    let (_total_width, widths) = calculate_widths(&[max_val], None);
 
     let mut out = String::new();
 
@@ -339,7 +469,7 @@ fn render_object_list_table_no_title(items: &[Value]) -> String {
 
 /// Extract sorted headers and row data from a list of JSON objects.
 fn extract_headers_and_rows(items: &[Value]) -> (Vec<String>, Vec<Vec<String>>) {
-    // Gather all unique keys across items, sorted
+    // Gather all unique keys across items, sorted alphabetically
     let mut header_set = std::collections::BTreeSet::new();
     for item in items {
         if let Value::Object(map) = item {
@@ -365,96 +495,6 @@ fn extract_headers_and_rows(items: &[Value]) -> (Vec<String>, Vec<Vec<String>>) 
         .collect();
 
     (headers, rows)
-}
-
-// ---------------------------------------------------------------------------
-// Low-level line drawing
-// ---------------------------------------------------------------------------
-
-/// Calculate the total inner width for a set of column widths.
-/// This is the sum of all column widths plus the separators between them.
-/// For N columns with widths [w1, w2, ...], the total is w1 + 1 + w2 + 1 + ...
-/// (each `|` separator between columns counts as 1).
-fn total_inner_width(widths: &[usize]) -> usize {
-    if widths.is_empty() {
-        return 0;
-    }
-    let sum: usize = widths.iter().sum();
-    // Between N columns there are N-1 separators of width 1 (the `+` or `|`)
-    sum + widths.len() - 1
-}
-
-/// Render a full-width dash line: `----...----`
-fn dash_line(inner_width: usize) -> String {
-    // The outer border adds 2 characters (one `|` each side) but for the top
-    // dashes we use `-` for the full width including borders.
-    let total = inner_width + 2;
-    "-".repeat(total)
-}
-
-/// Render a `+---+---+` separator line.
-fn line_break(widths: &[usize]) -> String {
-    let mut out = String::new();
-    for w in widths {
-        out.push('+');
-        out.push_str(&"-".repeat(*w));
-    }
-    out.push('+');
-    out
-}
-
-/// Render a title line: `|  Title  |` centered within total_inner_width.
-fn title_line(title: &str, inner_width: usize) -> String {
-    let mut out = String::new();
-    out.push('|');
-    let content = center_text(title, inner_width);
-    out.push_str(&content);
-    out.push('|');
-    out
-}
-
-/// Render a data row with 2-space left padding in each cell.
-fn data_row(widths: &[usize], cells: &[&str]) -> String {
-    let mut out = String::new();
-    for (i, w) in widths.iter().enumerate() {
-        out.push('|');
-        let cell = if i < cells.len() { cells[i] } else { "" };
-        // 2-space left padding, then content, then right-pad to fill width
-        let padded = format!("  {}", cell);
-        let needed = if *w > padded.len() { w - padded.len() } else { 0 };
-        out.push_str(&padded);
-        out.push_str(&" ".repeat(needed));
-    }
-    out.push('|');
-    out
-}
-
-/// Render a header row with centered text in each cell.
-fn header_row(widths: &[usize], headers: &[String]) -> String {
-    let mut out = String::new();
-    for (i, w) in widths.iter().enumerate() {
-        out.push('|');
-        let header = if i < headers.len() {
-            headers[i].as_str()
-        } else {
-            ""
-        };
-        out.push_str(&center_text(header, *w));
-    }
-    out.push('|');
-    out
-}
-
-/// Center text within a given width. If the text is wider than the width,
-/// it is returned with minimal padding.
-fn center_text(text: &str, width: usize) -> String {
-    if text.len() >= width {
-        return format!(" {} ", text);
-    }
-    let total_pad = width - text.len();
-    let left = total_pad / 2;
-    let right = total_pad - left;
-    format!("{}{}{}", " ".repeat(left), text, " ".repeat(right))
 }
 
 // ---------------------------------------------------------------------------
@@ -512,7 +552,7 @@ mod tests {
         });
         let result = format_table(&value).unwrap();
 
-        // Should be a vertical key-value table (keys sorted alphabetically)
+        // Keys should be sorted alphabetically
         assert!(result.contains("Account"), "should contain Account key");
         assert!(result.contains("668864905351"), "should contain account value");
         assert!(result.contains("Arn"), "should contain Arn key");
@@ -549,6 +589,26 @@ mod tests {
             .filter(|l| l.starts_with('|') && l.contains("Account"))
             .collect();
         assert_eq!(data_lines.len(), 1, "Account should appear in exactly one row");
+
+        // Verify alphabetical order: Account before Arn before UserId
+        let account_pos = result.find("Account").unwrap();
+        let arn_pos = result.find("Arn").unwrap();
+        let userid_pos = result.find("UserId").unwrap();
+        assert!(account_pos < arn_pos, "Account should come before Arn");
+        assert!(arn_pos < userid_pos, "Arn should come before UserId");
+
+        // All lines should have the same width
+        let bordered_lines: Vec<&str> = lines
+            .iter()
+            .filter(|l| l.starts_with('|') || l.starts_with('+'))
+            .copied()
+            .collect();
+        if bordered_lines.len() > 1 {
+            let expected_len = bordered_lines[0].len();
+            for line in &bordered_lines {
+                assert_eq!(line.len(), expected_len, "all lines should have same width");
+            }
+        }
     }
 
     #[test]
@@ -664,33 +724,48 @@ mod tests {
 
     #[test]
     fn test_table_format_line_break() {
-        assert_eq!(line_break(&[5, 8]), "+-----+--------+");
-        assert_eq!(line_break(&[3]), "+---+");
+        // Width 7 = first column (includes both | edges)
+        // Width 10 = second column (includes right | only)
+        // +-----+--------+  (no, that's the old format)
+        // New format: first: +dashes+ (width chars), subsequent: dashes+ (width chars)
+        // width=7: +-----+ (1+5+1=7), width=10: ---------+ (9+1=10)
+        assert_eq!(line_break(&[7, 10]), "+-----+---------+");
+        // Single column, width=5: +---+ (1+3+1=5)
+        assert_eq!(line_break(&[5]), "+---+");
     }
 
     #[test]
     fn test_table_format_data_row() {
-        let row = data_row(&[10, 12], &["foo", "bar"]);
-        // width 10: "  foo" (5 chars) + 5 spaces = 10
-        // width 12: "  bar" (5 chars) + 7 spaces = 12
-        assert_eq!(row, "|  foo     |  bar       |");
+        // First column width=12 includes both |, second width=14 includes right |
+        // align_left("foo", 12, "|", "|") = |  foo     | (12 chars)
+        // align_left("bar", 14, "", "|") =   bar         | (14 chars)
+        let row = data_row(&[12, 14], &["foo", "bar"]);
+        assert_eq!(row.len(), 12 + 14);
+        assert!(row.starts_with("|  foo"));
+        assert!(row.ends_with('|'));
+        assert!(row.contains("bar"));
     }
 
     #[test]
     fn test_table_format_center_text() {
-        let centered = center_text("Hi", 10);
-        assert_eq!(centered.len(), 10);
+        // center_text("Hi", 12, "|", "|")
+        // char_start = 12/2 - 2/2 - 1 = 6 - 1 - 1 = 4
+        // | + 4 spaces + Hi + spaces + |
+        // length_so_far = 1 + 4 + 2 = 7, right_spaces = 12 - 1 - 7 = 4
+        // Result: |    Hi    | (12 chars)
+        let centered = center_text("Hi", 12, "|", "|");
+        assert_eq!(centered.len(), 12);
         assert!(centered.contains("Hi"));
-        // "Hi" is 2 chars, 10 - 2 = 8 padding total, 4 left, 4 right
-        assert_eq!(centered, "    Hi    ");
+        assert_eq!(centered, "|    Hi    |");
     }
 
     #[test]
     fn test_table_format_title_line() {
-        let t = title_line("MyTitle", 20);
+        let t = title_line("MyTitle", 22);
         assert!(t.starts_with('|'));
         assert!(t.ends_with('|'));
         assert!(t.contains("MyTitle"));
+        assert_eq!(t.len(), 22);
     }
 
     #[test]
@@ -711,6 +786,12 @@ mod tests {
         assert!(lines[3].contains("Value1"), "first data value");
         assert!(lines[4].contains("LongerKey"), "second data row");
         assert!(lines[5].starts_with('+'), "bottom separator");
+
+        // All lines should have the same width
+        let expected_len = lines[0].len();
+        for line in &lines {
+            assert_eq!(line.len(), expected_len, "all lines same width: '{}'", line);
+        }
     }
 
     #[test]
@@ -735,6 +816,12 @@ mod tests {
         assert!(lines[5].contains("30"), "first data row age");
         assert!(lines[6].contains("Bob"), "second data row");
         assert!(lines[7].starts_with('+'), "bottom separator");
+
+        // All lines should have the same width
+        let expected_len = lines[0].len();
+        for line in &lines {
+            assert_eq!(line.len(), expected_len, "all lines same width: '{}'", line);
+        }
     }
 
     #[test]
@@ -777,15 +864,26 @@ mod tests {
         });
         let result = format_table(&value).unwrap();
 
-        // Find a separator line to check column widths
-        let lines: Vec<&str> = result.lines().collect();
-        let sep_line = lines.iter().find(|l| l.starts_with('+')).unwrap();
         // The Long column should be wide enough for the longest value
-        assert!(
-            sep_line.len() > 30,
-            "separator should be wide enough for long values"
-        );
         assert!(result.contains("this is a very long value indeed"));
+
+        // All lines should have the same width
+        let lines: Vec<&str> = result.lines().collect();
+        let bordered_lines: Vec<&&str> = lines
+            .iter()
+            .filter(|l| l.starts_with('|') || l.starts_with('+'))
+            .collect();
+        if bordered_lines.len() > 1 {
+            let expected_len = bordered_lines[0].len();
+            for line in &bordered_lines {
+                assert_eq!(
+                    line.len(),
+                    expected_len,
+                    "all bordered lines should have same length, but '{}' differs",
+                    line
+                );
+            }
+        }
     }
 
     #[test]
@@ -844,5 +942,32 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn test_table_calculate_widths_proportional() {
+        // Verify proportional scaling matches AWS CLI behavior
+        // STS-like: max_key=7, max_val=62, title="GetCallerIdentity" (17)
+        let (total_width, widths) = calculate_widths(&[7, 62], Some("GetCallerIdentity"));
+        // unscaled = [11, 66], sum = 77
+        // total_from_cols = 79, total_from_title = 19
+        // total_width = 79
+        assert_eq!(total_width, 79);
+        assert_eq!(widths.iter().sum::<usize>(), 79);
+        // The first column should be around 11, second around 68
+        assert_eq!(widths[0], 11);
+        assert_eq!(widths[1], 68);
+    }
+
+    #[test]
+    fn test_table_calculate_widths_title_wider() {
+        // When title is wider than columns, total_width increases
+        let (total_width, widths) = calculate_widths(&[3], Some("AVeryLongSectionTitle"));
+        // unscaled = [7], sum = 7, total_from_cols = 9
+        // title = 21 chars, total_from_title = 23
+        // total_width = 23
+        assert_eq!(total_width, 23);
+        // Single column takes full width
+        assert_eq!(widths[0], 23);
     }
 }

@@ -374,14 +374,31 @@ pub async fn run() -> Result<()> {
         .await?
     };
 
-    // 9a. Normalize timestamps in the response to match AWS CLI format
+    // 9a. Normalize response: reorder keys to model order, convert timestamps
     let mut response_value = response_value;
     if let Some(ref output_shape) = op.output_shape {
-        crate::core::protocol::normalize_timestamps_in_value(
+        crate::core::protocol::normalize_response_value(
             &mut response_value,
             output_shape,
             &service_model.shapes,
         );
+        // Add null for missing top-level members (matching botocore behavior)
+        crate::core::protocol::fill_missing_top_level_members(
+            &mut response_value,
+            output_shape,
+            &service_model.shapes,
+        );
+        // Re-strip pagination fields that fill_missing_top_level_members may have re-added as null
+        if let Some(ref pc) = paginator_config {
+            if let Some(obj) = response_value.as_object_mut() {
+                for token in &pc.output_token {
+                    obj.remove(token);
+                }
+                if let Some(ref mr) = pc.more_results {
+                    obj.remove(mr);
+                }
+            }
+        }
     }
 
     // 9b. Apply service-specific output customizations (e.g., pretty-print decoded JSON fields)
@@ -396,7 +413,7 @@ pub async fn run() -> Result<()> {
     };
 
     // 10. Format and print output
-    let formatted = formatter::format_output(&final_value, output_format)?;
+    let formatted = formatter::format_output_with_title(&final_value, output_format, Some(&op.name))?;
     println!("{formatted}");
 
     Ok(())
@@ -790,10 +807,10 @@ async fn dispatch_query_protocol(
         let (error_code, result) = match query::parse_query_error(&response_body) {
             Ok((code, message)) => {
                 let ec = code.clone();
-                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
+                (Some(ec), Err(anyhow::anyhow!("An error occurred ({}) when calling the {} operation: {}", code, op.name, message)))
             }
             Err(_) => {
-                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
+                (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
         DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
@@ -898,10 +915,10 @@ async fn dispatch_ec2_protocol(
         let (error_code, result) = match query::parse_ec2_error(&response_body) {
             Ok((code, message)) => {
                 let ec = code.clone();
-                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
+                (Some(ec), Err(anyhow::anyhow!("An error occurred ({}) when calling the {} operation: {}", code, op.name, message)))
             }
             Err(_) => {
-                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
+                (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
         DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
@@ -996,10 +1013,10 @@ async fn dispatch_json_protocol(
         let (error_code, result) = match json_protocol::parse_json_error(&response_body) {
             Ok((code, message)) => {
                 let ec = code.clone();
-                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
+                (Some(ec), Err(anyhow::anyhow!("An error occurred ({}) when calling the {} operation: {}", code, op.name, message)))
             }
             Err(_) => {
-                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
+                (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
         DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
@@ -1137,10 +1154,10 @@ async fn dispatch_rest_json_protocol(
         let (error_code, result) = match rest_json::parse_rest_json_error(&response_body) {
             Ok((code, message)) => {
                 let ec = code.clone();
-                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
+                (Some(ec), Err(anyhow::anyhow!("An error occurred ({}) when calling the {} operation: {}", code, op.name, message)))
             }
             Err(_) => {
-                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
+                (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
         DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
@@ -1280,10 +1297,10 @@ async fn dispatch_rest_xml_protocol(
         let (error_code, result) = match rest_xml::parse_rest_xml_error(&response_body) {
             Ok((code, message)) => {
                 let ec = code.clone();
-                (Some(ec), Err(anyhow::anyhow!("AWS Error (HTTP {}): {} - {}", response.status, code, message)))
+                (Some(ec), Err(anyhow::anyhow!("An error occurred ({}) when calling the {} operation: {}", code, op.name, message)))
             }
             Err(_) => {
-                (None, Err(anyhow::anyhow!("AWS Error (HTTP {}): {}", response.status, response_body)))
+                (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
         DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
@@ -2191,14 +2208,15 @@ mod tests {
 
         // Verify the formatted error message that the driver would produce
         let status = 403;
-        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
-        assert!(
-            formatted.contains("403"),
-            "Error should include HTTP status, got: {formatted}"
-        );
+        let op_name = "GetCallerIdentity";
+        let formatted = format!("An error occurred ({}) when calling the {} operation: {}", code, op_name, message);
         assert!(
             formatted.contains("InvalidClientTokenId"),
             "Error should include error code, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("GetCallerIdentity"),
+            "Error should include operation name, got: {formatted}"
         );
     }
 
@@ -2218,15 +2236,15 @@ mod tests {
             "The security token included in the request is invalid."
         );
 
-        let status = 403;
-        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
-        assert!(
-            formatted.contains("403"),
-            "Error should include HTTP status, got: {formatted}"
-        );
+        let op_name = "ListKeys";
+        let formatted = format!("An error occurred ({}) when calling the {} operation: {}", code, op_name, message);
         assert!(
             formatted.contains("UnrecognizedClientException"),
             "Error should include error code, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("ListKeys"),
+            "Error should include operation name, got: {formatted}"
         );
     }
 
@@ -2246,15 +2264,15 @@ mod tests {
             "User is not authorized to perform this action."
         );
 
-        let status = 403;
-        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
-        assert!(
-            formatted.contains("403"),
-            "Error should include HTTP status, got: {formatted}"
-        );
+        let op_name = "Invoke";
+        let formatted = format!("An error occurred ({}) when calling the {} operation: {}", code, op_name, message);
         assert!(
             formatted.contains("AccessDeniedException"),
             "Error should include error code, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("Invoke"),
+            "Error should include operation name, got: {formatted}"
         );
     }
 
@@ -2272,15 +2290,15 @@ mod tests {
         assert_eq!(code, "AccessDenied");
         assert_eq!(message, "Access Denied");
 
-        let status = 403;
-        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
-        assert!(
-            formatted.contains("403"),
-            "Error should include HTTP status, got: {formatted}"
-        );
+        let op_name = "GetObject";
+        let formatted = format!("An error occurred ({}) when calling the {} operation: {}", code, op_name, message);
         assert!(
             formatted.contains("AccessDenied"),
             "Error should include error code, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("GetObject"),
+            "Error should include operation name, got: {formatted}"
         );
     }
 
@@ -2305,15 +2323,15 @@ mod tests {
             "AWS was not able to validate the provided access credentials"
         );
 
-        let status = 401;
-        let formatted = format!("AWS Error (HTTP {}): {} - {}", status, code, message);
-        assert!(
-            formatted.contains("401"),
-            "Error should include HTTP status, got: {formatted}"
-        );
+        let op_name = "DescribeInstances";
+        let formatted = format!("An error occurred ({}) when calling the {} operation: {}", code, op_name, message);
         assert!(
             formatted.contains("AuthFailure"),
             "Error should include error code, got: {formatted}"
+        );
+        assert!(
+            formatted.contains("DescribeInstances"),
+            "Error should include operation name, got: {formatted}"
         );
     }
 
