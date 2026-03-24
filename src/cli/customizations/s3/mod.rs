@@ -10,6 +10,7 @@ mod cp;
 mod ls;
 mod mb;
 mod mv;
+mod presign;
 mod rm;
 mod sync;
 mod transfer;
@@ -28,7 +29,7 @@ use crate::core::http::client::HttpClient;
 use crate::core::http::request::{HttpRequest, HttpResponse};
 
 /// The set of recognized S3 high-level subcommands.
-const S3_SUBCOMMANDS: &[&str] = &["ls", "cp", "mv", "rm", "sync", "mb", "rb"];
+const S3_SUBCOMMANDS: &[&str] = &["ls", "cp", "mv", "rm", "sync", "mb", "rb", "presign"];
 
 /// Common context for S3 high-level command execution.
 ///
@@ -167,6 +168,7 @@ async fn dispatch_s3_subcommand(
         "sync" => handle_sync(args, ctx).await,
         "mb" => handle_mb(args, ctx).await,
         "rb" => handle_rb(args, ctx).await,
+        "presign" => presign::handle_presign(args, ctx),
         _ => bail!("Unknown s3 subcommand '{}'", subcommand),
     }
 }
@@ -182,6 +184,7 @@ fn print_s3_help() {
     println!("  sync     Sync directories and S3 prefixes");
     println!("  mb       Make an S3 bucket");
     println!("  rb       Remove an S3 bucket");
+    println!("  presign  Generate a presigned URL for an S3 object");
     println!();
     println!("For API-level S3 operations, use: raws s3api <operation>");
 }
@@ -515,7 +518,7 @@ mod tests {
 
     #[test]
     fn test_s3_subcommands_count() {
-        assert_eq!(S3_SUBCOMMANDS.len(), 7);
+        assert_eq!(S3_SUBCOMMANDS.len(), 8);
     }
 
     #[test]

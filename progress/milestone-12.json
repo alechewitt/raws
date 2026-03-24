@@ -75,8 +75,8 @@
         "cargo test -- presign",
         "raws s3 presign s3://test-bucket/test-key --expires-in 300  # should output a URL with X-Amz-Signature"
       ],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "SigV4 query string signing. Virtual-hosted and path-style for dotted buckets. 22 unit tests."
     },
     {
       "id": "cloudformation-deploy",
