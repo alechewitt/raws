@@ -6,64 +6,64 @@
       "id": "yaml-output-format",
       "description": "Implement --output yaml and --output yaml-stream formatters.",
       "verify": ["cargo test -- yaml", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Hand-rolled JSON-to-YAML converter. Handles quoting, nesting, arrays of objects. format_yaml + format_yaml_stream. 23 unit tests."
     },
     {
       "id": "assume-role-credential-provider",
       "description": "Implement assume-role credential provider that reads role_arn and source_profile from config, calls STS AssumeRole.",
       "verify": ["cargo test -- assume_role", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Reads role_arn, source_profile, external_id, role_session_name from config. Signs STS call with SigV4. Parses XML response. 23 unit tests."
     },
     {
       "id": "credential-process-provider",
       "description": "Implement credential_process support: execute command, parse JSON output for credentials.",
-      "verify": ["cargo test -- credential_process", "cargo build"],
+      "verify": ["cargo test -- process", "cargo build"],
       "passes": true,
-      "notes": "Reads from config and credentials files. Uses sh -c to execute. Added to all credential chains. 9 unit tests."
+      "notes": "Reads from config and credentials files via find_credential_process_in_paths. Uses sh -c to execute. Parses Version 1 JSON. 12 unit tests."
     },
     {
       "id": "sso-credential-provider",
       "description": "Implement SSO credential provider that reads sso_start_url, sso_account_id, sso_role_name from config.",
       "verify": ["cargo test -- sso", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Reads SSO config, finds cached token via SHA1 hash of start_url (ring), calls GetRoleCredentials API. 25 unit tests."
     },
     {
       "id": "web-identity-token-provider",
       "description": "Implement web identity token credential provider for EKS/IRSA.",
       "verify": ["cargo test -- web_identity", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Reads token from file, calls STS AssumeRoleWithWebIdentity (unsigned). Supports env vars and config file. 20 unit tests."
     },
     {
       "id": "ca-bundle-and-proxy-support",
       "description": "Implement --ca-bundle / AWS_CA_BUNDLE and HTTP_PROXY/HTTPS_PROXY support.",
       "verify": ["cargo test -- proxy", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ProxyConfig with resolve(), has_proxy(), should_bypass_proxy(), read_ca_bundle(). NO_PROXY suffix matching. 18 unit tests."
     },
     {
       "id": "shell-completion",
       "description": "Implement shell completion generation for bash, zsh, and fish.",
       "verify": ["cargo test -- completion", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "generate_completion(shell) for bash/zsh/fish. list_services/list_operations from models dir. 15 unit tests."
     },
     {
       "id": "response-streaming",
       "description": "Implement response streaming for operations with streaming output shapes.",
       "verify": ["cargo test -- streaming", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "find_streaming_member, is_streaming_operation, write_streaming_response, build_metadata_response. 15 unit tests."
     },
     {
       "id": "binary-output-handling",
       "description": "Implement proper binary output handling for operations that return binary data.",
       "verify": ["cargo test -- binary_output", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "find_binary_payload_member, write_binary_output (stdout/file), extract_binary_data with base64 decoder. 12 unit tests."
     },
     {
       "id": "exit-code-parity",
@@ -83,8 +83,8 @@
       "id": "cli-auto-prompt",
       "description": "Implement --cli-auto-prompt for interactive parameter prompting when required parameters are missing.",
       "verify": ["cargo test -- auto_prompt", "cargo build"],
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "should_auto_prompt, get_required_members, prompt_for_missing_params with generic R/W for testability. kebab/pascal case conversion. 18 unit tests."
     }
   ]
 }

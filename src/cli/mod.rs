@@ -1,6 +1,10 @@
 pub mod args;
+pub mod auto_prompt;
+pub mod binary_output;
 pub mod commands;
+pub mod completion;
 pub mod customizations;
 pub mod driver;
 pub mod formatter;
 pub mod jmespath;
+pub mod streaming;

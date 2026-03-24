@@ -1,7 +1,11 @@
+pub mod assume_role;
 pub mod chain;
 pub mod env;
 pub mod imds;
+pub mod process;
 pub mod profile;
+pub mod sso;
+pub mod web_identity;
 
 use anyhow::Result;
 

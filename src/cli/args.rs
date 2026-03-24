@@ -11,7 +11,7 @@ pub struct GlobalArgs {
     #[arg(long, global = true)]
     pub profile: Option<String>,
 
-    /// Output format: json, table, text
+    /// Output format: json, table, text, yaml, yaml-stream
     #[arg(long, global = true, default_value = "json")]
     pub output: String,
 
