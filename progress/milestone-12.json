@@ -1,0 +1,133 @@
+{
+  "milestone": 12,
+  "name": "Customizations Parity",
+  "features": [
+    {
+      "id": "configure-get",
+      "description": "Implement 'raws configure get <varname>' to read config values. Supports dotted names (e.g., 'profile.myprofile.region', 's3.max_concurrent_requests'). Returns exit code 0 if found, 1 if not. Reads from ~/.aws/config and ~/.aws/credentials.",
+      "verify": [
+        "cargo test -- configure",
+        "raws configure set region us-west-2 && raws configure get region  # should print 'us-west-2'",
+        "raws configure get nonexistent_key  # should exit with code 1"
+      ],
+      "passes": true,
+      "notes": "Supports simple keys, dotted profile.name.key, dotted subsection.key. Credential keys checked in credentials file."
+    },
+    {
+      "id": "configure-set",
+      "description": "Implement 'raws configure set <varname> <value>' to write config values. Credential keys (aws_access_key_id, aws_secret_access_key, aws_session_token) go to ~/.aws/credentials, everything else to ~/.aws/config. Supports dotted profile names like 'profile.myprofile.region'.",
+      "verify": [
+        "cargo test -- configure",
+        "raws configure set region eu-west-1 && cat ~/.aws/config  # verify region written",
+        "raws configure set profile.testprofile.region ap-southeast-1 && cat ~/.aws/config  # verify profile section"
+      ],
+      "passes": true,
+      "notes": "Writes credential keys to credentials file, all else to config. Supports dotted profile names."
+    },
+    {
+      "id": "configure-list",
+      "description": "Implement 'raws configure list' showing where each config value (profile, access_key, secret_key, region) comes from. Output format: 'NAME : VALUE : TYPE : LOCATION' with aligned columns. Types: env, config_file, manual, None. Masks credential values showing only last 4 chars.",
+      "verify": [
+        "cargo test -- configure_list",
+        "raws configure list  # should show profile, access_key, secret_key, region with sources",
+        "AWS_DEFAULT_REGION=us-east-1 raws configure list  # region should show 'env' type"
+      ],
+      "passes": true,
+      "notes": "Shows profile, access_key, secret_key, region with source resolution chain. Masks credentials."
+    },
+    {
+      "id": "configure-list-profiles",
+      "description": "Implement 'raws configure list-profiles' to list all available profile names from both ~/.aws/config and ~/.aws/credentials. Output one profile name per line, sorted alphabetically.",
+      "verify": [
+        "cargo test -- list_profiles",
+        "raws configure list-profiles  # should list all profiles from config and credentials files"
+      ],
+      "passes": true,
+      "notes": "Uses BTreeSet for dedup+sort. Extracts profile names from both config and credentials."
+    },
+    {
+      "id": "configure-export-credentials",
+      "description": "Implement 'raws configure export-credentials' to output current credentials in exportable format. Supports --format env (default, 'export VAR=val'), env-no-export ('VAR=val'), and json. Include AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_SESSION_TOKEN if present.",
+      "verify": [
+        "cargo test -- export_cred",
+        "raws configure export-credentials --format env  # should output export statements",
+        "raws configure export-credentials --format json  # should output JSON object"
+      ],
+      "passes": true,
+      "notes": "Supports env, env-no-export, json formats. Resolves credentials from env vars first, then credentials file."
+    },
+    {
+      "id": "configure-subcommand-dispatch",
+      "description": "Wire configure subcommands (get, set, list, list-profiles, export-credentials) into the CLI driver. 'raws configure' without subcommand runs interactive setup (existing). 'raws configure <subcmd>' dispatches to the new handlers.",
+      "verify": [
+        "cargo build",
+        "raws configure get region 2>&1  # should work (not 'unknown operation')",
+        "raws configure list 2>&1  # should show config table",
+        "raws configure list-profiles 2>&1  # should list profiles"
+      ],
+      "passes": true,
+      "notes": "All 5 configure subcommands wired into driver dispatch. Default falls through to interactive configure."
+    },
+    {
+      "id": "s3-presign",
+      "description": "Implement 'raws s3 presign s3://bucket/key' to generate a presigned URL. Supports --expires-in <seconds> (default 3600). Uses SigV4 query string signing (not header signing). The URL should be usable without credentials.",
+      "verify": [
+        "cargo test -- presign",
+        "raws s3 presign s3://test-bucket/test-key --expires-in 300  # should output a URL with X-Amz-Signature"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "cloudformation-deploy",
+      "description": "Implement 'raws cloudformation deploy --template-file <path> --stack-name <name> [--parameter-overrides Key=Value ...] [--capabilities CAPABILITY_IAM ...] [--no-execute-changeset]'. Creates a changeset, waits for completion, then executes it. If --no-execute-changeset, just creates and prints the changeset.",
+      "verify": [
+        "cargo test -- cloudformation_deploy",
+        "cargo build  # verify it compiles",
+        "raws cloudformation deploy --help 2>&1 || true  # should show usage"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "logs-tail",
+      "description": "Implement 'raws logs tail <log-group-name>' to tail CloudWatch Logs. Supports --since <time> (relative like '5m' or '1h', or ISO timestamp), --follow for continuous tailing with polling, and --format short|detailed|json. Uses FilterLogEvents API.",
+      "verify": [
+        "cargo test -- logs_tail",
+        "cargo build  # verify it compiles"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "ec2-wait-enhancements",
+      "description": "Add EC2 wait customizations matching AWS CLI behavior: progress output for long waits (instance-running, instance-terminated, etc.), custom error messages for common failures. Enhance existing waiter framework with optional progress callback.",
+      "verify": [
+        "cargo test -- waiter",
+        "cargo build  # verify it compiles"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "sts-decode-authorization-message",
+      "description": "Implement 'raws sts decode-authorization-message' customization that automatically pretty-prints the decoded JSON message instead of returning it as an escaped string (matching aws CLI behavior).",
+      "verify": [
+        "cargo test -- decode_auth",
+        "cargo build  # verify it compiles"
+      ],
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "route53-alias-customizations",
+      "description": "Implement Route53 customization for change-resource-record-sets that supports --hosted-zone-id shorthand (stripping /hostedzone/ prefix if present), matching AWS CLI behavior. Also handle the common JSON input format for record changes.",
+      "verify": [
+        "cargo test -- route53",
+        "cargo build  # verify it compiles"
+      ],
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

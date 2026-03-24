@@ -42,13 +42,55 @@ pub async fn run() -> Result<()> {
         return Ok(());
     }
 
-    // Handle "raws configure": interactive credential setup
+    // Handle "raws configure" and its subcommands (get, set, etc.)
     if service == "configure" {
         let profile = match args.profile.as_deref() {
             Some(p) => p.to_string(),
             None => std::env::var("AWS_PROFILE").unwrap_or_else(|_| "default".to_string()),
         };
-        return configure::run_configure(&profile);
+        match args.operation.as_deref() {
+            Some("get") => {
+                let varname = args.args.first()
+                    .ok_or_else(|| anyhow::anyhow!("usage: raws configure get <varname>"))?;
+                let exit_code = configure::run_configure_get(&profile, varname)?;
+                if exit_code != 0 {
+                    std::process::exit(exit_code);
+                }
+                return Ok(());
+            }
+            Some("set") => {
+                let varname = args.args.first()
+                    .ok_or_else(|| anyhow::anyhow!("usage: raws configure set <varname> <value>"))?;
+                let value = args.args.get(1)
+                    .ok_or_else(|| anyhow::anyhow!("usage: raws configure set <varname> <value>"))?;
+                return configure::run_configure_set(&profile, varname, value);
+            }
+            Some("list") => {
+                let profile_from_flag = args.profile.is_some();
+                return configure::run_configure_list(&profile, profile_from_flag);
+            }
+            Some("list-profiles") => {
+                return configure::run_configure_list_profiles();
+            }
+            Some("export-credentials") => {
+                // Parse --format from args (default: "env")
+                let mut format = "env";
+                let mut i = 0;
+                while i < args.args.len() {
+                    if args.args[i] == "--format" {
+                        if let Some(val) = args.args.get(i + 1) {
+                            format = val;
+                            break;
+                        }
+                    }
+                    i += 1;
+                }
+                return configure::run_configure_export_credentials(&profile, format);
+            }
+            _ => {
+                return configure::run_configure(&profile);
+            }
+        }
     }
 
     // Handle "raws s3 <subcommand>": S3 high-level commands (ls, cp, mv, rm, sync, mb, rb).

@@ -1,11 +1,516 @@
 use anyhow::{Context, Result};
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 
 use crate::core::config::loader::parse_ini;
 
 type IniData = HashMap<String, HashMap<String, String>>;
+
+/// Credential keys that live in ~/.aws/credentials rather than ~/.aws/config.
+const CREDENTIAL_KEYS: &[&str] = &[
+    "aws_access_key_id",
+    "aws_secret_access_key",
+    "aws_session_token",
+];
+
+/// Run `raws configure get <varname>` to read a single config/credentials value.
+///
+/// Supports three forms of `varname`:
+/// - Simple key (e.g. `region`): looks up in the current profile's config section,
+///   or credentials section for credential keys.
+/// - `profile.<name>.<key>`: looks up `<key>` in the named profile.
+/// - `<section>.<key>` (e.g. `s3.max_concurrent_requests`): looks up a subsection
+///   key in the current profile's config section.
+///
+/// Returns 0 if the value was found (printed to stdout), 1 if not found.
+pub fn run_configure_get(profile: &str, varname: &str) -> Result<i32> {
+    let aws_dir = aws_directory()?;
+    let config_path = aws_dir.join("config");
+    let credentials_path = aws_dir.join("credentials");
+
+    let config_data = load_ini_file(&config_path);
+    let creds_data = load_ini_file(&credentials_path);
+
+    let value = resolve_configure_get_value(profile, varname, &config_data, &creds_data);
+
+    match value {
+        Some(v) => {
+            println!("{}", v);
+            Ok(0)
+        }
+        None => Ok(1),
+    }
+}
+
+/// Core lookup logic for `configure get`, separated for testability.
+fn resolve_configure_get_value(
+    profile: &str,
+    varname: &str,
+    config_data: &IniData,
+    creds_data: &IniData,
+) -> Option<String> {
+    let parts: Vec<&str> = varname.splitn(3, '.').collect();
+
+    match parts.len() {
+        1 => {
+            // Simple key: look in current profile
+            let key = parts[0];
+            if CREDENTIAL_KEYS.contains(&key) {
+                let cred_section = credentials_section_name(profile);
+                get_value(creds_data, &cred_section, key)
+                    .or_else(|| {
+                        let config_section = config_section_name(profile);
+                        get_value(config_data, &config_section, key)
+                    })
+            } else {
+                let config_section = config_section_name(profile);
+                get_value(config_data, &config_section, key)
+            }
+        }
+        2 => {
+            // <section>.<key> — treat as subsection key in the current profile's config section
+            // e.g., "s3.max_concurrent_requests" looks up key "s3.max_concurrent_requests"
+            // in the profile's config section. AWS CLI stores these as dotted keys.
+            let config_section = config_section_name(profile);
+            get_value(config_data, &config_section, varname)
+        }
+        3 if parts[0] == "profile" => {
+            // profile.<name>.<key> — look in specified profile
+            let target_profile = parts[1];
+            let key = parts[2];
+            if CREDENTIAL_KEYS.contains(&key) {
+                let cred_section = credentials_section_name(target_profile);
+                get_value(creds_data, &cred_section, key)
+                    .or_else(|| {
+                        let config_section = config_section_name(target_profile);
+                        get_value(config_data, &config_section, key)
+                    })
+            } else {
+                let config_section = config_section_name(target_profile);
+                get_value(config_data, &config_section, key)
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Run `raws configure set <varname> <value>` to write a single config/credentials value.
+///
+/// Supports three forms of `varname`:
+/// - Simple key (e.g. `region`): writes to config or credentials for the current profile,
+///   depending on whether the key is a credential key.
+/// - `profile.<name>.<key>`: writes to the named profile (config or credentials depending on key).
+/// - `<section>.<key>` (e.g. `s3.max_concurrent_requests`): writes as a flat dotted key
+///   in the current profile's config section.
+pub fn run_configure_set(profile: &str, varname: &str, value: &str) -> Result<()> {
+    let aws_dir = aws_directory()?;
+
+    // Ensure ~/.aws/ directory exists
+    if !aws_dir.exists() {
+        std::fs::create_dir_all(&aws_dir)
+            .with_context(|| format!("Failed to create directory: {}", aws_dir.display()))?;
+    }
+
+    let parts: Vec<&str> = varname.splitn(3, '.').collect();
+
+    match parts.len() {
+        1 => {
+            // Simple key: write to current profile
+            let key = parts[0];
+            if CREDENTIAL_KEYS.contains(&key) {
+                let cred_section = credentials_section_name(profile);
+                set_ini_value(&aws_dir.join("credentials"), &cred_section, key, value)?;
+            } else {
+                let config_section = config_section_name(profile);
+                set_ini_value(&aws_dir.join("config"), &config_section, key, value)?;
+            }
+        }
+        2 => {
+            // <section>.<key> — store as flat dotted key in current profile's config section
+            let config_section = config_section_name(profile);
+            set_ini_value(&aws_dir.join("config"), &config_section, varname, value)?;
+        }
+        3 if parts[0] == "profile" => {
+            // profile.<name>.<key> — write to named profile
+            let target_profile = parts[1];
+            let key = parts[2];
+            if CREDENTIAL_KEYS.contains(&key) {
+                let cred_section = credentials_section_name(target_profile);
+                set_ini_value(&aws_dir.join("credentials"), &cred_section, key, value)?;
+            } else {
+                let config_section = config_section_name(target_profile);
+                set_ini_value(&aws_dir.join("config"), &config_section, key, value)?;
+            }
+        }
+        _ => {
+            anyhow::bail!("Invalid variable name: {}", varname);
+        }
+    }
+
+    Ok(())
+}
+
+/// Helper: load an INI file, set a single key in a section, and write it back.
+fn set_ini_value(path: &Path, section: &str, key: &str, value: &str) -> Result<()> {
+    let mut data = load_ini_file(path);
+    data.entry(section.to_string())
+        .or_default()
+        .insert(key.to_string(), value.to_string());
+    write_ini_file(path, &data)
+}
+
+/// Run `raws configure list` to show where each config value comes from.
+///
+/// Shows 4 configuration items: profile, access_key, secret_key, region.
+/// For each item, displays the value, its type (env, config-file, manual, None),
+/// and the location it was loaded from. Credential values are masked to show
+/// only the last 4 characters.
+pub fn run_configure_list(profile: &str, profile_from_flag: bool) -> Result<()> {
+    let output = build_configure_list_output(profile, profile_from_flag);
+    print!("{}", output);
+    Ok(())
+}
+
+/// Describes where a configuration value came from.
+struct ConfigSource {
+    value: String,
+    source_type: String,
+    location: String,
+}
+
+/// Build the full output string for `configure list`, separated for testability.
+fn build_configure_list_output(profile: &str, profile_from_flag: bool) -> String {
+    let profile_source = resolve_profile_source(profile, profile_from_flag);
+    let access_key_source = resolve_credential_source(
+        "aws_access_key_id",
+        "AWS_ACCESS_KEY_ID",
+        profile,
+    );
+    let secret_key_source = resolve_credential_source(
+        "aws_secret_access_key",
+        "AWS_SECRET_ACCESS_KEY",
+        profile,
+    );
+    let region_source = resolve_region_source(profile);
+
+    let rows: Vec<(&str, Option<ConfigSource>)> = vec![
+        ("profile", profile_source),
+        ("access_key", access_key_source),
+        ("secret_key", secret_key_source),
+        ("region", region_source),
+    ];
+
+    format_configure_list_output(&rows)
+}
+
+/// Format the configure list output with aligned columns matching AWS CLI format.
+fn format_configure_list_output(rows: &[(&str, Option<ConfigSource>)]) -> String {
+    let mut output = String::new();
+    // Header line
+    output.push_str(&format!(
+        "{:>10}{:>24}{:>16}    {}\n",
+        "Name", "Value", "Type", "Location"
+    ));
+    // Separator line
+    output.push_str(&format!(
+        "{:>10}{:>24}{:>16}    {}\n",
+        "----", "-----", "----", "--------"
+    ));
+
+    for (name, source) in rows {
+        match source {
+            Some(src) => {
+                let display_value = if *name == "access_key" || *name == "secret_key" {
+                    mask_credential(&src.value)
+                } else {
+                    src.value.clone()
+                };
+                output.push_str(&format!(
+                    "{:>10}{:>24}{:>16}    {}\n",
+                    name, display_value, src.source_type, src.location
+                ));
+            }
+            None => {
+                output.push_str(&format!(
+                    "{:>10}{:>24}{:>16}    {}\n",
+                    name, "<not set>", "None", "None"
+                ));
+            }
+        }
+    }
+
+    output
+}
+
+/// Mask a credential value, showing only the last 4 characters.
+fn mask_credential(value: &str) -> String {
+    if value.len() <= 4 {
+        value.to_string()
+    } else {
+        format!("****************{}", &value[value.len() - 4..])
+    }
+}
+
+/// Determine the source of the profile configuration value.
+fn resolve_profile_source(profile: &str, profile_from_flag: bool) -> Option<ConfigSource> {
+    if profile_from_flag {
+        Some(ConfigSource {
+            value: profile.to_string(),
+            source_type: "manual".to_string(),
+            location: "--profile".to_string(),
+        })
+    } else if std::env::var("AWS_PROFILE").is_ok() {
+        Some(ConfigSource {
+            value: profile.to_string(),
+            source_type: "env".to_string(),
+            location: "AWS_PROFILE".to_string(),
+        })
+    } else {
+        None
+    }
+}
+
+/// Determine the source of a credential value (access_key or secret_key).
+/// Checks env var first, then credentials file, then config file.
+fn resolve_credential_source(
+    ini_key: &str,
+    env_var: &str,
+    profile: &str,
+) -> Option<ConfigSource> {
+    // Check environment variable first
+    if let Ok(val) = std::env::var(env_var) {
+        if !val.is_empty() {
+            return Some(ConfigSource {
+                value: val,
+                source_type: "env".to_string(),
+                location: env_var.to_string(),
+            });
+        }
+    }
+
+    // Check credentials file
+    let aws_dir = match aws_directory() {
+        Ok(d) => d,
+        Err(_) => return None,
+    };
+
+    let creds_path = aws_dir.join("credentials");
+    let creds_data = load_ini_file(&creds_path);
+    let cred_section = credentials_section_name(profile);
+    if let Some(val) = get_value(&creds_data, &cred_section, ini_key) {
+        return Some(ConfigSource {
+            value: val,
+            source_type: "config-file".to_string(),
+            location: "~/.aws/credentials".to_string(),
+        });
+    }
+
+    // Check config file
+    let config_path = aws_dir.join("config");
+    let config_data = load_ini_file(&config_path);
+    let config_section = config_section_name(profile);
+    if let Some(val) = get_value(&config_data, &config_section, ini_key) {
+        return Some(ConfigSource {
+            value: val,
+            source_type: "config-file".to_string(),
+            location: "~/.aws/config".to_string(),
+        });
+    }
+
+    None
+}
+
+/// Determine the source of the region configuration value.
+/// Checks AWS_REGION, then AWS_DEFAULT_REGION env vars, then config file.
+fn resolve_region_source(profile: &str) -> Option<ConfigSource> {
+    // Check AWS_REGION env var
+    if let Ok(val) = std::env::var("AWS_REGION") {
+        if !val.is_empty() {
+            return Some(ConfigSource {
+                value: val,
+                source_type: "env".to_string(),
+                location: "AWS_REGION".to_string(),
+            });
+        }
+    }
+
+    // Check AWS_DEFAULT_REGION env var
+    if let Ok(val) = std::env::var("AWS_DEFAULT_REGION") {
+        if !val.is_empty() {
+            return Some(ConfigSource {
+                value: val,
+                source_type: "env".to_string(),
+                location: "AWS_DEFAULT_REGION".to_string(),
+            });
+        }
+    }
+
+    // Check config file
+    let aws_dir = match aws_directory() {
+        Ok(d) => d,
+        Err(_) => return None,
+    };
+
+    let config_path = aws_dir.join("config");
+    let config_data = load_ini_file(&config_path);
+    let config_section = config_section_name(profile);
+    if let Some(val) = get_value(&config_data, &config_section, "region") {
+        return Some(ConfigSource {
+            value: val,
+            source_type: "config-file".to_string(),
+            location: "~/.aws/config".to_string(),
+        });
+    }
+
+    None
+}
+
+/// Run `raws configure list-profiles` to list all profile names from
+/// both ~/.aws/config and ~/.aws/credentials, deduplicated and sorted.
+pub fn run_configure_list_profiles() -> Result<()> {
+    let output = build_list_profiles_output()?;
+    print!("{}", output);
+    Ok(())
+}
+
+/// Build the output for `configure list-profiles`, separated for testability.
+fn build_list_profiles_output() -> Result<String> {
+    let aws_dir = aws_directory()?;
+    let config_path = aws_dir.join("config");
+    let credentials_path = aws_dir.join("credentials");
+
+    let config_data = load_ini_file(&config_path);
+    let creds_data = load_ini_file(&credentials_path);
+
+    let profiles = collect_profile_names(&config_data, &creds_data);
+    let mut output = String::new();
+    for name in &profiles {
+        output.push_str(name);
+        output.push('\n');
+    }
+    Ok(output)
+}
+
+/// Extract all profile names from config and credentials INI data,
+/// deduplicated and sorted alphabetically.
+fn collect_profile_names(config_data: &IniData, creds_data: &IniData) -> Vec<String> {
+    let mut names = BTreeSet::new();
+
+    // Config file: sections are [default] or [profile <name>]
+    for section in config_data.keys() {
+        if section == "default" {
+            names.insert("default".to_string());
+        } else if let Some(name) = section.strip_prefix("profile ") {
+            names.insert(name.to_string());
+        }
+    }
+
+    // Credentials file: sections are [default] or [<name>]
+    for section in creds_data.keys() {
+        names.insert(section.to_string());
+    }
+
+    names.into_iter().collect()
+}
+
+/// Run `raws configure export-credentials` to output resolved credentials
+/// in an exportable format (env, env-no-export, or json).
+pub fn run_configure_export_credentials(profile: &str, format: &str) -> Result<()> {
+    let output = build_export_credentials_output(profile, format)?;
+    print!("{}", output);
+    Ok(())
+}
+
+/// Resolve credentials for a profile: env vars first, then credentials file,
+/// then config file. Returns (access_key, secret_key, optional session_token).
+fn resolve_export_credentials(profile: &str) -> Result<(String, String, Option<String>)> {
+    // Try env vars first
+    let env_access = std::env::var("AWS_ACCESS_KEY_ID").ok().filter(|v| !v.is_empty());
+    let env_secret = std::env::var("AWS_SECRET_ACCESS_KEY").ok().filter(|v| !v.is_empty());
+
+    if let (Some(ak), Some(sk)) = (env_access, env_secret) {
+        let token = std::env::var("AWS_SESSION_TOKEN").ok().filter(|v| !v.is_empty());
+        return Ok((ak, sk, token));
+    }
+
+    // Try credentials file, then config file
+    let aws_dir = aws_directory()?;
+    let credentials_path = aws_dir.join("credentials");
+    let config_path = aws_dir.join("config");
+
+    let creds_data = load_ini_file(&credentials_path);
+    let config_data = load_ini_file(&config_path);
+
+    let cred_section = credentials_section_name(profile);
+    let config_section = config_section_name(profile);
+
+    let access_key = get_value(&creds_data, &cred_section, "aws_access_key_id")
+        .or_else(|| get_value(&config_data, &config_section, "aws_access_key_id"));
+    let secret_key = get_value(&creds_data, &cred_section, "aws_secret_access_key")
+        .or_else(|| get_value(&config_data, &config_section, "aws_secret_access_key"));
+    let session_token = get_value(&creds_data, &cred_section, "aws_session_token")
+        .or_else(|| get_value(&config_data, &config_section, "aws_session_token"));
+
+    match (access_key, secret_key) {
+        (Some(ak), Some(sk)) => Ok((ak, sk, session_token)),
+        _ => anyhow::bail!(
+            "Unable to locate credentials for profile '{}'. \
+             Configure credentials with `raws configure`.",
+            profile
+        ),
+    }
+}
+
+/// Build the output string for `configure export-credentials`, separated for testability.
+fn build_export_credentials_output(profile: &str, format: &str) -> Result<String> {
+    let (access_key, secret_key, session_token) = resolve_export_credentials(profile)?;
+
+    match format {
+        "env" => {
+            let mut out = String::new();
+            out.push_str(&std::format!("export AWS_ACCESS_KEY_ID={}\n", access_key));
+            out.push_str(&std::format!("export AWS_SECRET_ACCESS_KEY={}\n", secret_key));
+            if let Some(token) = &session_token {
+                out.push_str(&std::format!("export AWS_SESSION_TOKEN={}\n", token));
+            }
+            Ok(out)
+        }
+        "env-no-export" => {
+            let mut out = String::new();
+            out.push_str(&std::format!("AWS_ACCESS_KEY_ID={}\n", access_key));
+            out.push_str(&std::format!("AWS_SECRET_ACCESS_KEY={}\n", secret_key));
+            if let Some(token) = &session_token {
+                out.push_str(&std::format!("AWS_SESSION_TOKEN={}\n", token));
+            }
+            Ok(out)
+        }
+        "json" => {
+            let mut out = String::from("{\n");
+            out.push_str(&std::format!("    \"AccessKeyId\": \"{}\",\n", access_key));
+            out.push_str(&std::format!("    \"SecretAccessKey\": \"{}\",\n", secret_key));
+            match &session_token {
+                Some(token) => {
+                    out.push_str(&std::format!("    \"SessionToken\": \"{}\"\n", token));
+                }
+                None => {
+                    // Remove trailing comma from SecretAccessKey line
+                    // Rebuild without trailing comma
+                    out.clear();
+                    out.push_str("{\n");
+                    out.push_str(&std::format!("    \"AccessKeyId\": \"{}\",\n", access_key));
+                    out.push_str(&std::format!("    \"SecretAccessKey\": \"{}\"\n", secret_key));
+                }
+            }
+            out.push_str("}\n");
+            Ok(out)
+        }
+        _ => anyhow::bail!(
+            "Unknown format '{}'. Supported formats: env, env-no-export, json",
+            format
+        ),
+    }
+}
 
 /// Run the interactive `raws configure` command.
 ///
@@ -399,5 +904,653 @@ mod tests {
         let reloaded = load_ini_file(&path);
         assert_eq!(reloaded["default"]["region"], "eu-west-1");
         assert_eq!(reloaded["default"]["output"], "json");
+    }
+
+    // --- configure get tests ---
+
+    fn make_config_data(section: &str, key: &str, value: &str) -> IniData {
+        let mut data = IniData::new();
+        let mut s = HashMap::new();
+        s.insert(key.to_string(), value.to_string());
+        data.insert(section.to_string(), s);
+        data
+    }
+
+    #[test]
+    fn test_configure_get_simple_key_from_config() {
+        let config = make_config_data("default", "region", "us-west-2");
+        let creds = IniData::new();
+        let result = resolve_configure_get_value("default", "region", &config, &creds);
+        assert_eq!(result, Some("us-west-2".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_simple_key_named_profile() {
+        let config = make_config_data("profile myprofile", "region", "eu-west-1");
+        let creds = IniData::new();
+        let result = resolve_configure_get_value("myprofile", "region", &config, &creds);
+        assert_eq!(result, Some("eu-west-1".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_key_not_found() {
+        let config = IniData::new();
+        let creds = IniData::new();
+        let result = resolve_configure_get_value("default", "region", &config, &creds);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_configure_get_credential_key_from_credentials() {
+        let config = IniData::new();
+        let creds = make_config_data("default", "aws_access_key_id", "AKIAEXAMPLE");
+        let result = resolve_configure_get_value("default", "aws_access_key_id", &config, &creds);
+        assert_eq!(result, Some("AKIAEXAMPLE".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_secret_key_from_credentials() {
+        let config = IniData::new();
+        let creds = make_config_data("default", "aws_secret_access_key", "secretvalue");
+        let result = resolve_configure_get_value("default", "aws_secret_access_key", &config, &creds);
+        assert_eq!(result, Some("secretvalue".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_session_token_from_credentials() {
+        let config = IniData::new();
+        let creds = make_config_data("default", "aws_session_token", "tokenvalue");
+        let result = resolve_configure_get_value("default", "aws_session_token", &config, &creds);
+        assert_eq!(result, Some("tokenvalue".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_dotted_profile_key() {
+        let config = make_config_data("profile myprofile", "region", "ap-southeast-1");
+        let creds = IniData::new();
+        let result = resolve_configure_get_value("default", "profile.myprofile.region", &config, &creds);
+        assert_eq!(result, Some("ap-southeast-1".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_dotted_profile_credential_key() {
+        let config = IniData::new();
+        let creds = make_config_data("myprofile", "aws_access_key_id", "AKIAOTHER");
+        let result = resolve_configure_get_value("default", "profile.myprofile.aws_access_key_id", &config, &creds);
+        assert_eq!(result, Some("AKIAOTHER".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_dotted_subsection_key() {
+        let config = make_config_data("default", "s3.max_concurrent_requests", "10");
+        let creds = IniData::new();
+        let result = resolve_configure_get_value("default", "s3.max_concurrent_requests", &config, &creds);
+        assert_eq!(result, Some("10".to_string()));
+    }
+
+    #[test]
+    fn test_configure_get_dotted_subsection_not_found() {
+        let config = IniData::new();
+        let creds = IniData::new();
+        let result = resolve_configure_get_value("default", "s3.max_concurrent_requests", &config, &creds);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_configure_get_dotted_profile_not_found() {
+        let config = IniData::new();
+        let creds = IniData::new();
+        let result = resolve_configure_get_value("default", "profile.nonexistent.region", &config, &creds);
+        assert_eq!(result, None);
+    }
+
+    // --- configure set tests ---
+
+    #[test]
+    fn test_configure_set_simple_config_key() {
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+        let config_path = aws_dir.join("config");
+
+        // Pre-populate config with a value to ensure it's preserved
+        let mut data = IniData::new();
+        let mut section = HashMap::new();
+        section.insert("output".to_string(), "json".to_string());
+        data.insert("default".to_string(), section);
+        write_ini_file(&config_path, &data).unwrap();
+
+        // Use set_ini_value to write region
+        set_ini_value(&config_path, "default", "region", "eu-west-1").unwrap();
+
+        // Verify
+        let loaded = load_ini_file(&config_path);
+        assert_eq!(loaded["default"]["region"], "eu-west-1");
+        assert_eq!(loaded["default"]["output"], "json"); // preserved
+    }
+
+    #[test]
+    fn test_configure_set_credential_key() {
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+        let creds_path = aws_dir.join("credentials");
+
+        set_ini_value(&creds_path, "default", "aws_access_key_id", "AKIANEWKEY").unwrap();
+
+        let loaded = load_ini_file(&creds_path);
+        assert_eq!(loaded["default"]["aws_access_key_id"], "AKIANEWKEY");
+    }
+
+    #[test]
+    fn test_configure_set_dotted_profile_key() {
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+        let config_path = aws_dir.join("config");
+
+        // Write via set_ini_value using config_section_name for a named profile
+        set_ini_value(&config_path, &config_section_name("myprofile"), "region", "ap-southeast-1").unwrap();
+
+        let loaded = load_ini_file(&config_path);
+        assert_eq!(loaded["profile myprofile"]["region"], "ap-southeast-1");
+    }
+
+    #[test]
+    fn test_configure_set_preserves_other_sections() {
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+        let config_path = aws_dir.join("config");
+
+        // Write initial data with two sections
+        let mut data = IniData::new();
+        let mut default_section = HashMap::new();
+        default_section.insert("region".to_string(), "us-east-1".to_string());
+        data.insert("default".to_string(), default_section);
+
+        let mut profile_section = HashMap::new();
+        profile_section.insert("region".to_string(), "eu-west-1".to_string());
+        data.insert("profile other".to_string(), profile_section);
+        write_ini_file(&config_path, &data).unwrap();
+
+        // Set a value in default section
+        set_ini_value(&config_path, "default", "output", "table").unwrap();
+
+        // Verify both sections and all values
+        let loaded = load_ini_file(&config_path);
+        assert_eq!(loaded["default"]["region"], "us-east-1");
+        assert_eq!(loaded["default"]["output"], "table");
+        assert_eq!(loaded["profile other"]["region"], "eu-west-1");
+    }
+
+    #[test]
+    fn test_configure_set_dotted_subsection_key() {
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+        let config_path = aws_dir.join("config");
+
+        // Write a subsection-style dotted key
+        set_ini_value(&config_path, "default", "s3.max_concurrent_requests", "20").unwrap();
+
+        let loaded = load_ini_file(&config_path);
+        assert_eq!(loaded["default"]["s3.max_concurrent_requests"], "20");
+    }
+
+    #[test]
+    fn test_configure_set_overwrites_existing_value() {
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+        let config_path = aws_dir.join("config");
+
+        set_ini_value(&config_path, "default", "region", "us-east-1").unwrap();
+        set_ini_value(&config_path, "default", "region", "eu-west-1").unwrap();
+
+        let loaded = load_ini_file(&config_path);
+        assert_eq!(loaded["default"]["region"], "eu-west-1");
+    }
+
+    #[test]
+    fn test_configure_set_creates_file_if_missing() {
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+        let config_path = aws_dir.join("config");
+
+        // File does not exist yet
+        assert!(!config_path.exists());
+
+        set_ini_value(&config_path, "default", "region", "us-west-2").unwrap();
+
+        assert!(config_path.exists());
+        let loaded = load_ini_file(&config_path);
+        assert_eq!(loaded["default"]["region"], "us-west-2");
+    }
+
+    // --- configure list tests ---
+
+    #[test]
+    fn test_mask_credential_long_value() {
+        assert_eq!(mask_credential("AKIAIOSFODNN7EXAMPLE"), "****************MPLE");
+    }
+
+    #[test]
+    fn test_mask_credential_exactly_4_chars() {
+        assert_eq!(mask_credential("ABCD"), "ABCD");
+    }
+
+    #[test]
+    fn test_mask_credential_short_value() {
+        assert_eq!(mask_credential("AB"), "AB");
+    }
+
+    #[test]
+    fn test_mask_credential_empty() {
+        assert_eq!(mask_credential(""), "");
+    }
+
+    #[test]
+    fn test_format_configure_list_output_all_none() {
+        let rows: Vec<(&str, Option<ConfigSource>)> = vec![
+            ("profile", None),
+            ("access_key", None),
+            ("secret_key", None),
+            ("region", None),
+        ];
+        let output = format_configure_list_output(&rows);
+        // Check header
+        assert!(output.contains("Name"));
+        assert!(output.contains("Value"));
+        assert!(output.contains("Type"));
+        assert!(output.contains("Location"));
+        // Check all rows show <not set>
+        let lines: Vec<&str> = output.lines().collect();
+        assert_eq!(lines.len(), 6); // header + separator + 4 rows
+        for line in &lines[2..] {
+            assert!(line.contains("<not set>"));
+            assert!(line.contains("None"));
+        }
+    }
+
+    #[test]
+    fn test_format_configure_list_output_with_values() {
+        let rows: Vec<(&str, Option<ConfigSource>)> = vec![
+            ("profile", Some(ConfigSource {
+                value: "myprofile".to_string(),
+                source_type: "manual".to_string(),
+                location: "--profile".to_string(),
+            })),
+            ("access_key", Some(ConfigSource {
+                value: "AKIAIOSFODNN7EXAMPLE".to_string(),
+                source_type: "config-file".to_string(),
+                location: "~/.aws/credentials".to_string(),
+            })),
+            ("secret_key", Some(ConfigSource {
+                value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY".to_string(),
+                source_type: "config-file".to_string(),
+                location: "~/.aws/credentials".to_string(),
+            })),
+            ("region", Some(ConfigSource {
+                value: "us-west-2".to_string(),
+                source_type: "config-file".to_string(),
+                location: "~/.aws/config".to_string(),
+            })),
+        ];
+        let output = format_configure_list_output(&rows);
+
+        // access_key and secret_key should be masked
+        assert!(output.contains("****************MPLE"));
+        assert!(output.contains("****************EKEY"));
+        // profile and region should NOT be masked
+        assert!(output.contains("myprofile"));
+        assert!(output.contains("us-west-2"));
+        // Check source types
+        assert!(output.contains("manual"));
+        assert!(output.contains("config-file"));
+        // Check locations
+        assert!(output.contains("--profile"));
+        assert!(output.contains("~/.aws/credentials"));
+        assert!(output.contains("~/.aws/config"));
+    }
+
+    #[test]
+    fn test_format_configure_list_column_alignment() {
+        let rows: Vec<(&str, Option<ConfigSource>)> = vec![
+            ("profile", None),
+            ("access_key", Some(ConfigSource {
+                value: "AKIAIOSFODNN7EXAMPLE".to_string(),
+                source_type: "env".to_string(),
+                location: "AWS_ACCESS_KEY_ID".to_string(),
+            })),
+        ];
+        let output = format_configure_list_output(&rows);
+        let lines: Vec<&str> = output.lines().collect();
+
+        // Header line should have right-aligned Name at width 10
+        assert!(lines[0].starts_with("      Name"));
+        // profile row: "profile" is 7 chars, right-aligned to 10 -> "   profile"
+        assert!(lines[2].contains("   profile"));
+        // access_key row: "access_key" is 10 chars, right-aligned to 10 -> "access_key"
+        assert!(lines[3].starts_with("access_key"));
+    }
+
+    #[test]
+    fn test_resolve_profile_source_from_flag() {
+        let source = resolve_profile_source("myprofile", true);
+        assert!(source.is_some());
+        let src = source.as_ref().map(|s| &s.source_type);
+        assert_eq!(src, Some(&"manual".to_string()));
+        let loc = source.as_ref().map(|s| &s.location);
+        assert_eq!(loc, Some(&"--profile".to_string()));
+    }
+
+    #[test]
+    fn test_resolve_profile_source_not_set() {
+        // Temporarily unset AWS_PROFILE to test the "not set" path
+        let saved = std::env::var("AWS_PROFILE").ok();
+        std::env::remove_var("AWS_PROFILE");
+
+        let source = resolve_profile_source("default", false);
+        assert!(source.is_none());
+
+        // Restore
+        if let Some(val) = saved {
+            std::env::set_var("AWS_PROFILE", val);
+        }
+    }
+
+    #[test]
+    fn test_configure_set_credential_vs_config_routing() {
+        // Verify that run_configure_set routes credential keys to credentials
+        // and config keys to config, using a temporary HOME directory
+        let dir = tempfile::tempdir().unwrap();
+        let aws_dir = dir.path().join(".aws");
+        std::fs::create_dir_all(&aws_dir).unwrap();
+
+        // Directly test the routing logic by calling set_ini_value as run_configure_set would
+        let creds_path = aws_dir.join("credentials");
+        let config_path = aws_dir.join("config");
+
+        // Credential key -> credentials file
+        let key = "aws_secret_access_key";
+        assert!(CREDENTIAL_KEYS.contains(&key));
+        set_ini_value(&creds_path, "default", key, "mysecret").unwrap();
+
+        // Config key -> config file
+        let key = "region";
+        assert!(!CREDENTIAL_KEYS.contains(&key));
+        set_ini_value(&config_path, "default", key, "us-west-2").unwrap();
+
+        // Verify credentials file has only cred key
+        let creds_loaded = load_ini_file(&creds_path);
+        assert_eq!(creds_loaded["default"]["aws_secret_access_key"], "mysecret");
+        assert!(creds_loaded["default"].get("region").is_none());
+
+        // Verify config file has only config key
+        let config_loaded = load_ini_file(&config_path);
+        assert_eq!(config_loaded["default"]["region"], "us-west-2");
+        assert!(config_loaded["default"].get("aws_secret_access_key").is_none());
+    }
+
+    // --- configure list-profiles tests ---
+
+    #[test]
+    fn test_collect_profile_names_empty() {
+        let config = IniData::new();
+        let creds = IniData::new();
+        let profiles = collect_profile_names(&config, &creds);
+        assert!(profiles.is_empty());
+    }
+
+    #[test]
+    fn test_collect_profile_names_config_only() {
+        let mut config = IniData::new();
+        config.insert("default".to_string(), HashMap::new());
+        config.insert("profile dev".to_string(), HashMap::new());
+        config.insert("profile prod".to_string(), HashMap::new());
+        let creds = IniData::new();
+
+        let profiles = collect_profile_names(&config, &creds);
+        assert_eq!(profiles, vec!["default", "dev", "prod"]);
+    }
+
+    #[test]
+    fn test_collect_profile_names_creds_only() {
+        let config = IniData::new();
+        let mut creds = IniData::new();
+        creds.insert("default".to_string(), HashMap::new());
+        creds.insert("staging".to_string(), HashMap::new());
+
+        let profiles = collect_profile_names(&config, &creds);
+        assert_eq!(profiles, vec!["default", "staging"]);
+    }
+
+    #[test]
+    fn test_collect_profile_names_deduplication() {
+        let mut config = IniData::new();
+        config.insert("default".to_string(), HashMap::new());
+        config.insert("profile dev".to_string(), HashMap::new());
+
+        let mut creds = IniData::new();
+        creds.insert("default".to_string(), HashMap::new());
+        creds.insert("dev".to_string(), HashMap::new());
+        creds.insert("prod".to_string(), HashMap::new());
+
+        let profiles = collect_profile_names(&config, &creds);
+        assert_eq!(profiles, vec!["default", "dev", "prod"]);
+    }
+
+    #[test]
+    fn test_collect_profile_names_sorted() {
+        let mut config = IniData::new();
+        config.insert("profile zebra".to_string(), HashMap::new());
+        config.insert("profile alpha".to_string(), HashMap::new());
+
+        let mut creds = IniData::new();
+        creds.insert("middle".to_string(), HashMap::new());
+
+        let profiles = collect_profile_names(&config, &creds);
+        assert_eq!(profiles, vec!["alpha", "middle", "zebra"]);
+    }
+
+    #[test]
+    fn test_collect_profile_names_ignores_non_profile_config_sections() {
+        // Sections in config that don't start with "profile " and aren't "default"
+        // should be ignored (e.g., plugin sections or other special sections).
+        let mut config = IniData::new();
+        config.insert("default".to_string(), HashMap::new());
+        config.insert("profile myprofile".to_string(), HashMap::new());
+        config.insert("sso-session mysession".to_string(), HashMap::new());
+        let creds = IniData::new();
+
+        let profiles = collect_profile_names(&config, &creds);
+        assert_eq!(profiles, vec!["default", "myprofile"]);
+    }
+
+    // --- configure export-credentials tests ---
+
+    #[test]
+    fn test_build_export_credentials_env_format() {
+        // Set up env vars for this test
+        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
+        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
+        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
+
+        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIATESTKEY123");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretTestKey456");
+        std::env::set_var("AWS_SESSION_TOKEN", "testToken789");
+
+        let result = build_export_credentials_output("default", "env").unwrap();
+        assert!(result.contains("export AWS_ACCESS_KEY_ID=AKIATESTKEY123"));
+        assert!(result.contains("export AWS_SECRET_ACCESS_KEY=secretTestKey456"));
+        assert!(result.contains("export AWS_SESSION_TOKEN=testToken789"));
+
+        // Restore
+        match saved_ak {
+            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
+            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
+        }
+        match saved_sk {
+            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
+            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
+        }
+        match saved_st {
+            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
+            None => std::env::remove_var("AWS_SESSION_TOKEN"),
+        }
+    }
+
+    #[test]
+    fn test_build_export_credentials_env_no_export_format() {
+        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
+        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
+        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
+
+        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIATEST");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretTest");
+        std::env::remove_var("AWS_SESSION_TOKEN");
+
+        let result = build_export_credentials_output("default", "env-no-export").unwrap();
+        assert!(result.contains("AWS_ACCESS_KEY_ID=AKIATEST\n"));
+        assert!(result.contains("AWS_SECRET_ACCESS_KEY=secretTest\n"));
+        assert!(!result.contains("export"));
+        assert!(!result.contains("SESSION_TOKEN"));
+
+        // Restore
+        match saved_ak {
+            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
+            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
+        }
+        match saved_sk {
+            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
+            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
+        }
+        match saved_st {
+            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
+            None => std::env::remove_var("AWS_SESSION_TOKEN"),
+        }
+    }
+
+    #[test]
+    fn test_build_export_credentials_json_format() {
+        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
+        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
+        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
+
+        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIAJSON");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretJson");
+        std::env::set_var("AWS_SESSION_TOKEN", "tokenJson");
+
+        let result = build_export_credentials_output("default", "json").unwrap();
+        assert!(result.contains("\"AccessKeyId\": \"AKIAJSON\""));
+        assert!(result.contains("\"SecretAccessKey\": \"secretJson\""));
+        assert!(result.contains("\"SessionToken\": \"tokenJson\""));
+        assert!(result.starts_with('{'));
+        assert!(result.trim_end().ends_with('}'));
+
+        // Restore
+        match saved_ak {
+            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
+            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
+        }
+        match saved_sk {
+            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
+            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
+        }
+        match saved_st {
+            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
+            None => std::env::remove_var("AWS_SESSION_TOKEN"),
+        }
+    }
+
+    #[test]
+    fn test_build_export_credentials_json_no_token() {
+        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
+        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
+        let saved_st = std::env::var("AWS_SESSION_TOKEN").ok();
+
+        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIANOTOKEN");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secretNoToken");
+        std::env::remove_var("AWS_SESSION_TOKEN");
+
+        let result = build_export_credentials_output("default", "json").unwrap();
+        assert!(result.contains("\"AccessKeyId\": \"AKIANOTOKEN\""));
+        assert!(result.contains("\"SecretAccessKey\": \"secretNoToken\""));
+        assert!(!result.contains("SessionToken"));
+        // Verify valid JSON structure: no trailing comma before }
+        assert!(!result.contains(",\n}"));
+
+        // Restore
+        match saved_ak {
+            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
+            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
+        }
+        match saved_sk {
+            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
+            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
+        }
+        match saved_st {
+            Some(v) => std::env::set_var("AWS_SESSION_TOKEN", v),
+            None => std::env::remove_var("AWS_SESSION_TOKEN"),
+        }
+    }
+
+    #[test]
+    fn test_build_export_credentials_unknown_format() {
+        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
+        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
+
+        std::env::set_var("AWS_ACCESS_KEY_ID", "AKIATEST");
+        std::env::set_var("AWS_SECRET_ACCESS_KEY", "secret");
+
+        let result = build_export_credentials_output("default", "xml");
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Unknown format 'xml'"));
+
+        // Restore
+        match saved_ak {
+            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
+            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
+        }
+        match saved_sk {
+            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
+            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
+        }
+    }
+
+    #[test]
+    fn test_export_credentials_no_credentials_found() {
+        // Ensure env vars are not set
+        let saved_ak = std::env::var("AWS_ACCESS_KEY_ID").ok();
+        let saved_sk = std::env::var("AWS_SECRET_ACCESS_KEY").ok();
+        let saved_home = std::env::var("HOME").ok();
+
+        std::env::remove_var("AWS_ACCESS_KEY_ID");
+        std::env::remove_var("AWS_SECRET_ACCESS_KEY");
+        // Point HOME to a temp dir with no .aws
+        let dir = tempfile::tempdir().unwrap();
+        std::env::set_var("HOME", dir.path());
+
+        let result = build_export_credentials_output("nonexistent", "env");
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Unable to locate credentials"));
+
+        // Restore
+        match saved_ak {
+            Some(v) => std::env::set_var("AWS_ACCESS_KEY_ID", v),
+            None => std::env::remove_var("AWS_ACCESS_KEY_ID"),
+        }
+        match saved_sk {
+            Some(v) => std::env::set_var("AWS_SECRET_ACCESS_KEY", v),
+            None => std::env::remove_var("AWS_SECRET_ACCESS_KEY"),
+        }
+        match saved_home {
+            Some(v) => std::env::set_var("HOME", v),
+            None => std::env::remove_var("HOME"),
+        }
     }
 }
