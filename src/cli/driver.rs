@@ -4,6 +4,7 @@ use clap::Parser;
 use crate::cli::args::GlobalArgs;
 use crate::cli::commands::configure;
 use crate::cli::customizations::cloudformation as cfn_commands;
+use crate::cli::customizations::iam::decode_iam_policy_documents;
 use crate::cli::customizations::logs as logs_commands;
 use crate::cli::customizations::route53::apply_route53_customizations;
 use crate::cli::customizations::s3 as s3_commands;
@@ -399,7 +400,13 @@ pub async fn run() -> Result<()> {
     }
 
     // 9b. Apply service-specific output customizations (e.g., pretty-print decoded JSON fields)
-    apply_output_customizations(service, operation, &mut response_value);
+    apply_output_customizations(
+        service,
+        operation,
+        &mut response_value,
+        op.output_shape.as_deref().unwrap_or(""),
+        &service_model.shapes,
+    );
 
     // 9. Apply --query JMESPath filter if provided
     let final_value = if let Some(ref query_expr) = args.query {
@@ -1318,13 +1325,24 @@ async fn dispatch_rest_xml_protocol(
 /// automatically pretty-prints this decoded JSON.  We replicate that behavior
 /// here by parsing the string into a JSON value so that formatters render it
 /// as a nested object rather than an escaped string.
-fn apply_output_customizations(service: &str, operation: &str, response: &mut serde_json::Value) {
+fn apply_output_customizations(
+    service: &str,
+    operation: &str,
+    response: &mut serde_json::Value,
+    output_shape_name: &str,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) {
     if service == "sts" && operation == "decode-authorization-message" {
         if let Some(msg) = response.get("DecodedMessage").and_then(|v| v.as_str()) {
             if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(msg) {
                 response["DecodedMessage"] = parsed;
             }
         }
+    }
+
+    // IAM: decode URL-encoded policy document strings into JSON objects.
+    if service == "iam" {
+        decode_iam_policy_documents(response, output_shape_name, shapes);
     }
 }
 
@@ -2888,6 +2906,10 @@ mod tests {
     // apply_output_customizations tests (STS DecodeAuthorizationMessage)
     // ---------------------------------------------------------------
 
+    fn empty_shapes() -> std::collections::HashMap<String, serde_json::Value> {
+        std::collections::HashMap::new()
+    }
+
     #[test]
     fn test_sts_decode_authorization_message_pretty_prints_decoded_message() {
         let escaped_json = r#"{"allowed":true,"explicitDeny":false,"matchedStatements":[]}"#;
@@ -2895,7 +2917,7 @@ mod tests {
             "DecodedMessage": escaped_json
         });
 
-        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+        apply_output_customizations("sts", "decode-authorization-message", &mut response, "", &empty_shapes());
 
         // DecodedMessage should now be a parsed JSON object, not a string
         assert!(
@@ -2916,11 +2938,11 @@ mod tests {
         let original = response.clone();
 
         // Different service: should not modify the response
-        apply_output_customizations("iam", "decode-authorization-message", &mut response);
+        apply_output_customizations("ec2", "decode-authorization-message", &mut response, "", &empty_shapes());
         assert_eq!(response, original);
 
         // Different operation: should not modify the response
-        apply_output_customizations("sts", "get-caller-identity", &mut response);
+        apply_output_customizations("sts", "get-caller-identity", &mut response, "", &empty_shapes());
         assert_eq!(response, original);
     }
 
@@ -2931,7 +2953,7 @@ mod tests {
             "DecodedMessage": malformed
         });
 
-        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+        apply_output_customizations("sts", "decode-authorization-message", &mut response, "", &empty_shapes());
 
         // Malformed JSON string should be left as-is
         assert_eq!(
@@ -2949,7 +2971,7 @@ mod tests {
         });
         let original = response.clone();
 
-        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+        apply_output_customizations("sts", "decode-authorization-message", &mut response, "", &empty_shapes());
         assert_eq!(response, original);
     }
 
@@ -2961,7 +2983,7 @@ mod tests {
         });
         let original = response.clone();
 
-        apply_output_customizations("sts", "decode-authorization-message", &mut response);
+        apply_output_customizations("sts", "decode-authorization-message", &mut response, "", &empty_shapes());
         assert_eq!(response, original);
     }
 }

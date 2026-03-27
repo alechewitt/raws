@@ -96,9 +96,9 @@
     "verify": [
       { "run": "raws iam list-roles --region us-east-1 --output json 2>&1 | head -30", "expect": "AssumeRolePolicyDocument should be a JSON object, not a URL-encoded string" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. IAM returns URL-encoded policy documents in its responses; AWS CLI decodes them before displaying."]
+    "passes": true,
+    "affected_files": ["src/cli/customizations/iam.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. IAM returns URL-encoded policy documents in its responses; AWS CLI decodes them before displaying.", "Fixed: Model-driven decode_iam_policy_documents() walks botocore shapes, URL-decodes any member with shape policyDocumentType, and parses as JSON."]
   },
   {
     "id": "validation-iam-optional-params-signing",
