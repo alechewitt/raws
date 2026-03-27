@@ -1,0 +1,281 @@
+{
+  "global_options": {
+    "commands": "global_options.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 12,
+    "tested": 12,
+    "passed": 8,
+    "failed": 4
+  },
+  "authentication": {
+    "commands": "authentication.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 4,
+    "tested": 4,
+    "passed": 2,
+    "failed": 2
+  },
+  "service_sts": {
+    "commands": "sts.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 12,
+    "tested": 12,
+    "passed": 3,
+    "failed": 9
+  },
+  "service_iam": {
+    "commands": "iam.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 179,
+    "tested": 179,
+    "passed": 30,
+    "failed": 149
+  },
+  "service_s3api": {
+    "commands": "s3api.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 109,
+    "tested": 109,
+    "passed": 10,
+    "failed": 99
+  },
+  "service_ec2": {
+    "commands": "ec2.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 756,
+    "tested": 756,
+    "passed": 30,
+    "failed": 9
+  },
+  "service_dynamodb": {
+    "commands": "dynamodb.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 59,
+    "tested": 59,
+    "passed": 4,
+    "failed": 54
+  },
+  "service_lambda": {
+    "commands": "lambda.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 86,
+    "tested": 86,
+    "passed": 6,
+    "failed": 80
+  },
+  "service_kms": {
+    "commands": "kms.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 54,
+    "tested": 54,
+    "passed": 7,
+    "failed": 47
+  },
+  "service_s3": {
+    "commands": "s3.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 10,
+    "tested": 10,
+    "passed": 1,
+    "failed": 9
+  },
+  "service_sns": {
+    "commands": "sns.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 43,
+    "tested": 43,
+    "passed": 8,
+    "failed": 35
+  },
+  "service_sqs": {
+    "commands": "sqs.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 24,
+    "tested": 24,
+    "passed": 1,
+    "failed": 23
+  },
+  "service_cloudformation": {
+    "commands": "cloudformation.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 94,
+    "tested": 94,
+    "passed": 31,
+    "failed": 63
+  },
+  "service_ecs": {
+    "commands": "ecs.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 68,
+    "tested": 68,
+    "passed": 11,
+    "failed": 29
+  },
+  "service_rds": {
+    "commands": "rds.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 167,
+    "tested": 167,
+    "passed": 31,
+    "failed": 39
+  },
+  "service_cloudwatch": {
+    "commands": "cloudwatch.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 45,
+    "tested": 45,
+    "passed": 2,
+    "failed": 43
+  },
+  "service_logs": {
+    "commands": "logs.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 106,
+    "tested": 106,
+    "passed": 15,
+    "failed": 91
+  },
+  "service_secretsmanager": {
+    "commands": "secretsmanager.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 24,
+    "tested": 24,
+    "passed": 2,
+    "failed": 22
+  },
+  "service_ssm": {
+    "commands": "ssm.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 148,
+    "tested": 148,
+    "passed": 37,
+    "failed": 1
+  },
+  "service_route53": {
+    "commands": "route53.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 73,
+    "tested": 73,
+    "passed": 7,
+    "failed": 66
+  },
+  "service_cloudfront": {
+    "commands": "cloudfront.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 170,
+    "tested": 170,
+    "passed": 15,
+    "failed": 16
+  },
+  "service_elasticache": {
+    "commands": "elasticache.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 77,
+    "tested": 77,
+    "passed": 34,
+    "failed": 2
+  },
+  "service_elb": {
+    "commands": "elb.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 31,
+    "tested": 31,
+    "passed": 4,
+    "failed": 27
+  },
+  "service_elbv2": {
+    "commands": "elbv2.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 53,
+    "tested": 53,
+    "passed": 8,
+    "failed": 41
+  },
+  "service_autoscaling": {
+    "commands": "autoscaling.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 67,
+    "tested": 67,
+    "passed": 67,
+    "failed": 0
+  },
+  "service_apigateway": {
+    "commands": "apigateway.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 125,
+    "tested": 125,
+    "passed": 0,
+    "failed": 15
+  },
+  "service_kinesis": {
+    "commands": "kinesis.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 40,
+    "tested": 40,
+    "passed": 10,
+    "failed": 30
+  },
+  "service_stepfunctions": {
+    "commands": "stepfunctions.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 38,
+    "tested": 38,
+    "passed": 4,
+    "failed": 34
+  },
+  "service_codebuild": {
+    "commands": "codebuild.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 60,
+    "tested": 60,
+    "passed": 13,
+    "failed": 30
+  },
+  "service_codepipeline": {
+    "commands": "codepipeline.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 45,
+    "tested": 45,
+    "passed": 5,
+    "failed": 40
+  },
+  "service_ecr": {
+    "commands": "ecr.json",
+    "commands_created": true,
+    "commands_tested": true,
+    "total_commands": 61,
+    "tested": 61,
+    "passed": 0,
+    "failed": 60
+  }
+}

@@ -1,0 +1,98 @@
+[
+  {
+    "command": "raws sts get-caller-identity --output json --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --output json --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws sts get-caller-identity --output text --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --output text --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws sts get-caller-identity --output table --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --output table --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws sts get-caller-identity --region eu-west-1",
+    "aws_command": "aws sts get-caller-identity --region eu-west-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws sts get-caller-identity --no-paginate --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --no-paginate --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws sts get-caller-identity --query Account --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --query Account --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ec2 describe-vpcs --no-sign-request --region us-east-1 2>&1",
+    "aws_command": "aws ec2 describe-vpcs --no-sign-request --region us-east-1 2>&1",
+    "category": "error",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws error message missing 'aws: [ERROR]: ' prefix. AWS outputs 'aws: [ERROR]: An error occurred (MissingParameter) when calling the DescribeVpcs operation: ...' while raws outputs 'An error occurred (MissingParameter) when calling the DescribeVpcs operation: ...'"
+  },
+  {
+    "command": "raws --version",
+    "aws_command": "aws --version",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws does not support --version flag. Returns 'error: unexpected argument --version found' instead of a version string. AWS outputs 'aws-cli/2.34.18 Python/3.11.13 Darwin/24.6.0 source/arm64'."
+  },
+  {
+    "command": "raws help 2>&1 | head -50",
+    "aws_command": "aws help 2>&1 | head -50",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Completely different help format. AWS uses man-page style (NAME, DESCRIPTION, SYNOPSIS, GLOBAL OPTIONS sections) while raws shows a service listing with usage line. No structural similarity."
+  },
+  {
+    "command": "raws ec2 describe-vpcs --output text --region us-east-1",
+    "aws_command": "aws ec2 describe-vpcs --output text --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ec2 describe-vpcs --output table --region us-east-1",
+    "aws_command": "aws ec2 describe-vpcs --output table --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws table output renders nested objects/arrays as inline JSON strings in a single flat table row, while AWS CLI renders them as nested sub-tables with proper formatting. For example, BlockPublicAccessStates and CidrBlockAssociationSet appear as raw JSON in raws but as nested table sections in AWS CLI."
+  },
+  {
+    "command": "raws ec2 describe-vpcs --query 'Vpcs[0].VpcId' --region us-east-1",
+    "aws_command": "aws ec2 describe-vpcs --query 'Vpcs[0].VpcId' --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  }
+]

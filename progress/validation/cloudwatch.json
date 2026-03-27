@@ -1,0 +1,362 @@
+[
+  {
+    "command": "raws cloudwatch help",
+    "aws_command": "aws cloudwatch help",
+    "category": "help",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "raws lists operations in compact 2-column format; AWS CLI uses man-page style with description. Operation list matches."
+  },
+  {
+    "command": "raws cloudwatch delete-alarm-mute-rule --region us-east-1",
+    "aws_command": "aws cloudwatch delete-alarm-mute-rule --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. CloudWatch migrated to smithy-rpc-v2-cbor protocol which raws does not implement."
+  },
+  {
+    "command": "raws cloudwatch delete-alarms --region us-east-1",
+    "aws_command": "aws cloudwatch delete-alarms --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch delete-anomaly-detector --region us-east-1",
+    "aws_command": "aws cloudwatch delete-anomaly-detector --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch delete-dashboards --region us-east-1",
+    "aws_command": "aws cloudwatch delete-dashboards --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch delete-insight-rules --region us-east-1",
+    "aws_command": "aws cloudwatch delete-insight-rules --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch delete-metric-stream --region us-east-1",
+    "aws_command": "aws cloudwatch delete-metric-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch describe-alarm-contributors --region us-east-1",
+    "aws_command": "aws cloudwatch describe-alarm-contributors --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch describe-alarm-history --region us-east-1",
+    "aws_command": "aws cloudwatch describe-alarm-history --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. AWS CLI returns {\"AlarmHistoryItems\": []}."
+  },
+  {
+    "command": "raws cloudwatch describe-alarms --region us-east-1",
+    "aws_command": "aws cloudwatch describe-alarms --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. AWS CLI returns {\"MetricAlarms\": [], \"CompositeAlarms\": []}."
+  },
+  {
+    "command": "raws cloudwatch describe-alarms-for-metric --region us-east-1",
+    "aws_command": "aws cloudwatch describe-alarms-for-metric --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch describe-anomaly-detectors --region us-east-1",
+    "aws_command": "aws cloudwatch describe-anomaly-detectors --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch describe-insight-rules --region us-east-1",
+    "aws_command": "aws cloudwatch describe-insight-rules --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch disable-alarm-actions --region us-east-1",
+    "aws_command": "aws cloudwatch disable-alarm-actions --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch disable-insight-rules --region us-east-1",
+    "aws_command": "aws cloudwatch disable-insight-rules --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch enable-alarm-actions --region us-east-1",
+    "aws_command": "aws cloudwatch enable-alarm-actions --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch enable-insight-rules --region us-east-1",
+    "aws_command": "aws cloudwatch enable-insight-rules --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch get-alarm-mute-rule --region us-east-1",
+    "aws_command": "aws cloudwatch get-alarm-mute-rule --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch get-dashboard --region us-east-1",
+    "aws_command": "aws cloudwatch get-dashboard --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. Tested with --dashboard-name test."
+  },
+  {
+    "command": "raws cloudwatch get-insight-rule-report --region us-east-1",
+    "aws_command": "aws cloudwatch get-insight-rule-report --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch get-metric-data --region us-east-1",
+    "aws_command": "aws cloudwatch get-metric-data --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch get-metric-statistics --region us-east-1",
+    "aws_command": "aws cloudwatch get-metric-statistics --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. Tested with full params (namespace, metric-name, start/end-time, period, statistics)."
+  },
+  {
+    "command": "raws cloudwatch get-metric-stream --region us-east-1",
+    "aws_command": "aws cloudwatch get-metric-stream --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch get-metric-widget-image --region us-east-1",
+    "aws_command": "aws cloudwatch get-metric-widget-image --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch list-alarm-mute-rules --region us-east-1",
+    "aws_command": "aws cloudwatch list-alarm-mute-rules --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch list-dashboards --region us-east-1",
+    "aws_command": "aws cloudwatch list-dashboards --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. AWS CLI returns {\"DashboardEntries\": []}."
+  },
+  {
+    "command": "raws cloudwatch list-managed-insight-rules --region us-east-1",
+    "aws_command": "aws cloudwatch list-managed-insight-rules --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch list-metric-streams --region us-east-1",
+    "aws_command": "aws cloudwatch list-metric-streams --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch list-metrics --region us-east-1",
+    "aws_command": "aws cloudwatch list-metrics --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. AWS CLI returns metrics successfully. Also tested --output text and --output table which both fail with same error."
+  },
+  {
+    "command": "raws cloudwatch list-tags-for-resource --region us-east-1",
+    "aws_command": "aws cloudwatch list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. Tested with --resource-arn."
+  },
+  {
+    "command": "raws cloudwatch put-alarm-mute-rule --region us-east-1",
+    "aws_command": "aws cloudwatch put-alarm-mute-rule --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch put-anomaly-detector --region us-east-1",
+    "aws_command": "aws cloudwatch put-anomaly-detector --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch put-composite-alarm --region us-east-1",
+    "aws_command": "aws cloudwatch put-composite-alarm --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch put-dashboard --region us-east-1",
+    "aws_command": "aws cloudwatch put-dashboard --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch put-insight-rule --region us-east-1",
+    "aws_command": "aws cloudwatch put-insight-rule --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch put-managed-insight-rules --region us-east-1",
+    "aws_command": "aws cloudwatch put-managed-insight-rules --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch put-metric-alarm --region us-east-1",
+    "aws_command": "aws cloudwatch put-metric-alarm --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch put-metric-data --region us-east-1",
+    "aws_command": "aws cloudwatch put-metric-data --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. Tested with --namespace and --metric-data params."
+  },
+  {
+    "command": "raws cloudwatch put-metric-stream --region us-east-1",
+    "aws_command": "aws cloudwatch put-metric-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch set-alarm-state --region us-east-1",
+    "aws_command": "aws cloudwatch set-alarm-state --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported. Tested with full params (alarm-name, state-value, state-reason)."
+  },
+  {
+    "command": "raws cloudwatch start-metric-streams --region us-east-1",
+    "aws_command": "aws cloudwatch start-metric-streams --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch stop-metric-streams --region us-east-1",
+    "aws_command": "aws cloudwatch stop-metric-streams --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch tag-resource --region us-east-1",
+    "aws_command": "aws cloudwatch tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch untag-resource --region us-east-1",
+    "aws_command": "aws cloudwatch untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails: Protocol 'smithy-rpc-v2-cbor' is not supported."
+  },
+  {
+    "command": "raws cloudwatch wait --region us-east-1",
+    "aws_command": "aws cloudwatch wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error when no waiter name given. raws prints usage message and exits 2; AWS CLI prints ParamValidation error and exits 252. Waiter names are listed correctly (alarm-exists, composite-alarm-exists, alarm-mute-rule-exists)."
+  }
+]

@@ -1,0 +1,1362 @@
+[
+  {
+    "command": "raws cloudfront help",
+    "aws_command": "aws cloudfront help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws uses simple list format; AWS CLI uses man-page style with descriptions. Both list same operations."
+  },
+  {
+    "command": "raws cloudfront associate-alias --region us-east-1",
+    "aws_command": "aws cloudfront associate-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI: 'the following arguments are required: --target-distribution-id, --alias' (exit 252). raws: 'URI template variable TargetDistributionId not found' (exit 255)."
+  },
+  {
+    "command": "raws cloudfront associate-distribution-tenant-web-acl --region us-east-1",
+    "aws_command": "aws cloudfront associate-distribution-tenant-web-acl --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront associate-distribution-web-acl --region us-east-1",
+    "aws_command": "aws cloudfront associate-distribution-web-acl --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront copy-distribution --region us-east-1",
+    "aws_command": "aws cloudfront copy-distribution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-anycast-ip-list --region us-east-1",
+    "aws_command": "aws cloudfront create-anycast-ip-list --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-cache-policy --region us-east-1",
+    "aws_command": "aws cloudfront create-cache-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-cloud-front-origin-access-identity --region us-east-1",
+    "aws_command": "aws cloudfront create-cloud-front-origin-access-identity --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront create-connection-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-connection-group --region us-east-1",
+    "aws_command": "aws cloudfront create-connection-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-continuous-deployment-policy --region us-east-1",
+    "aws_command": "aws cloudfront create-continuous-deployment-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-distribution --region us-east-1",
+    "aws_command": "aws cloudfront create-distribution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI does client-side validation: 'Missing required parameter DistributionConfig' (exit 252). raws sends to server and gets MalformedXML error (exit 254)."
+  },
+  {
+    "command": "raws cloudfront create-distribution-tenant --region us-east-1",
+    "aws_command": "aws cloudfront create-distribution-tenant --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-distribution-with-tags --region us-east-1",
+    "aws_command": "aws cloudfront create-distribution-with-tags --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-field-level-encryption-config --region us-east-1",
+    "aws_command": "aws cloudfront create-field-level-encryption-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-field-level-encryption-profile --region us-east-1",
+    "aws_command": "aws cloudfront create-field-level-encryption-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-function --region us-east-1",
+    "aws_command": "aws cloudfront create-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-invalidation --region us-east-1",
+    "aws_command": "aws cloudfront create-invalidation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI: 'the following arguments are required: --distribution-id' (exit 252). raws: 'URI template variable DistributionId not found' (exit 255). Different error format."
+  },
+  {
+    "command": "raws cloudfront create-invalidation-for-distribution-tenant --region us-east-1",
+    "aws_command": "aws cloudfront create-invalidation-for-distribution-tenant --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-key-group --region us-east-1",
+    "aws_command": "aws cloudfront create-key-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-key-value-store --region us-east-1",
+    "aws_command": "aws cloudfront create-key-value-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-monitoring-subscription --region us-east-1",
+    "aws_command": "aws cloudfront create-monitoring-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-origin-access-control --region us-east-1",
+    "aws_command": "aws cloudfront create-origin-access-control --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-origin-request-policy --region us-east-1",
+    "aws_command": "aws cloudfront create-origin-request-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-public-key --region us-east-1",
+    "aws_command": "aws cloudfront create-public-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-realtime-log-config --region us-east-1",
+    "aws_command": "aws cloudfront create-realtime-log-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-response-headers-policy --region us-east-1",
+    "aws_command": "aws cloudfront create-response-headers-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-streaming-distribution --region us-east-1",
+    "aws_command": "aws cloudfront create-streaming-distribution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-streaming-distribution-with-tags --region us-east-1",
+    "aws_command": "aws cloudfront create-streaming-distribution-with-tags --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-trust-store --region us-east-1",
+    "aws_command": "aws cloudfront create-trust-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront create-vpc-origin --region us-east-1",
+    "aws_command": "aws cloudfront create-vpc-origin --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-anycast-ip-list --region us-east-1",
+    "aws_command": "aws cloudfront delete-anycast-ip-list --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-cache-policy --region us-east-1",
+    "aws_command": "aws cloudfront delete-cache-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI: 'the following arguments are required: --id' (exit 252). raws: 'URI template variable Id not found' (exit 255). Different error format."
+  },
+  {
+    "command": "raws cloudfront delete-cloud-front-origin-access-identity --region us-east-1",
+    "aws_command": "aws cloudfront delete-cloud-front-origin-access-identity --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront delete-connection-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-connection-group --region us-east-1",
+    "aws_command": "aws cloudfront delete-connection-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-continuous-deployment-policy --region us-east-1",
+    "aws_command": "aws cloudfront delete-continuous-deployment-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-distribution --region us-east-1",
+    "aws_command": "aws cloudfront delete-distribution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-distribution-tenant --region us-east-1",
+    "aws_command": "aws cloudfront delete-distribution-tenant --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-field-level-encryption-config --region us-east-1",
+    "aws_command": "aws cloudfront delete-field-level-encryption-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-field-level-encryption-profile --region us-east-1",
+    "aws_command": "aws cloudfront delete-field-level-encryption-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-function --region us-east-1",
+    "aws_command": "aws cloudfront delete-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-key-group --region us-east-1",
+    "aws_command": "aws cloudfront delete-key-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-key-value-store --region us-east-1",
+    "aws_command": "aws cloudfront delete-key-value-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-monitoring-subscription --region us-east-1",
+    "aws_command": "aws cloudfront delete-monitoring-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-origin-access-control --region us-east-1",
+    "aws_command": "aws cloudfront delete-origin-access-control --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-origin-request-policy --region us-east-1",
+    "aws_command": "aws cloudfront delete-origin-request-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-public-key --region us-east-1",
+    "aws_command": "aws cloudfront delete-public-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-realtime-log-config --region us-east-1",
+    "aws_command": "aws cloudfront delete-realtime-log-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-resource-policy --region us-east-1",
+    "aws_command": "aws cloudfront delete-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-response-headers-policy --region us-east-1",
+    "aws_command": "aws cloudfront delete-response-headers-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-streaming-distribution --region us-east-1",
+    "aws_command": "aws cloudfront delete-streaming-distribution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-trust-store --region us-east-1",
+    "aws_command": "aws cloudfront delete-trust-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront delete-vpc-origin --region us-east-1",
+    "aws_command": "aws cloudfront delete-vpc-origin --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront describe-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront describe-connection-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront describe-function --region us-east-1",
+    "aws_command": "aws cloudfront describe-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront describe-key-value-store --region us-east-1",
+    "aws_command": "aws cloudfront describe-key-value-store --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront disassociate-distribution-tenant-web-acl --region us-east-1",
+    "aws_command": "aws cloudfront disassociate-distribution-tenant-web-acl --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront disassociate-distribution-web-acl --region us-east-1",
+    "aws_command": "aws cloudfront disassociate-distribution-web-acl --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-anycast-ip-list --region us-east-1",
+    "aws_command": "aws cloudfront get-anycast-ip-list --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-cache-policy --region us-east-1",
+    "aws_command": "aws cloudfront get-cache-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-cache-policy-config --region us-east-1",
+    "aws_command": "aws cloudfront get-cache-policy-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-cloud-front-origin-access-identity --region us-east-1",
+    "aws_command": "aws cloudfront get-cloud-front-origin-access-identity --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-cloud-front-origin-access-identity-config --region us-east-1",
+    "aws_command": "aws cloudfront get-cloud-front-origin-access-identity-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront get-connection-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-connection-group --region us-east-1",
+    "aws_command": "aws cloudfront get-connection-group --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-connection-group-by-routing-endpoint --region us-east-1",
+    "aws_command": "aws cloudfront get-connection-group-by-routing-endpoint --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-continuous-deployment-policy --region us-east-1",
+    "aws_command": "aws cloudfront get-continuous-deployment-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-continuous-deployment-policy-config --region us-east-1",
+    "aws_command": "aws cloudfront get-continuous-deployment-policy-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-distribution --region us-east-1",
+    "aws_command": "aws cloudfront get-distribution --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI: 'the following arguments are required: --id' (exit 252). raws: 'URI template variable Id not found' (exit 255). Different error message format and exit code."
+  },
+  {
+    "command": "raws cloudfront get-distribution-config --region us-east-1",
+    "aws_command": "aws cloudfront get-distribution-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-distribution-tenant --region us-east-1",
+    "aws_command": "aws cloudfront get-distribution-tenant --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-distribution-tenant-by-domain --region us-east-1",
+    "aws_command": "aws cloudfront get-distribution-tenant-by-domain --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-field-level-encryption --region us-east-1",
+    "aws_command": "aws cloudfront get-field-level-encryption --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-field-level-encryption-config --region us-east-1",
+    "aws_command": "aws cloudfront get-field-level-encryption-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-field-level-encryption-profile --region us-east-1",
+    "aws_command": "aws cloudfront get-field-level-encryption-profile --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-field-level-encryption-profile-config --region us-east-1",
+    "aws_command": "aws cloudfront get-field-level-encryption-profile-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-function --region us-east-1",
+    "aws_command": "aws cloudfront get-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-invalidation --region us-east-1",
+    "aws_command": "aws cloudfront get-invalidation --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-invalidation-for-distribution-tenant --region us-east-1",
+    "aws_command": "aws cloudfront get-invalidation-for-distribution-tenant --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-key-group --region us-east-1",
+    "aws_command": "aws cloudfront get-key-group --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-key-group-config --region us-east-1",
+    "aws_command": "aws cloudfront get-key-group-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-managed-certificate-details --region us-east-1",
+    "aws_command": "aws cloudfront get-managed-certificate-details --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-monitoring-subscription --region us-east-1",
+    "aws_command": "aws cloudfront get-monitoring-subscription --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-origin-access-control --region us-east-1",
+    "aws_command": "aws cloudfront get-origin-access-control --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-origin-access-control-config --region us-east-1",
+    "aws_command": "aws cloudfront get-origin-access-control-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-origin-request-policy --region us-east-1",
+    "aws_command": "aws cloudfront get-origin-request-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-origin-request-policy-config --region us-east-1",
+    "aws_command": "aws cloudfront get-origin-request-policy-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-public-key --region us-east-1",
+    "aws_command": "aws cloudfront get-public-key --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-public-key-config --region us-east-1",
+    "aws_command": "aws cloudfront get-public-key-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-realtime-log-config --region us-east-1",
+    "aws_command": "aws cloudfront get-realtime-log-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-resource-policy --region us-east-1",
+    "aws_command": "aws cloudfront get-resource-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-response-headers-policy --region us-east-1",
+    "aws_command": "aws cloudfront get-response-headers-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-response-headers-policy-config --region us-east-1",
+    "aws_command": "aws cloudfront get-response-headers-policy-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-streaming-distribution --region us-east-1",
+    "aws_command": "aws cloudfront get-streaming-distribution --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-streaming-distribution-config --region us-east-1",
+    "aws_command": "aws cloudfront get-streaming-distribution-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-trust-store --region us-east-1",
+    "aws_command": "aws cloudfront get-trust-store --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront get-vpc-origin --region us-east-1",
+    "aws_command": "aws cloudfront get-vpc-origin --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-anycast-ip-lists --region us-east-1",
+    "aws_command": "aws cloudfront list-anycast-ip-lists --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-cache-policies --region us-east-1",
+    "aws_command": "aws cloudfront list-cache-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-cloud-front-origin-access-identities --region us-east-1",
+    "aws_command": "aws cloudfront list-cloud-front-origin-access-identities --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI returns empty output for empty list; raws returns full JSON structure with Marker/MaxItems/IsTruncated/Quantity."
+  },
+  {
+    "command": "raws cloudfront list-conflicting-aliases --region us-east-1",
+    "aws_command": "aws cloudfront list-conflicting-aliases --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-connection-functions --region us-east-1",
+    "aws_command": "aws cloudfront list-connection-functions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-connection-groups --region us-east-1",
+    "aws_command": "aws cloudfront list-connection-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-continuous-deployment-policies --region us-east-1",
+    "aws_command": "aws cloudfront list-continuous-deployment-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-distribution-tenants --region us-east-1",
+    "aws_command": "aws cloudfront list-distribution-tenants --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-distribution-tenants-by-customization --region us-east-1",
+    "aws_command": "aws cloudfront list-distribution-tenants-by-customization --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI returns empty output for empty distribution list; raws returns full JSON structure with Marker/MaxItems/IsTruncated/Quantity. Also text/table output differs accordingly."
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-anycast-ip-list-id --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-anycast-ip-list-id --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-cache-policy-id --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-cache-policy-id --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-connection-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-connection-mode --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-connection-mode --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-key-group --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-key-group --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-origin-request-policy-id --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-origin-request-policy-id --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-owned-resource --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-owned-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-realtime-log-config --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-realtime-log-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-response-headers-policy-id --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-response-headers-policy-id --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-trust-store --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-trust-store --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-vpc-origin-id --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-vpc-origin-id --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-distributions-by-web-acl-id --region us-east-1",
+    "aws_command": "aws cloudfront list-distributions-by-web-acl-id --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-domain-conflicts --region us-east-1",
+    "aws_command": "aws cloudfront list-domain-conflicts --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-field-level-encryption-configs --region us-east-1",
+    "aws_command": "aws cloudfront list-field-level-encryption-configs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-field-level-encryption-profiles --region us-east-1",
+    "aws_command": "aws cloudfront list-field-level-encryption-profiles --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-functions --region us-east-1",
+    "aws_command": "aws cloudfront list-functions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-invalidations --region us-east-1",
+    "aws_command": "aws cloudfront list-invalidations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-invalidations-for-distribution-tenant --region us-east-1",
+    "aws_command": "aws cloudfront list-invalidations-for-distribution-tenant --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront list-key-groups --region us-east-1",
+    "aws_command": "aws cloudfront list-key-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-key-value-stores --region us-east-1",
+    "aws_command": "aws cloudfront list-key-value-stores --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra MaxItems and Quantity fields in KeyValueStoreList that AWS CLI omits."
+  },
+  {
+    "command": "raws cloudfront list-origin-access-controls --region us-east-1",
+    "aws_command": "aws cloudfront list-origin-access-controls --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI returns empty output for empty list; raws returns full JSON structure with Marker/MaxItems/IsTruncated/Quantity."
+  },
+  {
+    "command": "raws cloudfront list-origin-request-policies --region us-east-1",
+    "aws_command": "aws cloudfront list-origin-request-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-public-keys --region us-east-1",
+    "aws_command": "aws cloudfront list-public-keys --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI returns empty output for empty list; raws returns JSON with MaxItems/Quantity."
+  },
+  {
+    "command": "raws cloudfront list-realtime-log-configs --region us-east-1",
+    "aws_command": "aws cloudfront list-realtime-log-configs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-response-headers-policies --region us-east-1",
+    "aws_command": "aws cloudfront list-response-headers-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-streaming-distributions --region us-east-1",
+    "aws_command": "aws cloudfront list-streaming-distributions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI returns empty output for empty list; raws returns full JSON structure with Marker/MaxItems/IsTruncated/Quantity."
+  },
+  {
+    "command": "raws cloudfront list-tags-for-resource --region us-east-1",
+    "aws_command": "aws cloudfront list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI: client-side 'arguments are required: --resource' (exit 252). raws: server-side InvalidArgument error (exit 254)."
+  },
+  {
+    "command": "raws cloudfront list-trust-stores --region us-east-1",
+    "aws_command": "aws cloudfront list-trust-stores --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront list-vpc-origins --region us-east-1",
+    "aws_command": "aws cloudfront list-vpc-origins --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudfront publish-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront publish-connection-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront publish-function --region us-east-1",
+    "aws_command": "aws cloudfront publish-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront put-resource-policy --region us-east-1",
+    "aws_command": "aws cloudfront put-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront sign --region us-east-1",
+    "aws_command": "aws cloudfront sign --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "sign is a custom AWS CLI command not in botocore model. raws reports 'Unknown operation'. Not implementable without custom code."
+  },
+  {
+    "command": "raws cloudfront tag-resource --region us-east-1",
+    "aws_command": "aws cloudfront tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI: client-side 'arguments are required: --resource, --tags' (exit 252). raws: server-side InvalidArgument error (exit 254)."
+  },
+  {
+    "command": "raws cloudfront test-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront test-connection-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront test-function --region us-east-1",
+    "aws_command": "aws cloudfront test-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront untag-resource --region us-east-1",
+    "aws_command": "aws cloudfront untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-anycast-ip-list --region us-east-1",
+    "aws_command": "aws cloudfront update-anycast-ip-list --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-cache-policy --region us-east-1",
+    "aws_command": "aws cloudfront update-cache-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-cloud-front-origin-access-identity --region us-east-1",
+    "aws_command": "aws cloudfront update-cloud-front-origin-access-identity --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-connection-function --region us-east-1",
+    "aws_command": "aws cloudfront update-connection-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-connection-group --region us-east-1",
+    "aws_command": "aws cloudfront update-connection-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-continuous-deployment-policy --region us-east-1",
+    "aws_command": "aws cloudfront update-continuous-deployment-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-distribution --region us-east-1",
+    "aws_command": "aws cloudfront update-distribution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-distribution-tenant --region us-east-1",
+    "aws_command": "aws cloudfront update-distribution-tenant --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-distribution-with-staging-config --region us-east-1",
+    "aws_command": "aws cloudfront update-distribution-with-staging-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-domain-association --region us-east-1",
+    "aws_command": "aws cloudfront update-domain-association --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-field-level-encryption-config --region us-east-1",
+    "aws_command": "aws cloudfront update-field-level-encryption-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-field-level-encryption-profile --region us-east-1",
+    "aws_command": "aws cloudfront update-field-level-encryption-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-function --region us-east-1",
+    "aws_command": "aws cloudfront update-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-key-group --region us-east-1",
+    "aws_command": "aws cloudfront update-key-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-key-value-store --region us-east-1",
+    "aws_command": "aws cloudfront update-key-value-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-origin-access-control --region us-east-1",
+    "aws_command": "aws cloudfront update-origin-access-control --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-origin-request-policy --region us-east-1",
+    "aws_command": "aws cloudfront update-origin-request-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-public-key --region us-east-1",
+    "aws_command": "aws cloudfront update-public-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-realtime-log-config --region us-east-1",
+    "aws_command": "aws cloudfront update-realtime-log-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-response-headers-policy --region us-east-1",
+    "aws_command": "aws cloudfront update-response-headers-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-streaming-distribution --region us-east-1",
+    "aws_command": "aws cloudfront update-streaming-distribution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-trust-store --region us-east-1",
+    "aws_command": "aws cloudfront update-trust-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront update-vpc-origin --region us-east-1",
+    "aws_command": "aws cloudfront update-vpc-origin --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront verify-dns-configuration --region us-east-1",
+    "aws_command": "aws cloudfront verify-dns-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws cloudfront wait --region us-east-1",
+    "aws_command": "aws cloudfront wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize wait subcommand but error format differs. AWS: 'too few arguments' (exit 252). raws: 'Missing waiter name' (exit 2)."
+  }
+]

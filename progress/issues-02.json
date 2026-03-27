@@ -1,0 +1,202 @@
+[
+  {
+    "id": "validation-systemic-null-fields",
+    "description": "raws includes null-valued fields in JSON output; AWS CLI omits them. Affects s3api, dynamodb, lambda, and likely all services. Example: get-bucket-versioning returns {\"Status\": null, \"MFADelete\": null} instead of {}",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws s3api get-bucket-versioning --bucket <bucket> --region us-east-1", "expect": "JSON output should omit null fields, matching AWS CLI behavior" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Systemic issue across all protocols. AWS CLI strips null values from JSON responses."]
+  },
+  {
+    "id": "validation-systemic-error-prefix",
+    "description": "raws error messages are missing the 'aws: [ERROR]: ' prefix that the AWS CLI prepends to all error output. Example: raws outputs 'An error occurred (X)...' but AWS CLI outputs 'aws: [ERROR]: An error occurred (X)...'",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws ec2 describe-vpcs --no-sign-request --region us-east-1 2>&1", "expect": "Error should be prefixed with 'raws: [ERROR]: ' (or equivalent branding)" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Affects all error output across all services."]
+  },
+  {
+    "id": "validation-systemic-client-side-validation",
+    "description": "raws lacks client-side parameter validation. When required params are missing, raws sends the request to the server and gets a server-side error (exit 254/255), while AWS CLI validates client-side with 'the following arguments are required: --param-name' (exit 252). Affects all commands with required parameters.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws sts assume-role --region us-east-1 2>&1; echo $?", "expect": "Should show 'the following arguments are required: --role-arn, --role-session-name' with exit code 252" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. This is the single largest source of test failures across all services. AWS CLI validates required params before making API calls."]
+  },
+  {
+    "id": "validation-systemic-exit-codes",
+    "description": "raws uses exit code 255 for most errors, but AWS CLI uses specific exit codes: 252 for parameter validation errors, 253 for no-credentials errors, 254 for service errors. raws should match these exit code conventions.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws sts assume-role --region us-east-1 2>&1; echo $?", "expect": "Exit code 252 for missing params" },
+      { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN raws sts get-caller-identity --region us-east-1 2>&1; echo $?", "expect": "Exit code 253 for no credentials" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Exit codes differ for parameter validation (raws: 255, aws: 252) and no-credentials (raws: 255, aws: 253)."]
+  },
+  {
+    "id": "validation-systemic-table-nested",
+    "description": "raws table output renders nested objects and arrays as inline JSON strings in a flat table row. AWS CLI renders them as properly formatted nested sub-tables with double-pipe borders. Also, raws omits the top-level operation name header row.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws ec2 describe-vpcs --output table --region us-east-1", "expect": "Nested objects like CidrBlockAssociationSet should render as sub-tables, not inline JSON" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Affects ec2 describe-vpcs, iam list-users, kms list-keys, and any response with nested structures."]
+  },
+  {
+    "id": "validation-systemic-table-empty",
+    "description": "raws produces no output for empty table results. AWS CLI shows a minimal table header even when results are empty.",
+    "severity": "low",
+    "verify": [
+      { "run": "raws ec2 describe-instances --output table --region us-east-1", "expect": "Should show table header even if no instances exist" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Affects dynamodb list-tables, ec2 describe-instances, lambda list-functions when results are empty."]
+  },
+  {
+    "id": "validation-global-no-version",
+    "description": "raws does not support the --version flag. Running 'raws --version' produces a clap argument parsing error instead of a version string.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws --version", "expect": "Should output a version string like 'raws/0.1.0 ...'" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent."]
+  },
+  {
+    "id": "validation-ec2-owners-filter-ignored",
+    "description": "EC2 describe-images --owners self and describe-snapshots --owner-ids self ignore the filter parameter entirely, returning ALL public images/snapshots (79K+ items) instead of only self-owned ones. The EC2 protocol list parameter serialization (Owner.N) is not working.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws ec2 describe-images --owners self --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return only self-owned images (likely empty list), not all public images" },
+      { "run": "raws ec2 describe-snapshots --owner-ids self --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return only self-owned snapshots, not all public snapshots" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Critical performance and correctness bug. AWS CLI correctly filters; raws returns unfiltered results."]
+  },
+  {
+    "id": "validation-iam-url-encoded-policies",
+    "description": "IAM list-roles and get-account-authorization-details return AssumeRolePolicyDocument and PolicyDocument as raw URL-encoded strings (e.g., %7B%22Version%22...) instead of decoded JSON objects. AWS CLI properly decodes them.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws iam list-roles --region us-east-1 --output json 2>&1 | head -30", "expect": "AssumeRolePolicyDocument should be a JSON object, not a URL-encoded string" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. IAM returns URL-encoded policy documents in its responses; AWS CLI decodes them before displaying."]
+  },
+  {
+    "id": "validation-iam-optional-params-signing",
+    "description": "IAM list-policies with any optional parameter (--scope Local, --max-items, --path-prefix, --only-attached) causes a SignatureDoesNotMatch error: 'Credential should be scoped to a valid region'. Works fine without optional params. Likely a query protocol signing bug when serializing optional parameters on the IAM global endpoint.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws iam list-policies --scope Local --region us-east-1 2>&1", "expect": "Should return policies scoped to Local, not a SignatureDoesNotMatch error" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. This breaks many IAM commands that use optional filters."]
+  },
+  {
+    "id": "validation-s3-redirect-handling",
+    "description": "S3 operations on buckets in different regions return PermanentRedirect errors instead of transparently following the redirect. AWS CLI handles S3 redirects automatically. Affects s3api get-bucket-versioning, list-objects-v2, get-bucket-acl and s3 ls s3://<bucket>/ on cross-region buckets.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws s3 ls s3://<bucket>/ --region us-east-1 2>&1", "expect": "Should list objects, not return HTTP 301 redirect error" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. S3 requires following 301 redirects to the correct regional endpoint. raws may be using path-style URLs instead of virtual-hosted-style."]
+  },
+  {
+    "id": "validation-s3api-head-bucket-us-east-1",
+    "description": "s3api head-bucket fails on buckets in us-east-1 with 'An error occurred (Unknown)' while AWS CLI succeeds. May be related to the S3 global endpoint vs regional endpoint handling for us-east-1.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws s3api head-bucket --bucket <us-east-1-bucket> --region us-east-1 2>&1", "expect": "Should succeed (no output) like AWS CLI" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent."]
+  },
+  {
+    "id": "validation-s3api-list-directory-buckets",
+    "description": "s3api list-directory-buckets returns all buckets (same as list-buckets) instead of only S3 Express directory buckets. AWS CLI correctly returns an empty list when no directory buckets exist.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws s3api list-directory-buckets --region us-east-1 --output json 2>&1", "expect": "Should return empty Buckets list (no directory buckets), not all regular buckets" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. raws appears to route this to the same endpoint as list-buckets."]
+  },
+  {
+    "id": "validation-s3api-grantee-type-missing",
+    "description": "s3api get-bucket-acl response is missing the 'Type' field in the Grantee object. AWS CLI returns {\"Type\": \"CanonicalUser\", \"DisplayName\": ..., \"ID\": ...} but raws omits the Type field.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws s3api get-bucket-acl --bucket <bucket> --region us-east-1 --output json 2>&1", "expect": "Grantee objects should include 'Type': 'CanonicalUser'" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. The Type field may be an XML attribute that raws is not parsing."]
+  },
+  {
+    "id": "validation-systemic-additional-error-details",
+    "description": "When AWS returns errors with extra fields (e.g., Type: Sender, BucketName), AWS CLI appends 'Additional error details:\\nType: Sender' to the error message. raws omits this extra detail.",
+    "severity": "low",
+    "verify": [
+      { "run": "raws sts get-session-token --region us-east-1 2>&1", "expect": "Error message should include 'Additional error details' section" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Affects STS and S3 error responses that include extra context fields."]
+  },
+  {
+    "id": "validation-auth-no-credentials-error",
+    "description": "When no credentials are available, raws error message format differs from AWS CLI. raws: 'Failed to resolve AWS credentials: No credentials found...' (exit 255). AWS: 'aws: [ERROR]: Unable to locate credentials' (exit 253).",
+    "severity": "medium",
+    "verify": [
+      { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN raws sts get-caller-identity --region us-east-1 2>&1; echo $?", "expect": "Should say 'Unable to locate credentials' with exit code 253" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent."]
+  },
+  {
+    "id": "validation-auth-bad-profile-prefix",
+    "description": "When using a nonexistent profile, raws outputs 'The config profile (X) could not be found' but AWS CLI prefixes it with 'aws: [ERROR]: '. The core message matches but the prefix is missing.",
+    "severity": "low",
+    "verify": [
+      { "run": "raws sts get-caller-identity --profile nonexistent-profile-xyz --region us-east-1 2>&1", "expect": "Error should be prefixed with 'raws: [ERROR]: ' or similar" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Related to the systemic error prefix issue."]
+  },
+  {
+    "id": "validation-s3-website-not-implemented",
+    "description": "The 's3 website' subcommand is not implemented in raws. Running it returns 'Unknown s3 subcommand'.",
+    "severity": "low",
+    "verify": [
+      { "run": "raws s3 website 2>&1", "expect": "Should show usage/help for s3 website command" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent."]
+  }
+]

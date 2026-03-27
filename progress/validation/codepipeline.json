@@ -1,0 +1,386 @@
+[
+  {
+    "command": "raws codepipeline help",
+    "aws_command": "aws codepipeline help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows a compact operation list; AWS CLI shows full man-page style help with descriptions, NAME, DESCRIPTION sections. Both list the same operations."
+  },
+  {
+    "command": "raws codepipeline acknowledge-job --region us-east-1",
+    "aws_command": "aws codepipeline acknowledge-job --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException (exit 254); AWS CLI validates client-side with ParamValidation error listing required args (exit 252). Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline acknowledge-third-party-job --region us-east-1",
+    "aws_command": "aws codepipeline acknowledge-third-party-job --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline create-custom-action-type --region us-east-1",
+    "aws_command": "aws codepipeline create-custom-action-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline create-pipeline --region us-east-1",
+    "aws_command": "aws codepipeline create-pipeline --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException (Member must not be null); AWS CLI validates client-side with ParamValidation (--pipeline required). Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline delete-custom-action-type --region us-east-1",
+    "aws_command": "aws codepipeline delete-custom-action-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline delete-pipeline --region us-east-1",
+    "aws_command": "aws codepipeline delete-pipeline --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline delete-webhook --region us-east-1",
+    "aws_command": "aws codepipeline delete-webhook --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException (name must not be null); AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline deregister-webhook-with-third-party --region us-east-1",
+    "aws_command": "aws codepipeline deregister-webhook-with-third-party --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline disable-stage-transition --region us-east-1",
+    "aws_command": "aws codepipeline disable-stage-transition --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline enable-stage-transition --region us-east-1",
+    "aws_command": "aws codepipeline enable-stage-transition --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline get-action-type --region us-east-1",
+    "aws_command": "aws codepipeline get-action-type --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException (4 validation errors); AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline get-job-details --region us-east-1",
+    "aws_command": "aws codepipeline get-job-details --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline get-pipeline --region us-east-1",
+    "aws_command": "aws codepipeline get-pipeline --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline get-pipeline-execution --region us-east-1",
+    "aws_command": "aws codepipeline get-pipeline-execution --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline get-pipeline-state --region us-east-1",
+    "aws_command": "aws codepipeline get-pipeline-state --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline get-third-party-job-details --region us-east-1",
+    "aws_command": "aws codepipeline get-third-party-job-details --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline list-action-executions --region us-east-1",
+    "aws_command": "aws codepipeline list-action-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException (pipelineName must not be null); AWS CLI validates client-side (--pipeline-name required). Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline list-action-types --region us-east-1",
+    "aws_command": "aws codepipeline list-action-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codepipeline list-deploy-action-execution-targets --region us-east-1",
+    "aws_command": "aws codepipeline list-deploy-action-execution-targets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline list-pipeline-executions --region us-east-1",
+    "aws_command": "aws codepipeline list-pipeline-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline list-pipelines --region us-east-1",
+    "aws_command": "aws codepipeline list-pipelines --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codepipeline list-rule-executions --region us-east-1",
+    "aws_command": "aws codepipeline list-rule-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline list-rule-types --region us-east-1",
+    "aws_command": "aws codepipeline list-rule-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codepipeline list-tags-for-resource --region us-east-1",
+    "aws_command": "aws codepipeline list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException (resourceArn must not be null); AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline list-webhooks --region us-east-1",
+    "aws_command": "aws codepipeline list-webhooks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codepipeline override-stage-condition --region us-east-1",
+    "aws_command": "aws codepipeline override-stage-condition --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline poll-for-jobs --region us-east-1",
+    "aws_command": "aws codepipeline poll-for-jobs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException (actionTypeId must not be null); AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline poll-for-third-party-jobs --region us-east-1",
+    "aws_command": "aws codepipeline poll-for-third-party-jobs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline put-action-revision --region us-east-1",
+    "aws_command": "aws codepipeline put-action-revision --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline put-approval-result --region us-east-1",
+    "aws_command": "aws codepipeline put-approval-result --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline put-job-failure-result --region us-east-1",
+    "aws_command": "aws codepipeline put-job-failure-result --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline put-job-success-result --region us-east-1",
+    "aws_command": "aws codepipeline put-job-success-result --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline put-third-party-job-failure-result --region us-east-1",
+    "aws_command": "aws codepipeline put-third-party-job-failure-result --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline put-third-party-job-success-result --region us-east-1",
+    "aws_command": "aws codepipeline put-third-party-job-success-result --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline put-webhook --region us-east-1",
+    "aws_command": "aws codepipeline put-webhook --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline register-webhook-with-third-party --region us-east-1",
+    "aws_command": "aws codepipeline register-webhook-with-third-party --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline retry-stage-execution --region us-east-1",
+    "aws_command": "aws codepipeline retry-stage-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline rollback-stage --region us-east-1",
+    "aws_command": "aws codepipeline rollback-stage --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline start-pipeline-execution --region us-east-1",
+    "aws_command": "aws codepipeline start-pipeline-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline stop-pipeline-execution --region us-east-1",
+    "aws_command": "aws codepipeline stop-pipeline-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline tag-resource --region us-east-1",
+    "aws_command": "aws codepipeline tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline untag-resource --region us-east-1",
+    "aws_command": "aws codepipeline untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline update-action-type --region us-east-1",
+    "aws_command": "aws codepipeline update-action-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline update-pipeline --region us-east-1",
+    "aws_command": "aws codepipeline update-pipeline --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request and gets server-side ValidationException; AWS CLI validates client-side. Both recognize the command."
+  },
+  {
+    "command": "raws codepipeline list-pipelines --region us-east-1 --output table",
+    "aws_command": "aws codepipeline list-pipelines --region us-east-1 --output table",
+    "category": "output_format",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws outputs nothing for empty list in table format; AWS CLI outputs a table header (---------------/|ListPipelines|/+-------------+)"
+  },
+  {
+    "command": "raws codepipeline list-pipelines --region us-east-1 --output text",
+    "aws_command": "aws codepipeline list-pipelines --region us-east-1 --output text",
+    "category": "output_format",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codepipeline list-action-types --region us-east-1 --output text",
+    "aws_command": "aws codepipeline list-action-types --region us-east-1 --output text",
+    "category": "output_format",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  }
+]

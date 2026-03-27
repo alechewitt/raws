@@ -1,0 +1,538 @@
+[
+  {
+    "command": "raws autoscaling help",
+    "aws_command": "aws autoscaling help",
+    "category": "help",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "raws shows a plain list of operations; AWS CLI shows man-page style with description and formatting. Both list all commands correctly."
+  },
+  {
+    "command": "raws autoscaling attach-instances --region us-east-1",
+    "aws_command": "aws autoscaling attach-instances --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS does client-side validation (exit 252), raws uses server-side validation (exit 254). Same required params identified."
+  },
+  {
+    "command": "raws autoscaling attach-load-balancer-target-groups --region us-east-1",
+    "aws_command": "aws autoscaling attach-load-balancer-target-groups --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling attach-load-balancers --region us-east-1",
+    "aws_command": "aws autoscaling attach-load-balancers --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling attach-traffic-sources --region us-east-1",
+    "aws_command": "aws autoscaling attach-traffic-sources --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling batch-delete-scheduled-action --region us-east-1",
+    "aws_command": "aws autoscaling batch-delete-scheduled-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling batch-put-scheduled-update-group-action --region us-east-1",
+    "aws_command": "aws autoscaling batch-put-scheduled-update-group-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling cancel-instance-refresh --region us-east-1",
+    "aws_command": "aws autoscaling cancel-instance-refresh --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling complete-lifecycle-action --region us-east-1",
+    "aws_command": "aws autoscaling complete-lifecycle-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling create-auto-scaling-group --region us-east-1",
+    "aws_command": "aws autoscaling create-auto-scaling-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254). Same params identified."
+  },
+  {
+    "command": "raws autoscaling create-launch-configuration --region us-east-1",
+    "aws_command": "aws autoscaling create-launch-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling create-or-update-tags --region us-east-1",
+    "aws_command": "aws autoscaling create-or-update-tags --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-auto-scaling-group --region us-east-1",
+    "aws_command": "aws autoscaling delete-auto-scaling-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-launch-configuration --region us-east-1",
+    "aws_command": "aws autoscaling delete-launch-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-lifecycle-hook --region us-east-1",
+    "aws_command": "aws autoscaling delete-lifecycle-hook --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-notification-configuration --region us-east-1",
+    "aws_command": "aws autoscaling delete-notification-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-policy --region us-east-1",
+    "aws_command": "aws autoscaling delete-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-scheduled-action --region us-east-1",
+    "aws_command": "aws autoscaling delete-scheduled-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-tags --region us-east-1",
+    "aws_command": "aws autoscaling delete-tags --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling delete-warm-pool --region us-east-1",
+    "aws_command": "aws autoscaling delete-warm-pool --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling describe-account-limits --region us-east-1",
+    "aws_command": "aws autoscaling describe-account-limits --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-adjustment-types --region us-east-1",
+    "aws_command": "aws autoscaling describe-adjustment-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-auto-scaling-groups --region us-east-1",
+    "aws_command": "aws autoscaling describe-auto-scaling-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-auto-scaling-instances --region us-east-1",
+    "aws_command": "aws autoscaling describe-auto-scaling-instances --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-auto-scaling-notification-types --region us-east-1",
+    "aws_command": "aws autoscaling describe-auto-scaling-notification-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-instance-refreshes --region us-east-1",
+    "aws_command": "aws autoscaling describe-instance-refreshes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Requires --auto-scaling-group-name. Both return identical ValidationError for nonexistent ASG. Same exit code (254) and error message."
+  },
+  {
+    "command": "raws autoscaling describe-launch-configurations --region us-east-1",
+    "aws_command": "aws autoscaling describe-launch-configurations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-lifecycle-hook-types --region us-east-1",
+    "aws_command": "aws autoscaling describe-lifecycle-hook-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-lifecycle-hooks --region us-east-1",
+    "aws_command": "aws autoscaling describe-lifecycle-hooks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Requires --auto-scaling-group-name. Both return identical empty LifecycleHooks list for nonexistent ASG."
+  },
+  {
+    "command": "raws autoscaling describe-load-balancer-target-groups --region us-east-1",
+    "aws_command": "aws autoscaling describe-load-balancer-target-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Requires --auto-scaling-group-name. Both return identical ValidationError for nonexistent ASG. Same exit code (254) and error message."
+  },
+  {
+    "command": "raws autoscaling describe-load-balancers --region us-east-1",
+    "aws_command": "aws autoscaling describe-load-balancers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Requires --auto-scaling-group-name. Both return identical ValidationError for nonexistent ASG. Same exit code (254) and error message."
+  },
+  {
+    "command": "raws autoscaling describe-metric-collection-types --region us-east-1",
+    "aws_command": "aws autoscaling describe-metric-collection-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-notification-configurations --region us-east-1",
+    "aws_command": "aws autoscaling describe-notification-configurations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-policies --region us-east-1",
+    "aws_command": "aws autoscaling describe-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-scaling-activities --region us-east-1",
+    "aws_command": "aws autoscaling describe-scaling-activities --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-scaling-process-types --region us-east-1",
+    "aws_command": "aws autoscaling describe-scaling-process-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-scheduled-actions --region us-east-1",
+    "aws_command": "aws autoscaling describe-scheduled-actions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-tags --region us-east-1",
+    "aws_command": "aws autoscaling describe-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-termination-policy-types --region us-east-1",
+    "aws_command": "aws autoscaling describe-termination-policy-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws autoscaling describe-traffic-sources --region us-east-1",
+    "aws_command": "aws autoscaling describe-traffic-sources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Requires --auto-scaling-group-name. Both return identical ValidationError for nonexistent ASG. Same exit code (254) and error message."
+  },
+  {
+    "command": "raws autoscaling describe-warm-pool --region us-east-1",
+    "aws_command": "aws autoscaling describe-warm-pool --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Requires --auto-scaling-group-name. Both return identical ValidationError for nonexistent ASG. Same exit code (254) and error message."
+  },
+  {
+    "command": "raws autoscaling detach-instances --region us-east-1",
+    "aws_command": "aws autoscaling detach-instances --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling detach-load-balancer-target-groups --region us-east-1",
+    "aws_command": "aws autoscaling detach-load-balancer-target-groups --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling detach-load-balancers --region us-east-1",
+    "aws_command": "aws autoscaling detach-load-balancers --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling detach-traffic-sources --region us-east-1",
+    "aws_command": "aws autoscaling detach-traffic-sources --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling disable-metrics-collection --region us-east-1",
+    "aws_command": "aws autoscaling disable-metrics-collection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling enable-metrics-collection --region us-east-1",
+    "aws_command": "aws autoscaling enable-metrics-collection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling enter-standby --region us-east-1",
+    "aws_command": "aws autoscaling enter-standby --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling execute-policy --region us-east-1",
+    "aws_command": "aws autoscaling execute-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling exit-standby --region us-east-1",
+    "aws_command": "aws autoscaling exit-standby --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling get-predictive-scaling-forecast --region us-east-1",
+    "aws_command": "aws autoscaling get-predictive-scaling-forecast --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS does client-side validation (exit 252), raws uses server-side validation (exit 254). Same required params identified."
+  },
+  {
+    "command": "raws autoscaling launch-instances --region us-east-1",
+    "aws_command": "aws autoscaling launch-instances --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling put-lifecycle-hook --region us-east-1",
+    "aws_command": "aws autoscaling put-lifecycle-hook --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling put-notification-configuration --region us-east-1",
+    "aws_command": "aws autoscaling put-notification-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling put-scaling-policy --region us-east-1",
+    "aws_command": "aws autoscaling put-scaling-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling put-scheduled-update-group-action --region us-east-1",
+    "aws_command": "aws autoscaling put-scheduled-update-group-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling put-warm-pool --region us-east-1",
+    "aws_command": "aws autoscaling put-warm-pool --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling record-lifecycle-action-heartbeat --region us-east-1",
+    "aws_command": "aws autoscaling record-lifecycle-action-heartbeat --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling resume-processes --region us-east-1",
+    "aws_command": "aws autoscaling resume-processes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling rollback-instance-refresh --region us-east-1",
+    "aws_command": "aws autoscaling rollback-instance-refresh --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling set-desired-capacity --region us-east-1",
+    "aws_command": "aws autoscaling set-desired-capacity --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling set-instance-health --region us-east-1",
+    "aws_command": "aws autoscaling set-instance-health --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling set-instance-protection --region us-east-1",
+    "aws_command": "aws autoscaling set-instance-protection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling start-instance-refresh --region us-east-1",
+    "aws_command": "aws autoscaling start-instance-refresh --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling suspend-processes --region us-east-1",
+    "aws_command": "aws autoscaling suspend-processes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling terminate-instance-in-auto-scaling-group --region us-east-1",
+    "aws_command": "aws autoscaling terminate-instance-in-auto-scaling-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  },
+  {
+    "command": "raws autoscaling update-auto-scaling-group --region us-east-1",
+    "aws_command": "aws autoscaling update-auto-scaling-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS client-side (exit 252) vs raws server-side (exit 254)."
+  }
+]

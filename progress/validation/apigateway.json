@@ -1,0 +1,1002 @@
+[
+  {
+    "command": "raws apigateway help",
+    "aws_command": "aws apigateway help",
+    "category": "help",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-api-key --region us-east-1",
+    "aws_command": "aws apigateway create-api-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-authorizer --region us-east-1",
+    "aws_command": "aws apigateway create-authorizer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-base-path-mapping --region us-east-1",
+    "aws_command": "aws apigateway create-base-path-mapping --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-deployment --region us-east-1",
+    "aws_command": "aws apigateway create-deployment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-documentation-part --region us-east-1",
+    "aws_command": "aws apigateway create-documentation-part --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-documentation-version --region us-east-1",
+    "aws_command": "aws apigateway create-documentation-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-domain-name --region us-east-1",
+    "aws_command": "aws apigateway create-domain-name --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-domain-name-access-association --region us-east-1",
+    "aws_command": "aws apigateway create-domain-name-access-association --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-model --region us-east-1",
+    "aws_command": "aws apigateway create-model --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-request-validator --region us-east-1",
+    "aws_command": "aws apigateway create-request-validator --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-resource --region us-east-1",
+    "aws_command": "aws apigateway create-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-rest-api --region us-east-1",
+    "aws_command": "aws apigateway create-rest-api --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-stage --region us-east-1",
+    "aws_command": "aws apigateway create-stage --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-usage-plan --region us-east-1",
+    "aws_command": "aws apigateway create-usage-plan --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-usage-plan-key --region us-east-1",
+    "aws_command": "aws apigateway create-usage-plan-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway create-vpc-link --region us-east-1",
+    "aws_command": "aws apigateway create-vpc-link --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-api-key --region us-east-1",
+    "aws_command": "aws apigateway delete-api-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-authorizer --region us-east-1",
+    "aws_command": "aws apigateway delete-authorizer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-base-path-mapping --region us-east-1",
+    "aws_command": "aws apigateway delete-base-path-mapping --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-client-certificate --region us-east-1",
+    "aws_command": "aws apigateway delete-client-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-deployment --region us-east-1",
+    "aws_command": "aws apigateway delete-deployment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-documentation-part --region us-east-1",
+    "aws_command": "aws apigateway delete-documentation-part --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-documentation-version --region us-east-1",
+    "aws_command": "aws apigateway delete-documentation-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-domain-name --region us-east-1",
+    "aws_command": "aws apigateway delete-domain-name --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-domain-name-access-association --region us-east-1",
+    "aws_command": "aws apigateway delete-domain-name-access-association --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-gateway-response --region us-east-1",
+    "aws_command": "aws apigateway delete-gateway-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-integration --region us-east-1",
+    "aws_command": "aws apigateway delete-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-integration-response --region us-east-1",
+    "aws_command": "aws apigateway delete-integration-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-method --region us-east-1",
+    "aws_command": "aws apigateway delete-method --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-method-response --region us-east-1",
+    "aws_command": "aws apigateway delete-method-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-model --region us-east-1",
+    "aws_command": "aws apigateway delete-model --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-request-validator --region us-east-1",
+    "aws_command": "aws apigateway delete-request-validator --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-resource --region us-east-1",
+    "aws_command": "aws apigateway delete-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-rest-api --region us-east-1",
+    "aws_command": "aws apigateway delete-rest-api --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-stage --region us-east-1",
+    "aws_command": "aws apigateway delete-stage --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-usage-plan --region us-east-1",
+    "aws_command": "aws apigateway delete-usage-plan --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-usage-plan-key --region us-east-1",
+    "aws_command": "aws apigateway delete-usage-plan-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway delete-vpc-link --region us-east-1",
+    "aws_command": "aws apigateway delete-vpc-link --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway flush-stage-authorizers-cache --region us-east-1",
+    "aws_command": "aws apigateway flush-stage-authorizers-cache --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway flush-stage-cache --region us-east-1",
+    "aws_command": "aws apigateway flush-stage-cache --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway generate-client-certificate --region us-east-1",
+    "aws_command": "aws apigateway generate-client-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-account --region us-east-1",
+    "aws_command": "aws apigateway get-account --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws outputs features as bare string instead of array; includes cloudwatchRoleArn:null which AWS omits"
+  },
+  {
+    "command": "raws apigateway get-api-key --region us-east-1",
+    "aws_command": "aws apigateway get-api-key --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing required param error: raws says \"URI template variable not found\" (exit 255) vs AWS \"ParamValidation\" (exit 252)"
+  },
+  {
+    "command": "raws apigateway get-api-keys --region us-east-1",
+    "aws_command": "aws apigateway get-api-keys --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null instead of items:[] and includes extra warnings:null field"
+  },
+  {
+    "command": "raws apigateway get-authorizer --region us-east-1",
+    "aws_command": "aws apigateway get-authorizer --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-authorizers --region us-east-1",
+    "aws_command": "aws apigateway get-authorizers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-base-path-mapping --region us-east-1",
+    "aws_command": "aws apigateway get-base-path-mapping --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-base-path-mappings --region us-east-1",
+    "aws_command": "aws apigateway get-base-path-mappings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-client-certificate --region us-east-1",
+    "aws_command": "aws apigateway get-client-certificate --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing required param error: raws says \"URI template variable not found\" (exit 255) vs AWS \"ParamValidation\" (exit 252)"
+  },
+  {
+    "command": "raws apigateway get-client-certificates --region us-east-1",
+    "aws_command": "aws apigateway get-client-certificates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null instead of items:[] for empty list"
+  },
+  {
+    "command": "raws apigateway get-deployment --region us-east-1",
+    "aws_command": "aws apigateway get-deployment --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-deployments --region us-east-1",
+    "aws_command": "aws apigateway get-deployments --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-documentation-part --region us-east-1",
+    "aws_command": "aws apigateway get-documentation-part --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-documentation-parts --region us-east-1",
+    "aws_command": "aws apigateway get-documentation-parts --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-documentation-version --region us-east-1",
+    "aws_command": "aws apigateway get-documentation-version --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-documentation-versions --region us-east-1",
+    "aws_command": "aws apigateway get-documentation-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-domain-name --region us-east-1",
+    "aws_command": "aws apigateway get-domain-name --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing required param error: raws says \"URI template variable not found\" (exit 255) vs AWS \"ParamValidation\" (exit 252)"
+  },
+  {
+    "command": "raws apigateway get-domain-name-access-associations --region us-east-1",
+    "aws_command": "aws apigateway get-domain-name-access-associations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null and includes extra position:null field; AWS returns items:[]"
+  },
+  {
+    "command": "raws apigateway get-domain-names --region us-east-1",
+    "aws_command": "aws apigateway get-domain-names --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null instead of items:[] for empty list"
+  },
+  {
+    "command": "raws apigateway get-export --region us-east-1",
+    "aws_command": "aws apigateway get-export --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-gateway-response --region us-east-1",
+    "aws_command": "aws apigateway get-gateway-response --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-gateway-responses --region us-east-1",
+    "aws_command": "aws apigateway get-gateway-responses --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-integration --region us-east-1",
+    "aws_command": "aws apigateway get-integration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-integration-response --region us-east-1",
+    "aws_command": "aws apigateway get-integration-response --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-method --region us-east-1",
+    "aws_command": "aws apigateway get-method --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-method-response --region us-east-1",
+    "aws_command": "aws apigateway get-method-response --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-model --region us-east-1",
+    "aws_command": "aws apigateway get-model --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-model-template --region us-east-1",
+    "aws_command": "aws apigateway get-model-template --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-models --region us-east-1",
+    "aws_command": "aws apigateway get-models --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-request-validator --region us-east-1",
+    "aws_command": "aws apigateway get-request-validator --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-request-validators --region us-east-1",
+    "aws_command": "aws apigateway get-request-validators --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-resource --region us-east-1",
+    "aws_command": "aws apigateway get-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-resources --region us-east-1",
+    "aws_command": "aws apigateway get-resources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-rest-api --region us-east-1",
+    "aws_command": "aws apigateway get-rest-api --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing required param error: raws says \"URI template variable not found\" (exit 255) vs AWS \"ParamValidation\" (exit 252)"
+  },
+  {
+    "command": "raws apigateway get-rest-apis --region us-east-1",
+    "aws_command": "aws apigateway get-rest-apis --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null instead of items:[] for empty list"
+  },
+  {
+    "command": "raws apigateway get-sdk --region us-east-1",
+    "aws_command": "aws apigateway get-sdk --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-sdk-type --region us-east-1",
+    "aws_command": "aws apigateway get-sdk-type --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-sdk-types --region us-east-1",
+    "aws_command": "aws apigateway get-sdk-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null; AWS returns actual SDK type data (java, ruby). Likely items:null vs items:[] issue"
+  },
+  {
+    "command": "raws apigateway get-stage --region us-east-1",
+    "aws_command": "aws apigateway get-stage --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-stages --region us-east-1",
+    "aws_command": "aws apigateway get-stages --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-tags --region us-east-1",
+    "aws_command": "aws apigateway get-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-usage --region us-east-1",
+    "aws_command": "aws apigateway get-usage --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-usage-plan --region us-east-1",
+    "aws_command": "aws apigateway get-usage-plan --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing required param error: raws says \"URI template variable not found\" (exit 255) vs AWS \"ParamValidation\" (exit 252)"
+  },
+  {
+    "command": "raws apigateway get-usage-plan-key --region us-east-1",
+    "aws_command": "aws apigateway get-usage-plan-key --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-usage-plan-keys --region us-east-1",
+    "aws_command": "aws apigateway get-usage-plan-keys --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway get-usage-plans --region us-east-1",
+    "aws_command": "aws apigateway get-usage-plans --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null instead of items:[] for empty list"
+  },
+  {
+    "command": "raws apigateway get-vpc-link --region us-east-1",
+    "aws_command": "aws apigateway get-vpc-link --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing required param error: raws says \"URI template variable not found\" (exit 255) vs AWS \"ParamValidation\" (exit 252)"
+  },
+  {
+    "command": "raws apigateway get-vpc-links --region us-east-1",
+    "aws_command": "aws apigateway get-vpc-links --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns items:null instead of items:[] for empty list"
+  },
+  {
+    "command": "raws apigateway import-api-keys --region us-east-1",
+    "aws_command": "aws apigateway import-api-keys --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway import-documentation-parts --region us-east-1",
+    "aws_command": "aws apigateway import-documentation-parts --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway import-rest-api --region us-east-1",
+    "aws_command": "aws apigateway import-rest-api --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway put-gateway-response --region us-east-1",
+    "aws_command": "aws apigateway put-gateway-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway put-integration --region us-east-1",
+    "aws_command": "aws apigateway put-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway put-integration-response --region us-east-1",
+    "aws_command": "aws apigateway put-integration-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway put-method --region us-east-1",
+    "aws_command": "aws apigateway put-method --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway put-method-response --region us-east-1",
+    "aws_command": "aws apigateway put-method-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway put-rest-api --region us-east-1",
+    "aws_command": "aws apigateway put-rest-api --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway reject-domain-name-access-association --region us-east-1",
+    "aws_command": "aws apigateway reject-domain-name-access-association --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway tag-resource --region us-east-1",
+    "aws_command": "aws apigateway tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway test-invoke-authorizer --region us-east-1",
+    "aws_command": "aws apigateway test-invoke-authorizer --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway test-invoke-method --region us-east-1",
+    "aws_command": "aws apigateway test-invoke-method --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway untag-resource --region us-east-1",
+    "aws_command": "aws apigateway untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-account --region us-east-1",
+    "aws_command": "aws apigateway update-account --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-api-key --region us-east-1",
+    "aws_command": "aws apigateway update-api-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-authorizer --region us-east-1",
+    "aws_command": "aws apigateway update-authorizer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-base-path-mapping --region us-east-1",
+    "aws_command": "aws apigateway update-base-path-mapping --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-client-certificate --region us-east-1",
+    "aws_command": "aws apigateway update-client-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-deployment --region us-east-1",
+    "aws_command": "aws apigateway update-deployment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-documentation-part --region us-east-1",
+    "aws_command": "aws apigateway update-documentation-part --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-documentation-version --region us-east-1",
+    "aws_command": "aws apigateway update-documentation-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-domain-name --region us-east-1",
+    "aws_command": "aws apigateway update-domain-name --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-gateway-response --region us-east-1",
+    "aws_command": "aws apigateway update-gateway-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-integration --region us-east-1",
+    "aws_command": "aws apigateway update-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-integration-response --region us-east-1",
+    "aws_command": "aws apigateway update-integration-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-method --region us-east-1",
+    "aws_command": "aws apigateway update-method --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-method-response --region us-east-1",
+    "aws_command": "aws apigateway update-method-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-model --region us-east-1",
+    "aws_command": "aws apigateway update-model --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-request-validator --region us-east-1",
+    "aws_command": "aws apigateway update-request-validator --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-resource --region us-east-1",
+    "aws_command": "aws apigateway update-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-rest-api --region us-east-1",
+    "aws_command": "aws apigateway update-rest-api --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-stage --region us-east-1",
+    "aws_command": "aws apigateway update-stage --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-usage --region us-east-1",
+    "aws_command": "aws apigateway update-usage --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-usage-plan --region us-east-1",
+    "aws_command": "aws apigateway update-usage-plan --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws apigateway update-vpc-link --region us-east-1",
+    "aws_command": "aws apigateway update-vpc-link --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  }
+]

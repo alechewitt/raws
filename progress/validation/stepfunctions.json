@@ -1,0 +1,306 @@
+[
+  {
+    "command": "raws stepfunctions help",
+    "aws_command": "aws stepfunctions help",
+    "category": "help",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "raws shows compact operation list; aws shows full manpage with description and formatting. Both list the same operations."
+  },
+  {
+    "command": "raws stepfunctions create-activity --name test-activity --region us-east-1",
+    "aws_command": "aws stepfunctions create-activity --name test-activity --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for all parameters. API returns ValidationException: Value null at 'name'. AWS CLI succeeds and creates the activity."
+  },
+  {
+    "command": "raws stepfunctions create-state-machine --name test --definition '{...}' --role-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions create-state-machine --name test --definition '{...}' --role-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for all parameters (name, roleArn, definition). API returns ValidationException with 3 null constraint violations."
+  },
+  {
+    "command": "raws stepfunctions create-state-machine-alias --name test-alias --routing-configuration '[...]' --region us-east-1",
+    "aws_command": "aws stepfunctions create-state-machine-alias --name test-alias --routing-configuration '[...]' --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for all parameters (routingConfiguration, name). API returns ValidationException with 2 null constraint violations."
+  },
+  {
+    "command": "raws stepfunctions delete-activity --activity-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions delete-activity --activity-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for activityArn parameter. API returns ValidationException: Value null at 'activityArn'. AWS CLI succeeds (idempotent delete)."
+  },
+  {
+    "command": "raws stepfunctions delete-state-machine --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions delete-state-machine --state-machine-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineArn parameter. API returns ValidationException: Value null at 'stateMachineArn'. AWS CLI succeeds (idempotent delete)."
+  },
+  {
+    "command": "raws stepfunctions delete-state-machine-alias --state-machine-alias-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions delete-state-machine-alias --state-machine-alias-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineAliasArn. API returns ValidationException: Value null at 'stateMachineAliasArn'."
+  },
+  {
+    "command": "raws stepfunctions delete-state-machine-version --state-machine-version-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions delete-state-machine-version --state-machine-version-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineVersionArn. API returns ValidationException: Value null at 'stateMachineVersionArn'."
+  },
+  {
+    "command": "raws stepfunctions describe-activity --activity-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions describe-activity --activity-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for activityArn. API returns ValidationException: Value null at 'activityArn'. AWS CLI properly passes the ARN and gets ActivityDoesNotExist."
+  },
+  {
+    "command": "raws stepfunctions describe-execution --execution-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions describe-execution --execution-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for executionArn. API returns ValidationException: Value null at 'executionArn'."
+  },
+  {
+    "command": "raws stepfunctions describe-map-run --map-run-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions describe-map-run --map-run-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for mapRunArn. API returns ValidationException: Value null at 'mapRunArn'."
+  },
+  {
+    "command": "raws stepfunctions describe-state-machine --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions describe-state-machine --state-machine-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineArn. API returns ValidationException: Value null at 'stateMachineArn'. AWS CLI properly passes the ARN and gets StateMachineDoesNotExist."
+  },
+  {
+    "command": "raws stepfunctions describe-state-machine-alias --state-machine-alias-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions describe-state-machine-alias --state-machine-alias-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineAliasArn. API returns ValidationException: Value null at 'stateMachineAliasArn'."
+  },
+  {
+    "command": "raws stepfunctions describe-state-machine-for-execution --execution-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions describe-state-machine-for-execution --execution-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for executionArn. API returns ValidationException: Value null at 'executionArn'."
+  },
+  {
+    "command": "raws stepfunctions get-activity-task --activity-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions get-activity-task --activity-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for activityArn. API returns ValidationException: Value null at 'activityArn'."
+  },
+  {
+    "command": "raws stepfunctions get-execution-history --execution-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions get-execution-history --execution-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for executionArn. API returns ValidationException: Value null at 'executionArn'."
+  },
+  {
+    "command": "raws stepfunctions list-activities --region us-east-1",
+    "aws_command": "aws stepfunctions list-activities --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws stepfunctions list-executions --region us-east-1",
+    "aws_command": "aws stepfunctions list-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return same ValidationException error (Must provide a StateMachine ARN or MapRun ARN). Error message text and exit code match. Minor format difference: AWS prefixes with 'aws: [ERROR]:' and appends 'Additional error details'."
+  },
+  {
+    "command": "raws stepfunctions list-map-runs --execution-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions list-map-runs --execution-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for executionArn. API returns ValidationException: Value null at 'executionArn'. AWS CLI properly passes the ARN and gets ExecutionDoesNotExist."
+  },
+  {
+    "command": "raws stepfunctions list-state-machine-aliases --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions list-state-machine-aliases --state-machine-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineArn. API returns ValidationException: Value null at 'stateMachineArn'."
+  },
+  {
+    "command": "raws stepfunctions list-state-machine-versions --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions list-state-machine-versions --state-machine-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineArn. API returns ValidationException: Value null at 'stateMachineArn'."
+  },
+  {
+    "command": "raws stepfunctions list-state-machines --region us-east-1",
+    "aws_command": "aws stepfunctions list-state-machines --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws stepfunctions list-tags-for-resource --resource-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions list-tags-for-resource --resource-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for resourceArn. API returns ValidationException: Value null at 'resourceArn'."
+  },
+  {
+    "command": "raws stepfunctions publish-state-machine-version --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions publish-state-machine-version --state-machine-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineArn. API returns ValidationException: Value null at 'stateMachineArn'."
+  },
+  {
+    "command": "raws stepfunctions redrive-execution --execution-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions redrive-execution --execution-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for executionArn. API returns ValidationException: Value null at 'executionArn'."
+  },
+  {
+    "command": "raws stepfunctions send-task-failure --task-token fake-token --region us-east-1",
+    "aws_command": "aws stepfunctions send-task-failure --task-token fake-token --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for taskToken. API returns ValidationException: Value null at 'taskToken'."
+  },
+  {
+    "command": "raws stepfunctions send-task-heartbeat --task-token fake-token --region us-east-1",
+    "aws_command": "aws stepfunctions send-task-heartbeat --task-token fake-token --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for taskToken. API returns ValidationException: Value null at 'taskToken'."
+  },
+  {
+    "command": "raws stepfunctions send-task-success --task-token fake-token --output '{}' --region us-east-1",
+    "aws_command": "aws stepfunctions send-task-success --task-token fake-token --output '{}' --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for taskToken and output. API returns ValidationException with 2 null constraint violations."
+  },
+  {
+    "command": "raws stepfunctions start-execution --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions start-execution --state-machine-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineArn. API returns ValidationException: Value null at 'stateMachineArn'. AWS CLI gets StateMachineDoesNotExist."
+  },
+  {
+    "command": "raws stepfunctions start-sync-execution --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions start-sync-execution --state-machine-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws gets ThrottlingException: Rate exceeded. AWS CLI properly gets StateMachineDoesNotExist. Possible endpoint or header issue causing persistent throttling."
+  },
+  {
+    "command": "raws stepfunctions stop-execution --execution-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions stop-execution --execution-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for executionArn. API returns ValidationException: Value null at 'executionArn'. AWS CLI gets ExecutionDoesNotExist."
+  },
+  {
+    "command": "raws stepfunctions tag-resource --resource-arn arn:... --tags key=test,value=test --region us-east-1",
+    "aws_command": "aws stepfunctions tag-resource --resource-arn arn:... --tags key=test,value=test --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for resourceArn and tags. API returns ValidationException with 2 null constraint violations."
+  },
+  {
+    "command": "raws stepfunctions test-state --definition '{...}' --role-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions test-state --definition '{...}' --role-arn arn:... --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws consistently gets ThrottlingException: Rate exceeded. AWS CLI succeeds with the same parameters. Possible endpoint or header issue causing persistent throttling."
+  },
+  {
+    "command": "raws stepfunctions untag-resource --resource-arn arn:... --tag-keys test --region us-east-1",
+    "aws_command": "aws stepfunctions untag-resource --resource-arn arn:... --tag-keys test --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for tagKeys and resourceArn. API returns ValidationException with 2 null constraint violations."
+  },
+  {
+    "command": "raws stepfunctions update-map-run --map-run-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions update-map-run --map-run-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for mapRunArn. API returns ValidationException: Value null at 'mapRunArn'."
+  },
+  {
+    "command": "raws stepfunctions update-state-machine --state-machine-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions update-state-machine --state-machine-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineArn. API returns ValidationException: Value null at 'stateMachineArn'."
+  },
+  {
+    "command": "raws stepfunctions update-state-machine-alias --state-machine-alias-arn arn:... --region us-east-1",
+    "aws_command": "aws stepfunctions update-state-machine-alias --state-machine-alias-arn arn:... --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for stateMachineAliasArn. API returns ValidationException: Value null at 'stateMachineAliasArn'."
+  },
+  {
+    "command": "raws stepfunctions validate-state-machine-definition --definition '{...}' --region us-east-1",
+    "aws_command": "aws stepfunctions validate-state-machine-definition --definition '{...}' --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws sends null for definition. API returns ValidationException: Value at 'definition' failed to satisfy constraint: Member must not be null."
+  }
+]

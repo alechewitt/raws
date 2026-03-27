@@ -1,0 +1,1186 @@
+[
+  {
+    "command": "raws ssm help",
+    "aws_command": "aws ssm help",
+    "category": "help",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "help output is simplified list vs AWS CLI man-page format; lists same operations"
+  },
+  {
+    "command": "raws ssm add-tags-to-resource --region us-east-1",
+    "aws_command": "aws ssm add-tags-to-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm associate-ops-item-related-item --region us-east-1",
+    "aws_command": "aws ssm associate-ops-item-related-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm cancel-command --region us-east-1",
+    "aws_command": "aws ssm cancel-command --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm cancel-maintenance-window-execution --region us-east-1",
+    "aws_command": "aws ssm cancel-maintenance-window-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm create-activation --region us-east-1",
+    "aws_command": "aws ssm create-activation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm create-association --region us-east-1",
+    "aws_command": "aws ssm create-association --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm create-association-batch --region us-east-1",
+    "aws_command": "aws ssm create-association-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm create-document --region us-east-1",
+    "aws_command": "aws ssm create-document --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm create-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm create-maintenance-window --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm create-ops-item --region us-east-1",
+    "aws_command": "aws ssm create-ops-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm create-ops-metadata --region us-east-1",
+    "aws_command": "aws ssm create-ops-metadata --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm create-patch-baseline --region us-east-1",
+    "aws_command": "aws ssm create-patch-baseline --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm create-resource-data-sync --region us-east-1",
+    "aws_command": "aws ssm create-resource-data-sync --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-activation --region us-east-1",
+    "aws_command": "aws ssm delete-activation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-association --region us-east-1",
+    "aws_command": "aws ssm delete-association --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-document --region us-east-1",
+    "aws_command": "aws ssm delete-document --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-inventory --region us-east-1",
+    "aws_command": "aws ssm delete-inventory --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm delete-maintenance-window --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-ops-item --region us-east-1",
+    "aws_command": "aws ssm delete-ops-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-ops-metadata --region us-east-1",
+    "aws_command": "aws ssm delete-ops-metadata --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-parameter --region us-east-1",
+    "aws_command": "aws ssm delete-parameter --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "delete works correctly; raws returns {} on success vs AWS CLI returns nothing. No client-side param validation"
+  },
+  {
+    "command": "raws ssm delete-parameters --region us-east-1",
+    "aws_command": "aws ssm delete-parameters --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-patch-baseline --region us-east-1",
+    "aws_command": "aws ssm delete-patch-baseline --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-resource-data-sync --region us-east-1",
+    "aws_command": "aws ssm delete-resource-data-sync --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm delete-resource-policy --region us-east-1",
+    "aws_command": "aws ssm delete-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm deregister-managed-instance --region us-east-1",
+    "aws_command": "aws ssm deregister-managed-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm deregister-patch-baseline-for-patch-group --region us-east-1",
+    "aws_command": "aws ssm deregister-patch-baseline-for-patch-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm deregister-target-from-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm deregister-target-from-maintenance-window --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm deregister-task-from-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm deregister-task-from-maintenance-window --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-activations --region us-east-1",
+    "aws_command": "aws ssm describe-activations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-association --region us-east-1",
+    "aws_command": "aws ssm describe-association --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-association-execution-targets --region us-east-1",
+    "aws_command": "aws ssm describe-association-execution-targets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-association-executions --region us-east-1",
+    "aws_command": "aws ssm describe-association-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-automation-executions --region us-east-1",
+    "aws_command": "aws ssm describe-automation-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-automation-step-executions --region us-east-1",
+    "aws_command": "aws ssm describe-automation-step-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-available-patches --region us-east-1",
+    "aws_command": "aws ssm describe-available-patches --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-document --region us-east-1",
+    "aws_command": "aws ssm describe-document --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-document-permission --region us-east-1",
+    "aws_command": "aws ssm describe-document-permission --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-effective-instance-associations --region us-east-1",
+    "aws_command": "aws ssm describe-effective-instance-associations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-effective-patches-for-patch-baseline --region us-east-1",
+    "aws_command": "aws ssm describe-effective-patches-for-patch-baseline --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-instance-associations-status --region us-east-1",
+    "aws_command": "aws ssm describe-instance-associations-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-instance-information --region us-east-1",
+    "aws_command": "aws ssm describe-instance-information --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-instance-patch-states --region us-east-1",
+    "aws_command": "aws ssm describe-instance-patch-states --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-instance-patch-states-for-patch-group --region us-east-1",
+    "aws_command": "aws ssm describe-instance-patch-states-for-patch-group --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-instance-patches --region us-east-1",
+    "aws_command": "aws ssm describe-instance-patches --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-instance-properties --region us-east-1",
+    "aws_command": "aws ssm describe-instance-properties --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-inventory-deletions --region us-east-1",
+    "aws_command": "aws ssm describe-inventory-deletions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-maintenance-window-execution-task-invocations --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-window-execution-task-invocations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-maintenance-window-execution-tasks --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-window-execution-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-maintenance-window-executions --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-window-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-maintenance-window-schedule --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-window-schedule --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "both return same server-side ValidationException"
+  },
+  {
+    "command": "raws ssm describe-maintenance-window-targets --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-window-targets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-maintenance-window-tasks --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-window-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-maintenance-windows --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-windows --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-maintenance-windows-for-target --region us-east-1",
+    "aws_command": "aws ssm describe-maintenance-windows-for-target --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-ops-items --region us-east-1",
+    "aws_command": "aws ssm describe-ops-items --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-parameters --region us-east-1",
+    "aws_command": "aws ssm describe-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "timestamps in UTC (+00:00) vs AWS CLI local timezone; structure and data match"
+  },
+  {
+    "command": "raws ssm describe-patch-baselines --region us-east-1",
+    "aws_command": "aws ssm describe-patch-baselines --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-patch-group-state --region us-east-1",
+    "aws_command": "aws ssm describe-patch-group-state --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm describe-patch-groups --region us-east-1",
+    "aws_command": "aws ssm describe-patch-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm describe-patch-properties --region us-east-1",
+    "aws_command": "aws ssm describe-patch-properties --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm describe-sessions --region us-east-1",
+    "aws_command": "aws ssm describe-sessions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm disassociate-ops-item-related-item --region us-east-1",
+    "aws_command": "aws ssm disassociate-ops-item-related-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-access-token --region us-east-1",
+    "aws_command": "aws ssm get-access-token --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-automation-execution --region us-east-1",
+    "aws_command": "aws ssm get-automation-execution --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-calendar-state --region us-east-1",
+    "aws_command": "aws ssm get-calendar-state --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-command-invocation --region us-east-1",
+    "aws_command": "aws ssm get-command-invocation --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-connection-status --region us-east-1",
+    "aws_command": "aws ssm get-connection-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-default-patch-baseline --region us-east-1",
+    "aws_command": "aws ssm get-default-patch-baseline --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm get-deployable-patch-snapshot-for-instance --region us-east-1",
+    "aws_command": "aws ssm get-deployable-patch-snapshot-for-instance --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-document --region us-east-1",
+    "aws_command": "aws ssm get-document --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-execution-preview --region us-east-1",
+    "aws_command": "aws ssm get-execution-preview --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-inventory --region us-east-1",
+    "aws_command": "aws ssm get-inventory --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm get-inventory-schema --region us-east-1",
+    "aws_command": "aws ssm get-inventory-schema --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm get-maintenance-window --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-maintenance-window-execution --region us-east-1",
+    "aws_command": "aws ssm get-maintenance-window-execution --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-maintenance-window-execution-task --region us-east-1",
+    "aws_command": "aws ssm get-maintenance-window-execution-task --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-maintenance-window-execution-task-invocation --region us-east-1",
+    "aws_command": "aws ssm get-maintenance-window-execution-task-invocation --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-maintenance-window-task --region us-east-1",
+    "aws_command": "aws ssm get-maintenance-window-task --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-ops-item --region us-east-1",
+    "aws_command": "aws ssm get-ops-item --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-ops-metadata --region us-east-1",
+    "aws_command": "aws ssm get-ops-metadata --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-ops-summary --region us-east-1",
+    "aws_command": "aws ssm get-ops-summary --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-parameter --region us-east-1",
+    "aws_command": "aws ssm get-parameter --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "timestamps in UTC (+00:00) vs AWS CLI local timezone; --query and --output text/table flags ignored (always returns full JSON)"
+  },
+  {
+    "command": "raws ssm get-parameter-history --region us-east-1",
+    "aws_command": "aws ssm get-parameter-history --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-parameters --region us-east-1",
+    "aws_command": "aws ssm get-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-parameters-by-path --region us-east-1",
+    "aws_command": "aws ssm get-parameters-by-path --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-patch-baseline --region us-east-1",
+    "aws_command": "aws ssm get-patch-baseline --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-patch-baseline-for-patch-group --region us-east-1",
+    "aws_command": "aws ssm get-patch-baseline-for-patch-group --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-resource-policies --region us-east-1",
+    "aws_command": "aws ssm get-resource-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm get-service-setting --region us-east-1",
+    "aws_command": "aws ssm get-service-setting --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm label-parameter-version --region us-east-1",
+    "aws_command": "aws ssm label-parameter-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm list-association-versions --region us-east-1",
+    "aws_command": "aws ssm list-association-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-associations --region us-east-1",
+    "aws_command": "aws ssm list-associations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm list-command-invocations --region us-east-1",
+    "aws_command": "aws ssm list-command-invocations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-commands --region us-east-1",
+    "aws_command": "aws ssm list-commands --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm list-compliance-items --region us-east-1",
+    "aws_command": "aws ssm list-compliance-items --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-compliance-summaries --region us-east-1",
+    "aws_command": "aws ssm list-compliance-summaries --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm list-document-metadata-history --region us-east-1",
+    "aws_command": "aws ssm list-document-metadata-history --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-document-versions --region us-east-1",
+    "aws_command": "aws ssm list-document-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-documents --region us-east-1",
+    "aws_command": "aws ssm list-documents --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns empty output (no JSON) while AWS CLI returns document list; possible serialization or pagination bug"
+  },
+  {
+    "command": "raws ssm list-inventory-entries --region us-east-1",
+    "aws_command": "aws ssm list-inventory-entries --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-nodes --region us-east-1",
+    "aws_command": "aws ssm list-nodes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-nodes-summary --region us-east-1",
+    "aws_command": "aws ssm list-nodes-summary --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-ops-item-events --region us-east-1",
+    "aws_command": "aws ssm list-ops-item-events --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-ops-item-related-items --region us-east-1",
+    "aws_command": "aws ssm list-ops-item-related-items --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-ops-metadata --region us-east-1",
+    "aws_command": "aws ssm list-ops-metadata --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm list-resource-compliance-summaries --region us-east-1",
+    "aws_command": "aws ssm list-resource-compliance-summaries --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm list-resource-data-sync --region us-east-1",
+    "aws_command": "aws ssm list-resource-data-sync --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ssm list-tags-for-resource --region us-east-1",
+    "aws_command": "aws ssm list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm modify-document-permission --region us-east-1",
+    "aws_command": "aws ssm modify-document-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm put-compliance-items --region us-east-1",
+    "aws_command": "aws ssm put-compliance-items --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm put-inventory --region us-east-1",
+    "aws_command": "aws ssm put-inventory --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm put-parameter --region us-east-1",
+    "aws_command": "aws ssm put-parameter --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "put-parameter works correctly; wrote and verified parameter. No client-side param validation (server-side ValidationException vs AWS CLI client-side error)"
+  },
+  {
+    "command": "raws ssm put-resource-policy --region us-east-1",
+    "aws_command": "aws ssm put-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm register-default-patch-baseline --region us-east-1",
+    "aws_command": "aws ssm register-default-patch-baseline --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm register-patch-baseline-for-patch-group --region us-east-1",
+    "aws_command": "aws ssm register-patch-baseline-for-patch-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm register-target-with-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm register-target-with-maintenance-window --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm register-task-with-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm register-task-with-maintenance-window --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm remove-tags-from-resource --region us-east-1",
+    "aws_command": "aws ssm remove-tags-from-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm reset-service-setting --region us-east-1",
+    "aws_command": "aws ssm reset-service-setting --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm resume-session --region us-east-1",
+    "aws_command": "aws ssm resume-session --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm send-automation-signal --region us-east-1",
+    "aws_command": "aws ssm send-automation-signal --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm send-command --region us-east-1",
+    "aws_command": "aws ssm send-command --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm start-access-request --region us-east-1",
+    "aws_command": "aws ssm start-access-request --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm start-associations-once --region us-east-1",
+    "aws_command": "aws ssm start-associations-once --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm start-automation-execution --region us-east-1",
+    "aws_command": "aws ssm start-automation-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm start-change-request-execution --region us-east-1",
+    "aws_command": "aws ssm start-change-request-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm start-execution-preview --region us-east-1",
+    "aws_command": "aws ssm start-execution-preview --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm start-session --region us-east-1",
+    "aws_command": "aws ssm start-session --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm stop-automation-execution --region us-east-1",
+    "aws_command": "aws ssm stop-automation-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm terminate-session --region us-east-1",
+    "aws_command": "aws ssm terminate-session --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm unlabel-parameter-version --region us-east-1",
+    "aws_command": "aws ssm unlabel-parameter-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-association --region us-east-1",
+    "aws_command": "aws ssm update-association --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-association-status --region us-east-1",
+    "aws_command": "aws ssm update-association-status --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-document --region us-east-1",
+    "aws_command": "aws ssm update-document --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm update-document-default-version --region us-east-1",
+    "aws_command": "aws ssm update-document-default-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-document-metadata --region us-east-1",
+    "aws_command": "aws ssm update-document-metadata --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-maintenance-window --region us-east-1",
+    "aws_command": "aws ssm update-maintenance-window --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-maintenance-window-target --region us-east-1",
+    "aws_command": "aws ssm update-maintenance-window-target --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-maintenance-window-task --region us-east-1",
+    "aws_command": "aws ssm update-maintenance-window-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-managed-instance-role --region us-east-1",
+    "aws_command": "aws ssm update-managed-instance-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-ops-item --region us-east-1",
+    "aws_command": "aws ssm update-ops-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "no client-side param validation; server-side ValidationException (exit 254) vs AWS CLI client-side ParamValidation (exit 252)"
+  },
+  {
+    "command": "raws ssm update-ops-metadata --region us-east-1",
+    "aws_command": "aws ssm update-ops-metadata --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-patch-baseline --region us-east-1",
+    "aws_command": "aws ssm update-patch-baseline --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-resource-data-sync --region us-east-1",
+    "aws_command": "aws ssm update-resource-data-sync --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm update-service-setting --region us-east-1",
+    "aws_command": "aws ssm update-service-setting --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws ssm wait --region us-east-1",
+    "aws_command": "aws ssm wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "raws shows 'Missing waiter name' (exit 2) vs AWS CLI shows 'too few arguments' (exit 252); both indicate missing subcommand"
+  }
+]

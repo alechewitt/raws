@@ -1,0 +1,59 @@
+[
+  {
+    "id": "validation-sqs-params-not-serialized",
+    "description": "SQS commands do not serialize input parameters into the JSON request body. Commands like get-queue-url --queue-name and get-queue-attributes --queue-url fail with QueueDoesNotExist on existing queues because parameters aren't sent. Only list-queues works (no required params). List parameter serialization also fails with SerializationException.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws sqs list-queues --region us-east-1 --output json 2>&1", "expect": "This works - returns queue URLs" },
+      { "run": "raws sqs get-queue-url --queue-name <existing-queue> --region us-east-1 2>&1", "expect": "Should return QueueUrl, not QueueDoesNotExist" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. SQS uses JSON protocol. The request body is being sent empty despite parameters being provided on the command line."]
+  },
+  {
+    "id": "validation-rds-output-format-broken",
+    "description": "RDS commands ignore --output text and --output table flags, always outputting JSON regardless. Verified on describe-db-instances and describe-db-engine-versions. This is specific to RDS (query protocol) - other query protocol services like STS and IAM handle output formats correctly.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws rds describe-db-instances --output text --region us-east-1 2>&1", "expect": "Should output text format, not JSON" },
+      { "run": "raws rds describe-db-instances --output table --region us-east-1 2>&1", "expect": "Should output table format, not JSON" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. RDS JSON output is correct, but text/table format selection is broken."]
+  },
+  {
+    "id": "validation-rds-commands-missing",
+    "description": "Three RDS commands are not recognized by raws: add-option-to-option-group, remove-option-from-option-group, and generate-db-auth-token. The first two may be legacy commands; generate-db-auth-token is a client-side token generation utility.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws rds generate-db-auth-token --region us-east-1 2>&1", "expect": "Should be recognized as a valid command" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. generate-db-auth-token is a commonly used command for IAM database authentication."]
+  },
+  {
+    "id": "validation-rds-pagination-large-results",
+    "description": "RDS describe-reserved-db-instances-offerings returns empty output from raws while AWS CLI returns 13,827 offerings. Likely a pagination issue with very large result sets.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws rds describe-reserved-db-instances-offerings --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return offerings data, not empty output" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. May be related to auto-pagination handling for responses with many pages."]
+  },
+  {
+    "id": "validation-ecs-custom-commands-missing",
+    "description": "ECS deploy and monitor-express-gateway-service are custom AWS CLI commands not in the botocore service model. raws returns 'Unknown operation' for these. Also applies to cloudformation package command.",
+    "severity": "low",
+    "verify": [
+      { "run": "raws ecs deploy 2>&1", "expect": "Custom CLI command - may not be implementable from botocore models" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. These are AWS CLI-specific commands that don't correspond to API operations. Low priority since they require custom implementation outside the botocore model."]
+  }
+]

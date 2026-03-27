@@ -1,0 +1,850 @@
+[
+  {
+    "command": "raws logs help",
+    "aws_command": "aws logs help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows flat command list; AWS CLI shows man-page style with service description, usage, and formatted help"
+  },
+  {
+    "command": "raws logs associate-kms-key --region us-east-1",
+    "aws_command": "aws logs associate-kms-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error, exit 254); AWS CLI validates required --kms-key-id client-side (exit 252). CRITICAL: raws does not serialize any CLI parameters into the JSON request body for CloudWatch Logs."
+  },
+  {
+    "command": "raws logs associate-source-to-s3-table-integration --region us-east-1",
+    "aws_command": "aws logs associate-source-to-s3-table-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error, exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs cancel-export-task --region us-east-1",
+    "aws_command": "aws logs cancel-export-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required --task-id client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs cancel-import-task --region us-east-1",
+    "aws_command": "aws logs cancel-import-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs create-delivery --region us-east-1",
+    "aws_command": "aws logs create-delivery --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs create-export-task --region us-east-1",
+    "aws_command": "aws logs create-export-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs create-import-task --region us-east-1",
+    "aws_command": "aws logs create-import-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs create-log-anomaly-detector --region us-east-1",
+    "aws_command": "aws logs create-log-anomaly-detector --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs create-log-group --region us-east-1",
+    "aws_command": "aws logs create-log-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logGroupName even when --log-group-name is provided (server error exit 254); AWS CLI validates required --log-group-name client-side (exit 252). CRITICAL: parameters are not serialized."
+  },
+  {
+    "command": "raws logs create-log-stream --region us-east-1",
+    "aws_command": "aws logs create-log-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null params even when --log-group-name and --log-stream-name are provided (server error); AWS CLI validates client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs create-scheduled-query --region us-east-1",
+    "aws_command": "aws logs create-scheduled-query --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-account-policy --region us-east-1",
+    "aws_command": "aws logs delete-account-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-data-protection-policy --region us-east-1",
+    "aws_command": "aws logs delete-data-protection-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-delivery --region us-east-1",
+    "aws_command": "aws logs delete-delivery --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-delivery-destination --region us-east-1",
+    "aws_command": "aws logs delete-delivery-destination --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-delivery-destination-policy --region us-east-1",
+    "aws_command": "aws logs delete-delivery-destination-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-delivery-source --region us-east-1",
+    "aws_command": "aws logs delete-delivery-source --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-destination --region us-east-1",
+    "aws_command": "aws logs delete-destination --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null destinationName (server error exit 254); AWS CLI validates required --destination-name client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-index-policy --region us-east-1",
+    "aws_command": "aws logs delete-index-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-integration --region us-east-1",
+    "aws_command": "aws logs delete-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-log-anomaly-detector --region us-east-1",
+    "aws_command": "aws logs delete-log-anomaly-detector --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-log-group --region us-east-1",
+    "aws_command": "aws logs delete-log-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logGroupName (server error exit 254); AWS CLI validates required --log-group-name client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-log-stream --region us-east-1",
+    "aws_command": "aws logs delete-log-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-metric-filter --region us-east-1",
+    "aws_command": "aws logs delete-metric-filter --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logGroupName and filterName (server error exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-query-definition --region us-east-1",
+    "aws_command": "aws logs delete-query-definition --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-resource-policy --region us-east-1",
+    "aws_command": "aws logs delete-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-retention-policy --region us-east-1",
+    "aws_command": "aws logs delete-retention-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logGroupName even when --log-group-name is provided (server error); AWS CLI validates client-side. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs delete-scheduled-query --region us-east-1",
+    "aws_command": "aws logs delete-scheduled-query --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-subscription-filter --region us-east-1",
+    "aws_command": "aws logs delete-subscription-filter --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs delete-transformer --region us-east-1",
+    "aws_command": "aws logs delete-transformer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs describe-account-policies --region us-east-1",
+    "aws_command": "aws logs describe-account-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null policyType even when --policy-type DATA_PROTECTION_POLICY is provided (server error); AWS CLI returns {accountPolicies:[]}. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs describe-configuration-templates --region us-east-1",
+    "aws_command": "aws logs describe-configuration-templates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-deliveries --region us-east-1",
+    "aws_command": "aws logs describe-deliveries --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-delivery-destinations --region us-east-1",
+    "aws_command": "aws logs describe-delivery-destinations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-delivery-sources --region us-east-1",
+    "aws_command": "aws logs describe-delivery-sources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-destinations --region us-east-1",
+    "aws_command": "aws logs describe-destinations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-export-tasks --region us-east-1",
+    "aws_command": "aws logs describe-export-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-field-indexes --region us-east-1",
+    "aws_command": "aws logs describe-field-indexes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --log-group-identifiers, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs describe-import-task-batches --region us-east-1",
+    "aws_command": "aws logs describe-import-task-batches --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --import-id, but raws sends null to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs describe-import-tasks --region us-east-1",
+    "aws_command": "aws logs describe-import-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Minor: raws includes 'nextToken: null' in output; AWS CLI omits null nextToken"
+  },
+  {
+    "command": "raws logs describe-index-policies --region us-east-1",
+    "aws_command": "aws logs describe-index-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --log-group-identifiers, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs describe-log-groups --region us-east-1",
+    "aws_command": "aws logs describe-log-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches when no params. CRITICAL: when --log-group-name-prefix is provided, raws ignores it (param not serialized) and returns all groups. Table output format differs (raws uses flat table vs AWS key-value pairs)."
+  },
+  {
+    "command": "raws logs describe-log-streams --region us-east-1",
+    "aws_command": "aws logs describe-log-streams --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logGroupName even when --log-group-name is provided (server error); AWS CLI works correctly and returns log streams. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs describe-metric-filters --region us-east-1",
+    "aws_command": "aws logs describe-metric-filters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-queries --region us-east-1",
+    "aws_command": "aws logs describe-queries --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-query-definitions --region us-east-1",
+    "aws_command": "aws logs describe-query-definitions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Minor: raws includes 'nextToken: null' in output; AWS CLI omits null nextToken"
+  },
+  {
+    "command": "raws logs describe-resource-policies --region us-east-1",
+    "aws_command": "aws logs describe-resource-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs describe-subscription-filters --region us-east-1",
+    "aws_command": "aws logs describe-subscription-filters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logGroupName even when --log-group-name is provided (server error); AWS CLI works correctly. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs disassociate-kms-key --region us-east-1",
+    "aws_command": "aws logs disassociate-kms-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs disassociate-source-from-s3-table-integration --region us-east-1",
+    "aws_command": "aws logs disassociate-source-from-s3-table-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs filter-log-events --region us-east-1",
+    "aws_command": "aws logs filter-log-events --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both produce same server-side ValidationException error and exit 254 when missing required log group"
+  },
+  {
+    "command": "raws logs get-data-protection-policy --region us-east-1",
+    "aws_command": "aws logs get-data-protection-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing param, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-delivery --region us-east-1",
+    "aws_command": "aws logs get-delivery --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --id, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-delivery-destination --region us-east-1",
+    "aws_command": "aws logs get-delivery-destination --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing param, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-delivery-destination-policy --region us-east-1",
+    "aws_command": "aws logs get-delivery-destination-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing param, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-delivery-source --region us-east-1",
+    "aws_command": "aws logs get-delivery-source --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing param, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-integration --region us-east-1",
+    "aws_command": "aws logs get-integration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws gets InternalFailure from server (exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-log-anomaly-detector --region us-east-1",
+    "aws_command": "aws logs get-log-anomaly-detector --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws gets InvalidParameterException: Invalid ARN (exit 254); AWS CLI validates required --anomaly-detector-arn client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-log-events --region us-east-1",
+    "aws_command": "aws logs get-log-events --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-log-fields --region us-east-1",
+    "aws_command": "aws logs get-log-fields --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null dataSourceName/dataSourceType (server error exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-log-group-fields --region us-east-1",
+    "aws_command": "aws logs get-log-group-fields --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing log group, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-log-record --region us-east-1",
+    "aws_command": "aws logs get-log-record --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null pointer to server (exit 254); AWS CLI validates required --log-record-pointer client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-query-results --region us-east-1",
+    "aws_command": "aws logs get-query-results --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null queryId (server error exit 254); AWS CLI validates required --query-id client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-scheduled-query --region us-east-1",
+    "aws_command": "aws logs get-scheduled-query --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null identifier (server error exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-scheduled-query-history --region us-east-1",
+    "aws_command": "aws logs get-scheduled-query-history --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null identifier/startTime/endTime (server error exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs get-transformer --region us-east-1",
+    "aws_command": "aws logs get-transformer --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing param, but raws sends to server (exit 254) while AWS validates client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs list-aggregate-log-group-summaries --region us-east-1",
+    "aws_command": "aws logs list-aggregate-log-group-summaries --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null groupBy (server error exit 254); AWS CLI validates required --group-by client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs list-anomalies --region us-east-1",
+    "aws_command": "aws logs list-anomalies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs list-integrations --region us-east-1",
+    "aws_command": "aws logs list-integrations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs list-log-anomaly-detectors --region us-east-1",
+    "aws_command": "aws logs list-log-anomaly-detectors --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs list-log-groups --region us-east-1",
+    "aws_command": "aws logs list-log-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Minor: raws includes 'nextToken: null' in output; AWS CLI omits null nextToken"
+  },
+  {
+    "command": "raws logs list-log-groups-for-query --region us-east-1",
+    "aws_command": "aws logs list-log-groups-for-query --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null queryId (server error exit 254); AWS CLI validates required --query-id client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs list-scheduled-queries --region us-east-1",
+    "aws_command": "aws logs list-scheduled-queries --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws logs list-sources-for-s3-table-integration --region us-east-1",
+    "aws_command": "aws logs list-sources-for-s3-table-integration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null integrationArn (server error exit 254); AWS CLI validates required --integration-arn client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs list-tags-for-resource --region us-east-1",
+    "aws_command": "aws logs list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null resourceArn even when --resource-arn is provided (server error); AWS CLI works correctly and returns tags. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs put-account-policy --region us-east-1",
+    "aws_command": "aws logs put-account-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-bearer-token-authentication --region us-east-1",
+    "aws_command": "aws logs put-bearer-token-authentication --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-data-protection-policy --region us-east-1",
+    "aws_command": "aws logs put-data-protection-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-delivery-destination --region us-east-1",
+    "aws_command": "aws logs put-delivery-destination --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-delivery-destination-policy --region us-east-1",
+    "aws_command": "aws logs put-delivery-destination-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-delivery-source --region us-east-1",
+    "aws_command": "aws logs put-delivery-source --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-destination --region us-east-1",
+    "aws_command": "aws logs put-destination --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-destination-policy --region us-east-1",
+    "aws_command": "aws logs put-destination-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-index-policy --region us-east-1",
+    "aws_command": "aws logs put-index-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-integration --region us-east-1",
+    "aws_command": "aws logs put-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-log-events --region us-east-1",
+    "aws_command": "aws logs put-log-events --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logGroupName/logStreamName/logEvents even when all three are provided (server error); AWS CLI works correctly. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs put-log-group-deletion-protection --region us-east-1",
+    "aws_command": "aws logs put-log-group-deletion-protection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-metric-filter --region us-east-1",
+    "aws_command": "aws logs put-metric-filter --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-query-definition --region us-east-1",
+    "aws_command": "aws logs put-query-definition --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null name/queryString even when --name and --query-string are provided (server error); AWS CLI works correctly. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs put-resource-policy --region us-east-1",
+    "aws_command": "aws logs put-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-retention-policy --region us-east-1",
+    "aws_command": "aws logs put-retention-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null retentionInDays/logGroupName even when provided (server error exit 254); AWS CLI validates required params client-side (exit 252). CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs put-subscription-filter --region us-east-1",
+    "aws_command": "aws logs put-subscription-filter --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs put-transformer --region us-east-1",
+    "aws_command": "aws logs put-transformer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs start-live-tail --region us-east-1",
+    "aws_command": "aws logs start-live-tail --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws gets UnknownOperationException (exit 254); AWS CLI validates required --log-group-identifiers client-side (exit 252). start-live-tail may use streaming which raws does not support."
+  },
+  {
+    "command": "raws logs start-query --region us-east-1",
+    "aws_command": "aws logs start-query --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs stop-query --region us-east-1",
+    "aws_command": "aws logs stop-query --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs tag-resource --region us-east-1",
+    "aws_command": "aws logs tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null resourceArn/tags even when --resource-arn and --tags are provided (server error); AWS CLI validates client-side. CRITICAL: parameters not serialized."
+  },
+  {
+    "command": "raws logs tail --region us-east-1",
+    "aws_command": "aws logs tail --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws error message 'Missing required argument: <log-group-name>' (exit 255); AWS CLI error 'the following arguments are required: group_name' (exit 252). Different error format but both correctly require group name."
+  },
+  {
+    "command": "raws logs test-metric-filter --region us-east-1",
+    "aws_command": "aws logs test-metric-filter --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null filterPattern/logEventMessages (server error exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs test-transformer --region us-east-1",
+    "aws_command": "aws logs test-transformer --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends null logEventMessages/transformerConfig (server error exit 254); AWS CLI validates required params client-side (exit 252). Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs untag-resource --region us-east-1",
+    "aws_command": "aws logs untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs update-anomaly --region us-east-1",
+    "aws_command": "aws logs update-anomaly --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs update-delivery-configuration --region us-east-1",
+    "aws_command": "aws logs update-delivery-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs update-log-anomaly-detector --region us-east-1",
+    "aws_command": "aws logs update-log-anomaly-detector --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  },
+  {
+    "command": "raws logs update-scheduled-query --region us-east-1",
+    "aws_command": "aws logs update-scheduled-query --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request with null params (server-side error); AWS CLI validates required params client-side. Same parameter serialization bug."
+  }
+]

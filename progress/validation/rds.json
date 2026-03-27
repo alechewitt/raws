@@ -1,0 +1,1338 @@
+[
+  {
+    "command": "raws rds help",
+    "aws_command": "aws rds help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows operation list; aws shows man-page style with description, synopsis, available commands"
+  },
+  {
+    "command": "raws rds add-option-to-option-group --region us-east-1",
+    "aws_command": "aws rds add-option-to-option-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws: 'Unknown operation' - not found in service model (exit 2); aws recognizes the command."
+  },
+  {
+    "command": "raws rds add-role-to-db-cluster --region us-east-1",
+    "aws_command": "aws rds add-role-to-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds add-role-to-db-instance --region us-east-1",
+    "aws_command": "aws rds add-role-to-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds add-source-identifier-to-subscription --region us-east-1",
+    "aws_command": "aws rds add-source-identifier-to-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds add-tags-to-resource --region us-east-1",
+    "aws_command": "aws rds add-tags-to-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds apply-pending-maintenance-action --region us-east-1",
+    "aws_command": "aws rds apply-pending-maintenance-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds authorize-db-security-group-ingress --region us-east-1",
+    "aws_command": "aws rds authorize-db-security-group-ingress --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds backtrack-db-cluster --region us-east-1",
+    "aws_command": "aws rds backtrack-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds cancel-export-task --region us-east-1",
+    "aws_command": "aws rds cancel-export-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds copy-db-cluster-parameter-group --region us-east-1",
+    "aws_command": "aws rds copy-db-cluster-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds copy-db-cluster-snapshot --region us-east-1",
+    "aws_command": "aws rds copy-db-cluster-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds copy-db-parameter-group --region us-east-1",
+    "aws_command": "aws rds copy-db-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds copy-db-snapshot --region us-east-1",
+    "aws_command": "aws rds copy-db-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds copy-option-group --region us-east-1",
+    "aws_command": "aws rds copy-option-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-blue-green-deployment --region us-east-1",
+    "aws_command": "aws rds create-blue-green-deployment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-custom-db-engine-version --region us-east-1",
+    "aws_command": "aws rds create-custom-db-engine-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-cluster --region us-east-1",
+    "aws_command": "aws rds create-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds create-db-cluster-endpoint --region us-east-1",
+    "aws_command": "aws rds create-db-cluster-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-cluster-parameter-group --region us-east-1",
+    "aws_command": "aws rds create-db-cluster-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-cluster-snapshot --region us-east-1",
+    "aws_command": "aws rds create-db-cluster-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-instance --region us-east-1",
+    "aws_command": "aws rds create-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds create-db-instance-read-replica --region us-east-1",
+    "aws_command": "aws rds create-db-instance-read-replica --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-parameter-group --region us-east-1",
+    "aws_command": "aws rds create-db-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-proxy --region us-east-1",
+    "aws_command": "aws rds create-db-proxy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds create-db-proxy-endpoint --region us-east-1",
+    "aws_command": "aws rds create-db-proxy-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-security-group --region us-east-1",
+    "aws_command": "aws rds create-db-security-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-shard-group --region us-east-1",
+    "aws_command": "aws rds create-db-shard-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-db-snapshot --region us-east-1",
+    "aws_command": "aws rds create-db-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds create-db-subnet-group --region us-east-1",
+    "aws_command": "aws rds create-db-subnet-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-event-subscription --region us-east-1",
+    "aws_command": "aws rds create-event-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds create-global-cluster --region us-east-1",
+    "aws_command": "aws rds create-global-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-integration --region us-east-1",
+    "aws_command": "aws rds create-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-option-group --region us-east-1",
+    "aws_command": "aws rds create-option-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds create-tenant-database --region us-east-1",
+    "aws_command": "aws rds create-tenant-database --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-blue-green-deployment --region us-east-1",
+    "aws_command": "aws rds delete-blue-green-deployment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-custom-db-engine-version --region us-east-1",
+    "aws_command": "aws rds delete-custom-db-engine-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-cluster --region us-east-1",
+    "aws_command": "aws rds delete-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds delete-db-cluster-automated-backup --region us-east-1",
+    "aws_command": "aws rds delete-db-cluster-automated-backup --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-cluster-endpoint --region us-east-1",
+    "aws_command": "aws rds delete-db-cluster-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-cluster-parameter-group --region us-east-1",
+    "aws_command": "aws rds delete-db-cluster-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-cluster-snapshot --region us-east-1",
+    "aws_command": "aws rds delete-db-cluster-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-instance --region us-east-1",
+    "aws_command": "aws rds delete-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds delete-db-instance-automated-backup --region us-east-1",
+    "aws_command": "aws rds delete-db-instance-automated-backup --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-parameter-group --region us-east-1",
+    "aws_command": "aws rds delete-db-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-proxy --region us-east-1",
+    "aws_command": "aws rds delete-db-proxy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-proxy-endpoint --region us-east-1",
+    "aws_command": "aws rds delete-db-proxy-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-security-group --region us-east-1",
+    "aws_command": "aws rds delete-db-security-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-shard-group --region us-east-1",
+    "aws_command": "aws rds delete-db-shard-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-snapshot --region us-east-1",
+    "aws_command": "aws rds delete-db-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-db-subnet-group --region us-east-1",
+    "aws_command": "aws rds delete-db-subnet-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-event-subscription --region us-east-1",
+    "aws_command": "aws rds delete-event-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-global-cluster --region us-east-1",
+    "aws_command": "aws rds delete-global-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-integration --region us-east-1",
+    "aws_command": "aws rds delete-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-option-group --region us-east-1",
+    "aws_command": "aws rds delete-option-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds delete-tenant-database --region us-east-1",
+    "aws_command": "aws rds delete-tenant-database --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds deregister-db-proxy-targets --region us-east-1",
+    "aws_command": "aws rds deregister-db-proxy-targets --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds describe-account-attributes --region us-east-1",
+    "aws_command": "aws rds describe-account-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-blue-green-deployments --region us-east-1",
+    "aws_command": "aws rds describe-blue-green-deployments --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-certificates --region us-east-1",
+    "aws_command": "aws rds describe-certificates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-cluster-automated-backups --region us-east-1",
+    "aws_command": "aws rds describe-db-cluster-automated-backups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-cluster-backtracks --region us-east-1",
+    "aws_command": "aws rds describe-db-cluster-backtracks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-cluster-endpoints --region us-east-1",
+    "aws_command": "aws rds describe-db-cluster-endpoints --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-cluster-parameter-groups --region us-east-1",
+    "aws_command": "aws rds describe-db-cluster-parameter-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-cluster-parameters --region us-east-1",
+    "aws_command": "aws rds describe-db-cluster-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-cluster-snapshot-attributes --region us-east-1",
+    "aws_command": "aws rds describe-db-cluster-snapshot-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-cluster-snapshots --region us-east-1",
+    "aws_command": "aws rds describe-db-cluster-snapshots --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-clusters --region us-east-1",
+    "aws_command": "aws rds describe-db-clusters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-engine-versions --region us-east-1",
+    "aws_command": "aws rds describe-db-engine-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches (tested with --engine mysql filter). Same 18 versions, identical keys and values."
+  },
+  {
+    "command": "raws rds describe-db-instance-automated-backups --region us-east-1",
+    "aws_command": "aws rds describe-db-instance-automated-backups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-instances --region us-east-1",
+    "aws_command": "aws rds describe-db-instances --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON output matches. --output text and --output table are broken: raws outputs JSON regardless of format flag."
+  },
+  {
+    "command": "raws rds describe-db-log-files --region us-east-1",
+    "aws_command": "aws rds describe-db-log-files --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-major-engine-versions --region us-east-1",
+    "aws_command": "aws rds describe-db-major-engine-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-parameter-groups --region us-east-1",
+    "aws_command": "aws rds describe-db-parameter-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-parameters --region us-east-1",
+    "aws_command": "aws rds describe-db-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-proxies --region us-east-1",
+    "aws_command": "aws rds describe-db-proxies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-proxy-endpoints --region us-east-1",
+    "aws_command": "aws rds describe-db-proxy-endpoints --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-proxy-target-groups --region us-east-1",
+    "aws_command": "aws rds describe-db-proxy-target-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-proxy-targets --region us-east-1",
+    "aws_command": "aws rds describe-db-proxy-targets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-recommendations --region us-east-1",
+    "aws_command": "aws rds describe-db-recommendations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-security-groups --region us-east-1",
+    "aws_command": "aws rds describe-db-security-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-shard-groups --region us-east-1",
+    "aws_command": "aws rds describe-db-shard-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-snapshot-attributes --region us-east-1",
+    "aws_command": "aws rds describe-db-snapshot-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-db-snapshot-tenant-databases --region us-east-1",
+    "aws_command": "aws rds describe-db-snapshot-tenant-databases --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-snapshots --region us-east-1",
+    "aws_command": "aws rds describe-db-snapshots --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-db-subnet-groups --region us-east-1",
+    "aws_command": "aws rds describe-db-subnet-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-engine-default-cluster-parameters --region us-east-1",
+    "aws_command": "aws rds describe-engine-default-cluster-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-engine-default-parameters --region us-east-1",
+    "aws_command": "aws rds describe-engine-default-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-event-categories --region us-east-1",
+    "aws_command": "aws rds describe-event-categories --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-event-subscriptions --region us-east-1",
+    "aws_command": "aws rds describe-event-subscriptions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-events --region us-east-1",
+    "aws_command": "aws rds describe-events --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-export-tasks --region us-east-1",
+    "aws_command": "aws rds describe-export-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-global-clusters --region us-east-1",
+    "aws_command": "aws rds describe-global-clusters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-integrations --region us-east-1",
+    "aws_command": "aws rds describe-integrations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-option-group-options --region us-east-1",
+    "aws_command": "aws rds describe-option-group-options --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-option-groups --region us-east-1",
+    "aws_command": "aws rds describe-option-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-orderable-db-instance-options --region us-east-1",
+    "aws_command": "aws rds describe-orderable-db-instance-options --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds describe-pending-maintenance-actions --region us-east-1",
+    "aws_command": "aws rds describe-pending-maintenance-actions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-reserved-db-instances --region us-east-1",
+    "aws_command": "aws rds describe-reserved-db-instances --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-reserved-db-instances-offerings --region us-east-1",
+    "aws_command": "aws rds describe-reserved-db-instances-offerings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns empty output (no JSON); aws returns 13827 offerings. Possible pagination issue with large result sets."
+  },
+  {
+    "command": "raws rds describe-source-regions --region us-east-1",
+    "aws_command": "aws rds describe-source-regions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-tenant-databases --region us-east-1",
+    "aws_command": "aws rds describe-tenant-databases --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws rds describe-valid-db-instance-modifications --region us-east-1",
+    "aws_command": "aws rds describe-valid-db-instance-modifications --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds disable-http-endpoint --region us-east-1",
+    "aws_command": "aws rds disable-http-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds download-db-log-file-portion --region us-east-1",
+    "aws_command": "aws rds download-db-log-file-portion --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds enable-http-endpoint --region us-east-1",
+    "aws_command": "aws rds enable-http-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds failover-db-cluster --region us-east-1",
+    "aws_command": "aws rds failover-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds failover-global-cluster --region us-east-1",
+    "aws_command": "aws rds failover-global-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds generate-db-auth-token --region us-east-1",
+    "aws_command": "aws rds generate-db-auth-token --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws: 'Unknown operation' - not found in service model (exit 2); aws recognizes the command."
+  },
+  {
+    "command": "raws rds list-tags-for-resource --region us-east-1",
+    "aws_command": "aws rds list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation). Both correctly identify missing required params."
+  },
+  {
+    "command": "raws rds modify-activity-stream --region us-east-1",
+    "aws_command": "aws rds modify-activity-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-certificates --region us-east-1",
+    "aws_command": "aws rds modify-certificates --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-current-db-cluster-capacity --region us-east-1",
+    "aws_command": "aws rds modify-current-db-cluster-capacity --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-custom-db-engine-version --region us-east-1",
+    "aws_command": "aws rds modify-custom-db-engine-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-cluster --region us-east-1",
+    "aws_command": "aws rds modify-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-cluster-endpoint --region us-east-1",
+    "aws_command": "aws rds modify-db-cluster-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-cluster-parameter-group --region us-east-1",
+    "aws_command": "aws rds modify-db-cluster-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-cluster-snapshot-attribute --region us-east-1",
+    "aws_command": "aws rds modify-db-cluster-snapshot-attribute --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-instance --region us-east-1",
+    "aws_command": "aws rds modify-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds modify-db-parameter-group --region us-east-1",
+    "aws_command": "aws rds modify-db-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-proxy --region us-east-1",
+    "aws_command": "aws rds modify-db-proxy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-proxy-endpoint --region us-east-1",
+    "aws_command": "aws rds modify-db-proxy-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-proxy-target-group --region us-east-1",
+    "aws_command": "aws rds modify-db-proxy-target-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-recommendation --region us-east-1",
+    "aws_command": "aws rds modify-db-recommendation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-shard-group --region us-east-1",
+    "aws_command": "aws rds modify-db-shard-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-snapshot --region us-east-1",
+    "aws_command": "aws rds modify-db-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-snapshot-attribute --region us-east-1",
+    "aws_command": "aws rds modify-db-snapshot-attribute --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-db-subnet-group --region us-east-1",
+    "aws_command": "aws rds modify-db-subnet-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-event-subscription --region us-east-1",
+    "aws_command": "aws rds modify-event-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-global-cluster --region us-east-1",
+    "aws_command": "aws rds modify-global-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds modify-integration --region us-east-1",
+    "aws_command": "aws rds modify-integration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds modify-tenant-database --region us-east-1",
+    "aws_command": "aws rds modify-tenant-database --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds promote-read-replica --region us-east-1",
+    "aws_command": "aws rds promote-read-replica --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds promote-read-replica-db-cluster --region us-east-1",
+    "aws_command": "aws rds promote-read-replica-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds purchase-reserved-db-instances-offering --region us-east-1",
+    "aws_command": "aws rds purchase-reserved-db-instances-offering --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds reboot-db-cluster --region us-east-1",
+    "aws_command": "aws rds reboot-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds reboot-db-instance --region us-east-1",
+    "aws_command": "aws rds reboot-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds reboot-db-shard-group --region us-east-1",
+    "aws_command": "aws rds reboot-db-shard-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds register-db-proxy-targets --region us-east-1",
+    "aws_command": "aws rds register-db-proxy-targets --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds remove-from-global-cluster --region us-east-1",
+    "aws_command": "aws rds remove-from-global-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds remove-option-from-option-group --region us-east-1",
+    "aws_command": "aws rds remove-option-from-option-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws: 'Unknown operation' - not found in service model (exit 2); aws recognizes the command."
+  },
+  {
+    "command": "raws rds remove-role-from-db-cluster --region us-east-1",
+    "aws_command": "aws rds remove-role-from-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds remove-role-from-db-instance --region us-east-1",
+    "aws_command": "aws rds remove-role-from-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds remove-source-identifier-from-subscription --region us-east-1",
+    "aws_command": "aws rds remove-source-identifier-from-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds remove-tags-from-resource --region us-east-1",
+    "aws_command": "aws rds remove-tags-from-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds reset-db-cluster-parameter-group --region us-east-1",
+    "aws_command": "aws rds reset-db-cluster-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds reset-db-parameter-group --region us-east-1",
+    "aws_command": "aws rds reset-db-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds restore-db-cluster-from-s3 --region us-east-1",
+    "aws_command": "aws rds restore-db-cluster-from-s3 --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds restore-db-cluster-from-snapshot --region us-east-1",
+    "aws_command": "aws rds restore-db-cluster-from-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds restore-db-cluster-to-point-in-time --region us-east-1",
+    "aws_command": "aws rds restore-db-cluster-to-point-in-time --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds restore-db-instance-from-db-snapshot --region us-east-1",
+    "aws_command": "aws rds restore-db-instance-from-db-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds restore-db-instance-from-s3 --region us-east-1",
+    "aws_command": "aws rds restore-db-instance-from-s3 --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds restore-db-instance-to-point-in-time --region us-east-1",
+    "aws_command": "aws rds restore-db-instance-to-point-in-time --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds revoke-db-security-group-ingress --region us-east-1",
+    "aws_command": "aws rds revoke-db-security-group-ingress --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds start-activity-stream --region us-east-1",
+    "aws_command": "aws rds start-activity-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds start-db-cluster --region us-east-1",
+    "aws_command": "aws rds start-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds start-db-instance --region us-east-1",
+    "aws_command": "aws rds start-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds start-db-instance-automated-backups-replication --region us-east-1",
+    "aws_command": "aws rds start-db-instance-automated-backups-replication --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds start-export-task --region us-east-1",
+    "aws_command": "aws rds start-export-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds stop-activity-stream --region us-east-1",
+    "aws_command": "aws rds stop-activity-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds stop-db-cluster --region us-east-1",
+    "aws_command": "aws rds stop-db-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds stop-db-instance --region us-east-1",
+    "aws_command": "aws rds stop-db-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command recognized. Missing-param error: raws sends to server (exit 254, server error); aws validates client-side (exit 252, ParamValidation)."
+  },
+  {
+    "command": "raws rds stop-db-instance-automated-backups-replication --region us-east-1",
+    "aws_command": "aws rds stop-db-instance-automated-backups-replication --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds switchover-blue-green-deployment --region us-east-1",
+    "aws_command": "aws rds switchover-blue-green-deployment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds switchover-global-cluster --region us-east-1",
+    "aws_command": "aws rds switchover-global-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds switchover-read-replica --region us-east-1",
+    "aws_command": "aws rds switchover-read-replica --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": "not individually tested"
+  },
+  {
+    "command": "raws rds wait --region us-east-1",
+    "aws_command": "aws rds wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both handle missing subcommand; raws says 'Missing waiter name'; aws says 'too few arguments'. Both exit 0. Different message format."
+  }
+]

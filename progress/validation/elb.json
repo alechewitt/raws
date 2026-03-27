@@ -1,0 +1,250 @@
+[
+  {
+    "command": "raws elb help",
+    "aws_command": "aws elb help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws outputs a plain list of operations; AWS CLI outputs full man-page style help with description, usage, subcommands"
+  },
+  {
+    "command": "raws elb add-tags --region us-east-1",
+    "aws_command": "aws elb add-tags --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb apply-security-groups-to-load-balancer --region us-east-1",
+    "aws_command": "aws elb apply-security-groups-to-load-balancer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb attach-load-balancer-to-subnets --region us-east-1",
+    "aws_command": "aws elb attach-load-balancer-to-subnets --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb configure-health-check --region us-east-1",
+    "aws_command": "aws elb configure-health-check --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb create-app-cookie-stickiness-policy --region us-east-1",
+    "aws_command": "aws elb create-app-cookie-stickiness-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb create-lb-cookie-stickiness-policy --region us-east-1",
+    "aws_command": "aws elb create-lb-cookie-stickiness-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb create-load-balancer --region us-east-1",
+    "aws_command": "aws elb create-load-balancer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb create-load-balancer-listeners --region us-east-1",
+    "aws_command": "aws elb create-load-balancer-listeners --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb create-load-balancer-policy --region us-east-1",
+    "aws_command": "aws elb create-load-balancer-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb delete-load-balancer --region us-east-1",
+    "aws_command": "aws elb delete-load-balancer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb delete-load-balancer-listeners --region us-east-1",
+    "aws_command": "aws elb delete-load-balancer-listeners --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb delete-load-balancer-policy --region us-east-1",
+    "aws_command": "aws elb delete-load-balancer-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb deregister-instances-from-load-balancer --region us-east-1",
+    "aws_command": "aws elb deregister-instances-from-load-balancer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb describe-account-limits --region us-east-1",
+    "aws_command": "aws elb describe-account-limits --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON and text output match exactly. Table output differs: raws omits the outer DescribeAccountLimits header row that AWS CLI shows"
+  },
+  {
+    "command": "raws elb describe-instance-health --region us-east-1",
+    "aws_command": "aws elb describe-instance-health --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --load-balancer-name. With a real LB name, raws returns LoadBalancerNotFound while AWS succeeds - raws fails to send the --load-balancer-name parameter to the API"
+  },
+  {
+    "command": "raws elb describe-load-balancer-attributes --region us-east-1",
+    "aws_command": "aws elb describe-load-balancer-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --load-balancer-name. With a real LB name, raws returns LoadBalancerNotFound while AWS succeeds - raws fails to send the --load-balancer-name parameter to the API"
+  },
+  {
+    "command": "raws elb describe-load-balancer-policies --region us-east-1",
+    "aws_command": "aws elb describe-load-balancer-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. Text output matches exactly. Table output differs in layout (raws flattens nested structures)"
+  },
+  {
+    "command": "raws elb describe-load-balancer-policy-types --region us-east-1",
+    "aws_command": "aws elb describe-load-balancer-policy-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches. Text output has minor trailing-tab difference: AWS outputs empty DefaultValue as trailing tab, raws omits the trailing tab. Table differs in layout"
+  },
+  {
+    "command": "raws elb describe-load-balancers --region us-east-1",
+    "aws_command": "aws elb describe-load-balancers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. Text output matches exactly. Table output differs: raws renders nested objects as JSON strings in flat columns vs AWS hierarchical nested tables. --load-balancer-names filter is broken: raws returns empty results while AWS correctly filters"
+  },
+  {
+    "command": "raws elb describe-tags --region us-east-1",
+    "aws_command": "aws elb describe-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --load-balancer-names. With a real LB name, raws returns ValidationError 'null at loadBalancerNames' while AWS succeeds - raws fails to parse/send the --load-balancer-names list parameter"
+  },
+  {
+    "command": "raws elb detach-load-balancer-from-subnets --region us-east-1",
+    "aws_command": "aws elb detach-load-balancer-from-subnets --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb disable-availability-zones-for-load-balancer --region us-east-1",
+    "aws_command": "aws elb disable-availability-zones-for-load-balancer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb enable-availability-zones-for-load-balancer --region us-east-1",
+    "aws_command": "aws elb enable-availability-zones-for-load-balancer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb modify-load-balancer-attributes --region us-east-1",
+    "aws_command": "aws elb modify-load-balancer-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb register-instances-with-load-balancer --region us-east-1",
+    "aws_command": "aws elb register-instances-with-load-balancer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb remove-tags --region us-east-1",
+    "aws_command": "aws elb remove-tags --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb set-load-balancer-listener-ssl-certificate --region us-east-1",
+    "aws_command": "aws elb set-load-balancer-listener-ssl-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb set-load-balancer-policies-for-backend-server --region us-east-1",
+    "aws_command": "aws elb set-load-balancer-policies-for-backend-server --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb set-load-balancer-policies-of-listener --region us-east-1",
+    "aws_command": "aws elb set-load-balancer-policies-of-listener --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params, but AWS returns client-side ParamValidation (exit 252) while raws sends to server and gets ValidationError (exit 254)"
+  },
+  {
+    "command": "raws elb wait --region us-east-1",
+    "aws_command": "aws elb wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing waiter subcommand. AWS says 'too few arguments' (exit 252); raws says 'Missing waiter name' (exit 2). Different error messages and exit codes"
+  }
+]

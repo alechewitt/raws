@@ -1,0 +1,322 @@
+[
+  {
+    "command": "raws kinesis help",
+    "aws_command": "aws kinesis help",
+    "category": "help",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Format differs (raws shows compact table, AWS shows man-page style) but all operations listed match"
+  },
+  {
+    "command": "raws kinesis add-tags-to-stream --region us-east-1",
+    "aws_command": "aws kinesis add-tags-to-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws fails with SerializationException when passing --tags Key=Value shorthand; no client-side required param validation (server returns ValidationException vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis create-stream --region us-east-1",
+    "aws_command": "aws kinesis create-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException vs AWS CLI ParamValidation exit 252). Also --region flag is overridden by AWS_REGION env var (wrong priority)."
+  },
+  {
+    "command": "raws kinesis decrease-stream-retention-period --region us-east-1",
+    "aws_command": "aws kinesis decrease-stream-retention-period --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis delete-resource-policy --region us-east-1",
+    "aws_command": "aws kinesis delete-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis delete-stream --region us-east-1",
+    "aws_command": "aws kinesis delete-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both get same server error (InvalidArgumentException). AWS CLI adds 'Additional error details' section but core error matches."
+  },
+  {
+    "command": "raws kinesis deregister-stream-consumer --region us-east-1",
+    "aws_command": "aws kinesis deregister-stream-consumer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both get same server error (InvalidArgumentException). AWS CLI adds 'Additional error details' section but core error matches."
+  },
+  {
+    "command": "raws kinesis describe-account-settings --region us-east-1",
+    "aws_command": "aws kinesis describe-account-settings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. Text and table output also work correctly."
+  },
+  {
+    "command": "raws kinesis describe-limits --region us-east-1",
+    "aws_command": "aws kinesis describe-limits --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON, text, and table outputs all match exactly"
+  },
+  {
+    "command": "raws kinesis describe-stream --region us-east-1",
+    "aws_command": "aws kinesis describe-stream --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON output: raws includes StreamModeDetails (AWS omits), raws omits KeyId:null (AWS includes), timestamp UTC vs local. --output text and --output table are broken (output JSON instead). --region flag overridden by AWS_REGION env var."
+  },
+  {
+    "command": "raws kinesis describe-stream-consumer --region us-east-1",
+    "aws_command": "aws kinesis describe-stream-consumer --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return same server error (InvalidArgumentException) when no consumer ARN provided. AWS CLI adds 'Additional error details' but core error matches."
+  },
+  {
+    "command": "raws kinesis describe-stream-summary --region us-east-1",
+    "aws_command": "aws kinesis describe-stream-summary --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON output nearly matches but timestamp format differs (UTC vs local timezone). --output text broken (outputs JSON). --region flag overridden by AWS_REGION env var."
+  },
+  {
+    "command": "raws kinesis disable-enhanced-monitoring --region us-east-1",
+    "aws_command": "aws kinesis disable-enhanced-monitoring --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis enable-enhanced-monitoring --region us-east-1",
+    "aws_command": "aws kinesis enable-enhanced-monitoring --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis get-records --region us-east-1",
+    "aws_command": "aws kinesis get-records --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON output: raws includes ChildShards:null (AWS omits null fields). Both return same record count and structure. --output text broken (outputs JSON)."
+  },
+  {
+    "command": "raws kinesis get-resource-policy --region us-east-1",
+    "aws_command": "aws kinesis get-resource-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis get-shard-iterator --region us-east-1",
+    "aws_command": "aws kinesis get-shard-iterator --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output structure matches (both return ShardIterator string). Values differ as expected."
+  },
+  {
+    "command": "raws kinesis increase-stream-retention-period --region us-east-1",
+    "aws_command": "aws kinesis increase-stream-retention-period --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis list-shards --region us-east-1",
+    "aws_command": "aws kinesis list-shards --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON output structure matches. --output text broken (outputs JSON). --region flag overridden by AWS_REGION env var."
+  },
+  {
+    "command": "raws kinesis list-stream-consumers --region us-east-1",
+    "aws_command": "aws kinesis list-stream-consumers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BROKEN: raws sends null for streamARN even when --stream-arn is provided; server returns ValidationException. Likely JSON protocol serialization bug for ARN-type parameters."
+  },
+  {
+    "command": "raws kinesis list-streams --region us-east-1",
+    "aws_command": "aws kinesis list-streams --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. Text and table outputs work. Minor table format difference (raws renders StreamModeDetails inline, AWS renders as sub-table)."
+  },
+  {
+    "command": "raws kinesis list-tags-for-resource --region us-east-1",
+    "aws_command": "aws kinesis list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BROKEN: raws sends null for resourceARN even when --resource-arn is provided; server returns ValidationException. Same ARN serialization bug as list-stream-consumers."
+  },
+  {
+    "command": "raws kinesis list-tags-for-stream --region us-east-1",
+    "aws_command": "aws kinesis list-tags-for-stream --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. --output text broken (outputs JSON)."
+  },
+  {
+    "command": "raws kinesis merge-shards --region us-east-1",
+    "aws_command": "aws kinesis merge-shards --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis put-record --region us-east-1",
+    "aws_command": "aws kinesis put-record --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON output: raws includes EncryptionType:null (AWS omits). Successful write works. --output text broken (outputs JSON). No client-side param validation."
+  },
+  {
+    "command": "raws kinesis put-records --region us-east-1",
+    "aws_command": "aws kinesis put-records --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BROKEN: raws fails with SerializationException when passing --records with JSON objects. Cannot serialize list-of-structures parameter."
+  },
+  {
+    "command": "raws kinesis put-resource-policy --region us-east-1",
+    "aws_command": "aws kinesis put-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis register-stream-consumer --region us-east-1",
+    "aws_command": "aws kinesis register-stream-consumer --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BROKEN: raws sends null for streamARN even when --stream-arn is provided. Same ARN serialization bug. Server returns ValidationException."
+  },
+  {
+    "command": "raws kinesis remove-tags-from-stream --region us-east-1",
+    "aws_command": "aws kinesis remove-tags-from-stream --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis split-shard --region us-east-1",
+    "aws_command": "aws kinesis split-shard --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis start-stream-encryption --region us-east-1",
+    "aws_command": "aws kinesis start-stream-encryption --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis stop-stream-encryption --region us-east-1",
+    "aws_command": "aws kinesis stop-stream-encryption --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis tag-resource --region us-east-1",
+    "aws_command": "aws kinesis tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis untag-resource --region us-east-1",
+    "aws_command": "aws kinesis untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis update-account-settings --region us-east-1",
+    "aws_command": "aws kinesis update-account-settings --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis update-max-record-size --region us-east-1",
+    "aws_command": "aws kinesis update-max-record-size --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis update-shard-count --region us-east-1",
+    "aws_command": "aws kinesis update-shard-count --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis update-stream-mode --region us-east-1",
+    "aws_command": "aws kinesis update-stream-mode --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis update-stream-warm-throughput --region us-east-1",
+    "aws_command": "aws kinesis update-stream-warm-throughput --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "No client-side required param validation (server ValidationException exit 254 vs AWS CLI ParamValidation exit 252)"
+  },
+  {
+    "command": "raws kinesis wait --region us-east-1",
+    "aws_command": "aws kinesis wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both report missing waiter name. Different error format but both exit with error."
+  }
+]

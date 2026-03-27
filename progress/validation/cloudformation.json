@@ -1,0 +1,754 @@
+[
+  {
+    "command": "raws cloudformation help",
+    "aws_command": "aws cloudformation help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows plain command list; AWS CLI shows rich man-page style help with description, formatting, and available commands section"
+  },
+  {
+    "command": "raws cloudformation activate-organizations-access --region us-east-1",
+    "aws_command": "aws cloudformation activate-organizations-access --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation activate-type --region us-east-1",
+    "aws_command": "aws cloudformation activate-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation batch-describe-type-configurations --region us-east-1",
+    "aws_command": "aws cloudformation batch-describe-type-configurations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation cancel-update-stack --region us-east-1",
+    "aws_command": "aws cloudformation cancel-update-stack --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation continue-update-rollback --region us-east-1",
+    "aws_command": "aws cloudformation continue-update-rollback --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation create-change-set --region us-east-1",
+    "aws_command": "aws cloudformation create-change-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation create-generated-template --region us-east-1",
+    "aws_command": "aws cloudformation create-generated-template --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation create-stack --region us-east-1",
+    "aws_command": "aws cloudformation create-stack --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation create-stack-instances --region us-east-1",
+    "aws_command": "aws cloudformation create-stack-instances --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation create-stack-refactor --region us-east-1",
+    "aws_command": "aws cloudformation create-stack-refactor --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation create-stack-set --region us-east-1",
+    "aws_command": "aws cloudformation create-stack-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation deactivate-organizations-access --region us-east-1",
+    "aws_command": "aws cloudformation deactivate-organizations-access --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation deactivate-type --region us-east-1",
+    "aws_command": "aws cloudformation deactivate-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation delete-change-set --region us-east-1",
+    "aws_command": "aws cloudformation delete-change-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --change-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation delete-generated-template --region us-east-1",
+    "aws_command": "aws cloudformation delete-generated-template --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation delete-stack --region us-east-1",
+    "aws_command": "aws cloudformation delete-stack --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation delete-stack-instances --region us-east-1",
+    "aws_command": "aws cloudformation delete-stack-instances --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation delete-stack-set --region us-east-1",
+    "aws_command": "aws cloudformation delete-stack-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation deploy --region us-east-1",
+    "aws_command": "aws cloudformation deploy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --template-file. Different error messages: AWS says '--template-file, --stack-name required', raws says '--template-file is required for cloudformation deploy'. Both exit non-zero."
+  },
+  {
+    "command": "raws cloudformation deregister-type --region us-east-1",
+    "aws_command": "aws cloudformation deregister-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-account-limits --region us-east-1",
+    "aws_command": "aws cloudformation describe-account-limits --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-change-set --region us-east-1",
+    "aws_command": "aws cloudformation describe-change-set --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --change-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-change-set-hooks --region us-east-1",
+    "aws_command": "aws cloudformation describe-change-set-hooks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --change-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-events --region us-east-1",
+    "aws_command": "aws cloudformation describe-events --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-generated-template --region us-east-1",
+    "aws_command": "aws cloudformation describe-generated-template --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-organizations-access --region us-east-1",
+    "aws_command": "aws cloudformation describe-organizations-access --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-publisher --region us-east-1",
+    "aws_command": "aws cloudformation describe-publisher --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-resource-scan --region us-east-1",
+    "aws_command": "aws cloudformation describe-resource-scan --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stack-drift-detection-status --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-drift-detection-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stack-events --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-events --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Both exit non-zero."
+  },
+  {
+    "command": "raws cloudformation describe-stack-instance --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-instance --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stack-refactor --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-refactor --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stack-resource --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stack-resource-drifts --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-resource-drifts --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stack-resources --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-resources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-stack-set --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-set --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stack-set-operation --region us-east-1",
+    "aws_command": "aws cloudformation describe-stack-set-operation --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation describe-stacks --region us-east-1",
+    "aws_command": "aws cloudformation describe-stacks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-type --region us-east-1",
+    "aws_command": "aws cloudformation describe-type --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation describe-type-registration --region us-east-1",
+    "aws_command": "aws cloudformation describe-type-registration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --registration-token. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation detect-stack-drift --region us-east-1",
+    "aws_command": "aws cloudformation detect-stack-drift --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation detect-stack-resource-drift --region us-east-1",
+    "aws_command": "aws cloudformation detect-stack-resource-drift --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation detect-stack-set-drift --region us-east-1",
+    "aws_command": "aws cloudformation detect-stack-set-drift --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation estimate-template-cost --region us-east-1",
+    "aws_command": "aws cloudformation estimate-template-cost --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation execute-change-set --region us-east-1",
+    "aws_command": "aws cloudformation execute-change-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --change-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation execute-stack-refactor --region us-east-1",
+    "aws_command": "aws cloudformation execute-stack-refactor --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation get-generated-template --region us-east-1",
+    "aws_command": "aws cloudformation get-generated-template --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation get-hook-result --region us-east-1",
+    "aws_command": "aws cloudformation get-hook-result --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation get-stack-policy --region us-east-1",
+    "aws_command": "aws cloudformation get-stack-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation get-template --region us-east-1",
+    "aws_command": "aws cloudformation get-template --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation get-template-summary --region us-east-1",
+    "aws_command": "aws cloudformation get-template-summary --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation import-stacks-to-stack-set --region us-east-1",
+    "aws_command": "aws cloudformation import-stacks-to-stack-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-change-sets --region us-east-1",
+    "aws_command": "aws cloudformation list-change-sets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-exports --region us-east-1",
+    "aws_command": "aws cloudformation list-exports --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation list-generated-templates --region us-east-1",
+    "aws_command": "aws cloudformation list-generated-templates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation list-hook-results --region us-east-1",
+    "aws_command": "aws cloudformation list-hook-results --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes null fields (TargetType, TargetId, NextToken) in JSON output; AWS CLI omits them. Functional match but output differs."
+  },
+  {
+    "command": "raws cloudformation list-imports --region us-east-1",
+    "aws_command": "aws cloudformation list-imports --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --export-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-resource-scan-related-resources --region us-east-1",
+    "aws_command": "aws cloudformation list-resource-scan-related-resources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-resource-scan-resources --region us-east-1",
+    "aws_command": "aws cloudformation list-resource-scan-resources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --resource-scan-id. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-resource-scans --region us-east-1",
+    "aws_command": "aws cloudformation list-resource-scans --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation list-stack-instance-resource-drifts --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-instance-resource-drifts --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-stack-instances --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-instances --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-stack-refactor-actions --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-refactor-actions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-refactor-id. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-stack-refactors --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-refactors --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation list-stack-resources --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-resources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-stack-set-auto-deployment-targets --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-set-auto-deployment-targets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-stack-set-operation-results --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-set-operation-results --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-stack-set-operations --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-set-operations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation list-stack-sets --region us-east-1",
+    "aws_command": "aws cloudformation list-stack-sets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation list-stacks --region us-east-1",
+    "aws_command": "aws cloudformation list-stacks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches. --output text matches (both empty). --output table differs: AWS CLI shows bordered empty table header, raws shows blank line."
+  },
+  {
+    "command": "raws cloudformation list-type-registrations --region us-east-1",
+    "aws_command": "aws cloudformation list-type-registrations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation list-type-versions --region us-east-1",
+    "aws_command": "aws cloudformation list-type-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation list-types --region us-east-1",
+    "aws_command": "aws cloudformation list-types --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation package --region us-east-1",
+    "aws_command": "aws cloudformation package --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws does not support 'package' (custom CLI command, not in service model). Returns 'Unknown operation' error. AWS CLI returns missing param error."
+  },
+  {
+    "command": "raws cloudformation publish-type --region us-east-1",
+    "aws_command": "aws cloudformation publish-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation record-handler-progress --region us-east-1",
+    "aws_command": "aws cloudformation record-handler-progress --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation register-publisher --region us-east-1",
+    "aws_command": "aws cloudformation register-publisher --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation register-type --region us-east-1",
+    "aws_command": "aws cloudformation register-type --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). raws also flags 'type' as required (server-side) while AWS only flags --type-name and --schema-handler-package."
+  },
+  {
+    "command": "raws cloudformation rollback-stack --region us-east-1",
+    "aws_command": "aws cloudformation rollback-stack --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation set-stack-policy --region us-east-1",
+    "aws_command": "aws cloudformation set-stack-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation set-type-configuration --region us-east-1",
+    "aws_command": "aws cloudformation set-type-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --configuration. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation set-type-default-version --region us-east-1",
+    "aws_command": "aws cloudformation set-type-default-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation signal-resource --region us-east-1",
+    "aws_command": "aws cloudformation signal-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation start-resource-scan --region us-east-1",
+    "aws_command": "aws cloudformation start-resource-scan --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both recognized the command. AWS started a scan successfully; raws got ResourceScanInProgress because scan was already running (timing-dependent, not a code issue)."
+  },
+  {
+    "command": "raws cloudformation stop-stack-set-operation --region us-east-1",
+    "aws_command": "aws cloudformation stop-stack-set-operation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation test-type --region us-east-1",
+    "aws_command": "aws cloudformation test-type --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation update-generated-template --region us-east-1",
+    "aws_command": "aws cloudformation update-generated-template --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required param. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation update-stack --region us-east-1",
+    "aws_command": "aws cloudformation update-stack --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation update-stack-instances --region us-east-1",
+    "aws_command": "aws cloudformation update-stack-instances --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation update-stack-set --region us-east-1",
+    "aws_command": "aws cloudformation update-stack-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing --stack-set-name. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). Same semantic behavior."
+  },
+  {
+    "command": "raws cloudformation update-termination-protection --region us-east-1",
+    "aws_command": "aws cloudformation update-termination-protection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing required params. AWS CLI: client-side ParamValidation (exit 252). raws: server-side ValidationError (exit 254). raws additionally flags enableTerminationProtection as required (boolean, sent as null)."
+  },
+  {
+    "command": "raws cloudformation validate-template --region us-east-1",
+    "aws_command": "aws cloudformation validate-template --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws cloudformation wait --region us-east-1",
+    "aws_command": "aws cloudformation wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize 'wait' and error on missing subcommand. Different error messages and exit codes (AWS: 252, raws: 2). Both require a waiter name."
+  }
+]

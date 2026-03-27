@@ -1,0 +1,618 @@
+[
+  {
+    "command": "raws elasticache help",
+    "aws_command": "aws elasticache help",
+    "category": "help",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "raws shows operation list; AWS CLI shows man-page style help. Both list available commands."
+  },
+  {
+    "command": "raws elasticache add-tags-to-resource --region us-east-1",
+    "aws_command": "aws elasticache add-tags-to-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidARN error."
+  },
+  {
+    "command": "raws elasticache authorize-cache-security-group-ingress --region us-east-1",
+    "aws_command": "aws elasticache authorize-cache-security-group-ingress --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache batch-apply-update-action --region us-east-1",
+    "aws_command": "aws elasticache batch-apply-update-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache batch-stop-update-action --region us-east-1",
+    "aws_command": "aws elasticache batch-stop-update-action --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache complete-migration --region us-east-1",
+    "aws_command": "aws elasticache complete-migration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache copy-serverless-cache-snapshot --region us-east-1",
+    "aws_command": "aws elasticache copy-serverless-cache-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache copy-snapshot --region us-east-1",
+    "aws_command": "aws elasticache copy-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache create-cache-cluster --region us-east-1",
+    "aws_command": "aws elasticache create-cache-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache create-cache-parameter-group --region us-east-1",
+    "aws_command": "aws elasticache create-cache-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache create-cache-security-group --region us-east-1",
+    "aws_command": "aws elasticache create-cache-security-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache create-cache-subnet-group --region us-east-1",
+    "aws_command": "aws elasticache create-cache-subnet-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache create-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache create-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache create-replication-group --region us-east-1",
+    "aws_command": "aws elasticache create-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache create-serverless-cache --region us-east-1",
+    "aws_command": "aws elasticache create-serverless-cache --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache create-serverless-cache-snapshot --region us-east-1",
+    "aws_command": "aws elasticache create-serverless-cache-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache create-snapshot --region us-east-1",
+    "aws_command": "aws elasticache create-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache create-user --region us-east-1",
+    "aws_command": "aws elasticache create-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache create-user-group --region us-east-1",
+    "aws_command": "aws elasticache create-user-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side DefaultUserRequired error."
+  },
+  {
+    "command": "raws elasticache decrease-node-groups-in-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache decrease-node-groups-in-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache decrease-replica-count --region us-east-1",
+    "aws_command": "aws elasticache decrease-replica-count --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-cache-cluster --region us-east-1",
+    "aws_command": "aws elasticache delete-cache-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache delete-cache-parameter-group --region us-east-1",
+    "aws_command": "aws elasticache delete-cache-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-cache-security-group --region us-east-1",
+    "aws_command": "aws elasticache delete-cache-security-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-cache-subnet-group --region us-east-1",
+    "aws_command": "aws elasticache delete-cache-subnet-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache delete-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-replication-group --region us-east-1",
+    "aws_command": "aws elasticache delete-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-serverless-cache --region us-east-1",
+    "aws_command": "aws elasticache delete-serverless-cache --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-serverless-cache-snapshot --region us-east-1",
+    "aws_command": "aws elasticache delete-serverless-cache-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-snapshot --region us-east-1",
+    "aws_command": "aws elasticache delete-snapshot --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-user --region us-east-1",
+    "aws_command": "aws elasticache delete-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache delete-user-group --region us-east-1",
+    "aws_command": "aws elasticache delete-user-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-cache-clusters --region us-east-1",
+    "aws_command": "aws elasticache describe-cache-clusters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-cache-engine-versions --region us-east-1",
+    "aws_command": "aws elasticache describe-cache-engine-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-cache-parameter-groups --region us-east-1",
+    "aws_command": "aws elasticache describe-cache-parameter-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-cache-parameters --region us-east-1",
+    "aws_command": "aws elasticache describe-cache-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Tested with --cache-parameter-group-name default.redis7. JSON output matches identically."
+  },
+  {
+    "command": "raws elasticache describe-cache-security-groups --region us-east-1",
+    "aws_command": "aws elasticache describe-cache-security-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return same InvalidParameterValue error (cache security groups not permitted for this account)."
+  },
+  {
+    "command": "raws elasticache describe-cache-subnet-groups --region us-east-1",
+    "aws_command": "aws elasticache describe-cache-subnet-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-engine-default-parameters --region us-east-1",
+    "aws_command": "aws elasticache describe-engine-default-parameters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra fields CacheParameterGroupFamily and CacheNodeTypeSpecificParameters (3 items) that AWS CLI omits from the EngineDefaults wrapper. Core Parameters list (64 items) matches."
+  },
+  {
+    "command": "raws elasticache describe-events --region us-east-1",
+    "aws_command": "aws elasticache describe-events --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-global-replication-groups --region us-east-1",
+    "aws_command": "aws elasticache describe-global-replication-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-replication-groups --region us-east-1",
+    "aws_command": "aws elasticache describe-replication-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-reserved-cache-nodes --region us-east-1",
+    "aws_command": "aws elasticache describe-reserved-cache-nodes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-reserved-cache-nodes-offerings --region us-east-1",
+    "aws_command": "aws elasticache describe-reserved-cache-nodes-offerings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-serverless-cache-snapshots --region us-east-1",
+    "aws_command": "aws elasticache describe-serverless-cache-snapshots --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-serverless-caches --region us-east-1",
+    "aws_command": "aws elasticache describe-serverless-caches --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-service-updates --region us-east-1",
+    "aws_command": "aws elasticache describe-service-updates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-snapshots --region us-east-1",
+    "aws_command": "aws elasticache describe-snapshots --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-update-actions --region us-east-1",
+    "aws_command": "aws elasticache describe-update-actions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-user-groups --region us-east-1",
+    "aws_command": "aws elasticache describe-user-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache describe-users --region us-east-1",
+    "aws_command": "aws elasticache describe-users --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache disassociate-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache disassociate-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache export-serverless-cache-snapshot --region us-east-1",
+    "aws_command": "aws elasticache export-serverless-cache-snapshot --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache failover-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache failover-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache increase-node-groups-in-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache increase-node-groups-in-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache increase-replica-count --region us-east-1",
+    "aws_command": "aws elasticache increase-replica-count --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache list-allowed-node-type-modifications --region us-east-1",
+    "aws_command": "aws elasticache list-allowed-node-type-modifications --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return same InvalidParameterCombination error when called without required CacheClusterId or ReplicationGroupId."
+  },
+  {
+    "command": "raws elasticache list-tags-for-resource --region us-east-1",
+    "aws_command": "aws elasticache list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws returns InvalidParameterValue 'Unauthorized call. Please check the region or customer id' when given a valid ARN, while AWS CLI returns {\"TagList\": []} successfully. Tested with both parametergroup and user ARNs."
+  },
+  {
+    "command": "raws elasticache modify-cache-cluster --region us-east-1",
+    "aws_command": "aws elasticache modify-cache-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache modify-cache-parameter-group --region us-east-1",
+    "aws_command": "aws elasticache modify-cache-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache modify-cache-subnet-group --region us-east-1",
+    "aws_command": "aws elasticache modify-cache-subnet-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache modify-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache modify-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache modify-replication-group --region us-east-1",
+    "aws_command": "aws elasticache modify-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache modify-replication-group-shard-configuration --region us-east-1",
+    "aws_command": "aws elasticache modify-replication-group-shard-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache modify-serverless-cache --region us-east-1",
+    "aws_command": "aws elasticache modify-serverless-cache --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache modify-user --region us-east-1",
+    "aws_command": "aws elasticache modify-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache modify-user-group --region us-east-1",
+    "aws_command": "aws elasticache modify-user-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache purchase-reserved-cache-nodes-offering --region us-east-1",
+    "aws_command": "aws elasticache purchase-reserved-cache-nodes-offering --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache rebalance-slots-in-global-replication-group --region us-east-1",
+    "aws_command": "aws elasticache rebalance-slots-in-global-replication-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache reboot-cache-cluster --region us-east-1",
+    "aws_command": "aws elasticache reboot-cache-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache remove-tags-from-resource --region us-east-1",
+    "aws_command": "aws elasticache remove-tags-from-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidARN error."
+  },
+  {
+    "command": "raws elasticache reset-cache-parameter-group --region us-east-1",
+    "aws_command": "aws elasticache reset-cache-parameter-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache revoke-cache-security-group-ingress --region us-east-1",
+    "aws_command": "aws elasticache revoke-cache-security-group-ingress --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache start-migration --region us-east-1",
+    "aws_command": "aws elasticache start-migration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws elasticache test-failover --region us-east-1",
+    "aws_command": "aws elasticache test-failover --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache test-migration --region us-east-1",
+    "aws_command": "aws elasticache test-migration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error on missing params. AWS CLI validates client-side; raws gets server-side InvalidParameterValue error."
+  },
+  {
+    "command": "raws elasticache wait --region us-east-1",
+    "aws_command": "aws elasticache wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both error when no waiter name specified. Different error message format but same behavior."
+  }
+]

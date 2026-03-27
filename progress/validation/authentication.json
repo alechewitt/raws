@@ -1,0 +1,34 @@
+[
+  {
+    "command": "raws sts get-caller-identity --profile alechewt_awscli_test --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --profile alechewt_awscli_test --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws sts get-caller-identity --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN raws sts get-caller-identity --region us-east-1 2>&1",
+    "aws_command": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN aws sts get-caller-identity --region us-east-1 2>&1",
+    "category": "error",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws says 'Failed to resolve AWS credentials: No credentials found. Configure credentials via environment variables ...' (exit 255); aws says 'aws: [ERROR]: An error occurred (NoCredentials): Unable to locate credentials. You can configure credentials by running \"aws login\".' (exit 253). Different error message format and exit code."
+  },
+  {
+    "command": "raws sts get-caller-identity --profile nonexistent-profile-xyz --region us-east-1 2>&1",
+    "aws_command": "aws sts get-caller-identity --profile nonexistent-profile-xyz --region us-east-1 2>&1",
+    "category": "error",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws outputs 'The config profile (nonexistent-profile-xyz) could not be found' but aws outputs 'aws: [ERROR]: The config profile (nonexistent-profile-xyz) could not be found'. raws is missing the 'aws: [ERROR]: ' prefix. Exit codes both 255."
+  }
+]

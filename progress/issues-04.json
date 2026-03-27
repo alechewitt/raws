@@ -1,0 +1,103 @@
+[
+  {
+    "id": "validation-cloudwatch-unsupported-protocol",
+    "description": "CloudWatch uses the smithy-rpc-v2-cbor protocol which raws does not support. All 43 API commands fail with 'Protocol smithy-rpc-v2-cbor is not supported'. Only help and wait work.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws cloudwatch list-metrics --region us-east-1 2>&1", "expect": "Should return metrics list, not protocol error" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Known limitation. Adding smithy-rpc-v2-cbor support would unblock all 43 CloudWatch commands at once."]
+  },
+  {
+    "id": "validation-json-protocol-params-not-serialized",
+    "description": "For JSON protocol services (SQS, CloudWatch Logs, and possibly others), raws does not serialize CLI parameters into the JSON request body. Commands that take parameters send an empty body, causing server-side errors like QueueDoesNotExist or 'Member must not be null'. Only parameterless commands work.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws sqs get-queue-url --queue-name <existing-queue> --region us-east-1 2>&1", "expect": "Should return QueueUrl, not QueueDoesNotExist" },
+      { "run": "raws logs create-log-group --log-group-name test-group --region us-east-1 2>&1", "expect": "Should create log group, not fail with null constraint violation" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Affects SQS and CloudWatch Logs confirmed. DynamoDB and KMS (also JSON protocol) seem to work, so this may be selective. Note: supersedes the SQS-specific issue in issues-03.json."]
+  },
+  {
+    "id": "validation-secretsmanager-region-ignored",
+    "description": "Secrets Manager commands ignore --region when service-specific parameters (--secret-id, --name) are present. Requests route to us-west-2 (default) instead of the specified region. Only parameterless commands like list-secrets respect --region.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws secretsmanager describe-secret --secret-id test-secret --region us-east-1 2>&1", "expect": "Should query us-east-1, not us-west-2" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. This may affect other services too - needs investigation."]
+  },
+  {
+    "id": "validation-secretsmanager-missing-idempotency-token",
+    "description": "Secrets Manager create-secret does not auto-generate a ClientRequestToken (idempotency UUID). AWS CLI auto-generates this, but raws requires it to be explicitly provided, causing InvalidRequestException.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws secretsmanager create-secret --name test --secret-string test --region us-east-1 2>&1", "expect": "Should auto-generate ClientRequestToken and succeed" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. AWS CLI generates a UUID for idempotencyToken-annotated fields automatically."]
+  },
+  {
+    "id": "validation-ssm-rds-output-format-ignored",
+    "description": "SSM and RDS commands ignore --output text and --output table flags, always returning JSON. This was confirmed on ssm describe-instance-information, ssm list-commands, rds describe-db-instances, rds describe-db-engine-versions. Other services (STS, EC2, IAM) handle output formats correctly.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws ssm describe-instance-information --output text --region us-east-1 2>&1 | head -5", "expect": "Should output text format, not JSON" },
+      { "run": "raws rds describe-db-instances --output table --region us-east-1 2>&1 | head -5", "expect": "Should output table format, not JSON" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Affects JSON protocol services (SSM) and query protocol services (RDS). Query protocol services that use global endpoints (STS, IAM) work correctly."]
+  },
+  {
+    "id": "validation-ssm-query-flag-ignored",
+    "description": "SSM commands ignore the --query JMESPath flag, returning the full JSON response instead of filtered results. This was confirmed on ssm describe-instance-information --query 'InstanceInformationList'. The --query flag works for other services like STS and EC2.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws ssm describe-instance-information --query 'InstanceInformationList[0].InstanceId' --region us-east-1 2>&1", "expect": "Should return just the instance ID string, not the full JSON" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. May affect other JSON protocol services."]
+  },
+  {
+    "id": "validation-timestamps-utc-vs-local",
+    "description": "raws outputs timestamps in UTC (+00:00) while AWS CLI uses local timezone (e.g., -07:00). Affects all services that return timestamp fields: secretsmanager, ssm, iam, and others.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws ssm describe-instance-information --region us-east-1 --output json 2>&1 | grep -o '\"LastPingDateTime\":[^,]*'", "expect": "Timestamp should be in local timezone to match AWS CLI" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. AWS CLI converts timestamps to local timezone; raws keeps them in UTC."]
+  },
+  {
+    "id": "validation-route53-get-account-limit-signing",
+    "description": "Route53 get-account-limit fails with SignatureDoesNotMatch: 'Credential should be scoped to a valid region'. Similar to the IAM optional params signing issue - Route53's global endpoint may need special signing region handling.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws route53 get-account-limit --type MAX_HOSTED_ZONES_BY_OWNER --region us-east-1 2>&1", "expect": "Should return account limit data, not SignatureDoesNotMatch" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Route53 is a global service like IAM; may need similar signing region fixes."]
+  },
+  {
+    "id": "validation-ssm-list-documents-empty",
+    "description": "SSM list-documents returns empty output while AWS CLI returns a full document list. Likely a pagination or serialization bug specific to this command.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws ssm list-documents --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return DocumentIdentifiers list, not empty output" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Other SSM list commands work correctly."]
+  }
+]

@@ -1,0 +1,690 @@
+[
+  {
+    "command": "raws lambda help",
+    "aws_command": "aws lambda help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows a simple operation list; AWS shows man-page style help with service description, available commands, and formatting. Functional but different presentation."
+  },
+  {
+    "command": "raws lambda add-layer-version-permission --region us-east-1",
+    "aws_command": "aws lambda add-layer-version-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --layer-name, --version-number, --statement-id, --action, --principal'. raws: 'URI template variable LayerName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda add-permission --region us-east-1",
+    "aws_command": "aws lambda add-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --statement-id, --action, --principal'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda checkpoint-durable-execution --region us-east-1",
+    "aws_command": "aws lambda checkpoint-durable-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --durable-execution-arn, --checkpoint-token'. raws: 'URI template variable DurableExecutionArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda create-alias --region us-east-1",
+    "aws_command": "aws lambda create-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --name, --function-version'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda create-capacity-provider --region us-east-1",
+    "aws_command": "aws lambda create-capacity-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS catches client-side: 'the following arguments are required: --capacity-provider-name, --vpc-config, --permissions-config'. raws sends to server, gets server-side validation error with constraint details."
+  },
+  {
+    "command": "raws lambda create-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda create-code-signing-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS catches client-side: 'the following arguments are required: --allowed-publishers'. raws sends to server, gets server-side validation error."
+  },
+  {
+    "command": "raws lambda create-event-source-mapping --region us-east-1",
+    "aws_command": "aws lambda create-event-source-mapping --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS catches client-side: 'the following arguments are required: --function-name'. raws sends to server, gets server-side validation error."
+  },
+  {
+    "command": "raws lambda create-function --region us-east-1",
+    "aws_command": "aws lambda create-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS catches client-side: 'the following arguments are required: --function-name, --role'. raws sends to server, gets server-side validation error listing all 3 null constraints."
+  },
+  {
+    "command": "raws lambda create-function-url-config --region us-east-1",
+    "aws_command": "aws lambda create-function-url-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --auth-type'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-alias --region us-east-1",
+    "aws_command": "aws lambda delete-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-capacity-provider --region us-east-1",
+    "aws_command": "aws lambda delete-capacity-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --capacity-provider-name'. raws: 'URI template variable CapacityProviderName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda delete-code-signing-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --code-signing-config-arn'. raws: 'URI template variable CodeSigningConfigArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-event-source-mapping --region us-east-1",
+    "aws_command": "aws lambda delete-event-source-mapping --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --uuid'. raws: 'URI template variable UUID not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-function --region us-east-1",
+    "aws_command": "aws lambda delete-function --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-function-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda delete-function-code-signing-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-function-concurrency --region us-east-1",
+    "aws_command": "aws lambda delete-function-concurrency --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-function-event-invoke-config --region us-east-1",
+    "aws_command": "aws lambda delete-function-event-invoke-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-function-url-config --region us-east-1",
+    "aws_command": "aws lambda delete-function-url-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-layer-version --region us-east-1",
+    "aws_command": "aws lambda delete-layer-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --layer-name, --version-number'. raws: 'URI template variable LayerName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda delete-provisioned-concurrency-config --region us-east-1",
+    "aws_command": "aws lambda delete-provisioned-concurrency-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --qualifier'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-account-settings --region us-east-1",
+    "aws_command": "aws lambda get-account-settings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws lambda get-alias --region us-east-1",
+    "aws_command": "aws lambda get-alias --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-capacity-provider --region us-east-1",
+    "aws_command": "aws lambda get-capacity-provider --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --capacity-provider-name'. raws: 'URI template variable CapacityProviderName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda get-code-signing-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --code-signing-config-arn'. raws: 'URI template variable CodeSigningConfigArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-durable-execution --region us-east-1",
+    "aws_command": "aws lambda get-durable-execution --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --durable-execution-arn'. raws: 'URI template variable DurableExecutionArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-durable-execution-history --region us-east-1",
+    "aws_command": "aws lambda get-durable-execution-history --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --durable-execution-arn'. raws: 'URI template variable DurableExecutionArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-durable-execution-state --region us-east-1",
+    "aws_command": "aws lambda get-durable-execution-state --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --durable-execution-arn, --checkpoint-token'. raws: 'URI template variable DurableExecutionArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-event-source-mapping --region us-east-1",
+    "aws_command": "aws lambda get-event-source-mapping --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --uuid'. raws: 'URI template variable UUID not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-function --region us-east-1",
+    "aws_command": "aws lambda get-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs. Exit codes differ (AWS 252, raws 255)."
+  },
+  {
+    "command": "raws lambda get-function-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda get-function-code-signing-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-function-concurrency --region us-east-1",
+    "aws_command": "aws lambda get-function-concurrency --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-function-configuration --region us-east-1",
+    "aws_command": "aws lambda get-function-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-function-event-invoke-config --region us-east-1",
+    "aws_command": "aws lambda get-function-event-invoke-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-function-recursion-config --region us-east-1",
+    "aws_command": "aws lambda get-function-recursion-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-function-scaling-config --region us-east-1",
+    "aws_command": "aws lambda get-function-scaling-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --qualifier'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-function-url-config --region us-east-1",
+    "aws_command": "aws lambda get-function-url-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-layer-version --region us-east-1",
+    "aws_command": "aws lambda get-layer-version --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --layer-name, --version-number'. raws: 'URI template variable LayerName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-layer-version-by-arn --region us-east-1",
+    "aws_command": "aws lambda get-layer-version-by-arn --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS catches missing param client-side: 'the following arguments are required: --arn'. raws sends request to server, gets server-side validation error: 'Value null at arn failed to satisfy constraint'. raws lacks client-side required param validation for query-string params."
+  },
+  {
+    "command": "raws lambda get-layer-version-policy --region us-east-1",
+    "aws_command": "aws lambda get-layer-version-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --layer-name, --version-number'. raws: 'URI template variable LayerName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-policy --region us-east-1",
+    "aws_command": "aws lambda get-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs. Exit codes differ (AWS 252, raws 255)."
+  },
+  {
+    "command": "raws lambda get-provisioned-concurrency-config --region us-east-1",
+    "aws_command": "aws lambda get-provisioned-concurrency-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --qualifier'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda get-runtime-management-config --region us-east-1",
+    "aws_command": "aws lambda get-runtime-management-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda invoke --region us-east-1",
+    "aws_command": "aws lambda invoke --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, outfile'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-aliases --region us-east-1",
+    "aws_command": "aws lambda list-aliases --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-capacity-providers --region us-east-1",
+    "aws_command": "aws lambda list-capacity-providers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws lambda list-code-signing-configs --region us-east-1",
+    "aws_command": "aws lambda list-code-signing-configs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws lambda list-durable-executions-by-function --region us-east-1",
+    "aws_command": "aws lambda list-durable-executions-by-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-event-source-mappings --region us-east-1",
+    "aws_command": "aws lambda list-event-source-mappings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws lambda list-function-event-invoke-configs --region us-east-1",
+    "aws_command": "aws lambda list-function-event-invoke-configs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-function-url-configs --region us-east-1",
+    "aws_command": "aws lambda list-function-url-configs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-function-versions-by-capacity-provider --region us-east-1",
+    "aws_command": "aws lambda list-function-versions-by-capacity-provider --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --capacity-provider-name'. raws: 'URI template variable CapacityProviderName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-functions --region us-east-1",
+    "aws_command": "aws lambda list-functions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. --output text matches (both empty). --output table differs: AWS shows table header '|ListFunctions|' for empty result, raws shows nothing."
+  },
+  {
+    "command": "raws lambda list-functions-by-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda list-functions-by-code-signing-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --code-signing-config-arn'. raws: 'URI template variable CodeSigningConfigArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-layer-versions --region us-east-1",
+    "aws_command": "aws lambda list-layer-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --layer-name'. raws: 'URI template variable LayerName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-layers --region us-east-1",
+    "aws_command": "aws lambda list-layers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws lambda list-provisioned-concurrency-configs --region us-east-1",
+    "aws_command": "aws lambda list-provisioned-concurrency-configs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-tags --region us-east-1",
+    "aws_command": "aws lambda list-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --resource'. raws: 'URI template variable Resource not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda list-versions-by-function --region us-east-1",
+    "aws_command": "aws lambda list-versions-by-function --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda publish-layer-version --region us-east-1",
+    "aws_command": "aws lambda publish-layer-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --layer-name'. raws: 'URI template variable LayerName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda publish-version --region us-east-1",
+    "aws_command": "aws lambda publish-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda put-function-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda put-function-code-signing-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --code-signing-config-arn, --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda put-function-concurrency --region us-east-1",
+    "aws_command": "aws lambda put-function-concurrency --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --reserved-concurrent-executions'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda put-function-event-invoke-config --region us-east-1",
+    "aws_command": "aws lambda put-function-event-invoke-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda put-function-recursion-config --region us-east-1",
+    "aws_command": "aws lambda put-function-recursion-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --recursive-loop'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda put-function-scaling-config --region us-east-1",
+    "aws_command": "aws lambda put-function-scaling-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --qualifier'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda put-provisioned-concurrency-config --region us-east-1",
+    "aws_command": "aws lambda put-provisioned-concurrency-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --qualifier, --provisioned-concurrent-executions'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda put-runtime-management-config --region us-east-1",
+    "aws_command": "aws lambda put-runtime-management-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --update-runtime-on'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda remove-layer-version-permission --region us-east-1",
+    "aws_command": "aws lambda remove-layer-version-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --layer-name, --version-number, --statement-id'. raws: 'URI template variable LayerName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda remove-permission --region us-east-1",
+    "aws_command": "aws lambda remove-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --statement-id'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda send-durable-execution-callback-failure --region us-east-1",
+    "aws_command": "aws lambda send-durable-execution-callback-failure --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --callback-id'. raws: 'URI template variable CallbackId not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda send-durable-execution-callback-heartbeat --region us-east-1",
+    "aws_command": "aws lambda send-durable-execution-callback-heartbeat --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --callback-id'. raws: 'URI template variable CallbackId not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda send-durable-execution-callback-success --region us-east-1",
+    "aws_command": "aws lambda send-durable-execution-callback-success --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --callback-id'. raws: 'URI template variable CallbackId not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda stop-durable-execution --region us-east-1",
+    "aws_command": "aws lambda stop-durable-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --durable-execution-arn'. raws: 'URI template variable DurableExecutionArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda tag-resource --region us-east-1",
+    "aws_command": "aws lambda tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --resource, --tags'. raws: 'URI template variable Resource not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda untag-resource --region us-east-1",
+    "aws_command": "aws lambda untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --resource, --tag-keys'. raws: 'URI template variable Resource not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-alias --region us-east-1",
+    "aws_command": "aws lambda update-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name, --name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-capacity-provider --region us-east-1",
+    "aws_command": "aws lambda update-capacity-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --capacity-provider-name'. raws: 'URI template variable CapacityProviderName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-code-signing-config --region us-east-1",
+    "aws_command": "aws lambda update-code-signing-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --code-signing-config-arn'. raws: 'URI template variable CodeSigningConfigArn not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-event-source-mapping --region us-east-1",
+    "aws_command": "aws lambda update-event-source-mapping --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --uuid'. raws: 'URI template variable UUID not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-function-code --region us-east-1",
+    "aws_command": "aws lambda update-function-code --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-function-configuration --region us-east-1",
+    "aws_command": "aws lambda update-function-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-function-event-invoke-config --region us-east-1",
+    "aws_command": "aws lambda update-function-event-invoke-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda update-function-url-config --region us-east-1",
+    "aws_command": "aws lambda update-function-url-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both reject missing params. AWS: 'the following arguments are required: --function-name'. raws: 'URI template variable FunctionName not found'. Error message format differs."
+  },
+  {
+    "command": "raws lambda wait --region us-east-1",
+    "aws_command": "aws lambda wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both show usage error for missing waiter name. AWS: 'too few arguments'. raws: 'Missing waiter name.' Different message format but both exit 0."
+  },
+  {
+    "command": "raws lambda wizard --region us-east-1",
+    "aws_command": "aws lambda wizard --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS: 'too few arguments' (wizard is a built-in subcommand). raws: 'Unknown operation wizard for service lambda. Operation not found in service model.' raws does not support wizard subcommand."
+  }
+]

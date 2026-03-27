@@ -1,0 +1,346 @@
+[
+  {
+    "command": "raws sns help",
+    "aws_command": "aws sns help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows simplified format ('sns operations:' + list) vs AWS CLI man-page style with description, formatting, and section headers. Same commands listed."
+  },
+  {
+    "command": "raws sns add-permission --region us-east-1",
+    "aws_command": "aws sns add-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns check-if-phone-number-is-opted-out --region us-east-1",
+    "aws_command": "aws sns check-if-phone-number-is-opted-out --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns confirm-subscription --region us-east-1",
+    "aws_command": "aws sns confirm-subscription --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns create-platform-application --region us-east-1",
+    "aws_command": "aws sns create-platform-application --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns create-platform-endpoint --region us-east-1",
+    "aws_command": "aws sns create-platform-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns create-sms-sandbox-phone-number --region us-east-1",
+    "aws_command": "aws sns create-sms-sandbox-phone-number --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns create-topic --region us-east-1",
+    "aws_command": "aws sns create-topic --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns delete-endpoint --region us-east-1",
+    "aws_command": "aws sns delete-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns delete-platform-application --region us-east-1",
+    "aws_command": "aws sns delete-platform-application --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns delete-sms-sandbox-phone-number --region us-east-1",
+    "aws_command": "aws sns delete-sms-sandbox-phone-number --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns delete-topic --region us-east-1",
+    "aws_command": "aws sns delete-topic --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns get-data-protection-policy --region us-east-1",
+    "aws_command": "aws sns get-data-protection-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns get-endpoint-attributes --region us-east-1",
+    "aws_command": "aws sns get-endpoint-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns get-platform-application-attributes --region us-east-1",
+    "aws_command": "aws sns get-platform-application-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns get-sms-attributes --region us-east-1",
+    "aws_command": "aws sns get-sms-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. Text output matches. Table output differs: raws omits outer wrapper header 'GetSMSAttributes' and nested table borders (double-pipe vs single-pipe)"
+  },
+  {
+    "command": "raws sns get-sms-sandbox-account-status --region us-east-1",
+    "aws_command": "aws sns get-sms-sandbox-account-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON, text, and table output all match exactly"
+  },
+  {
+    "command": "raws sns get-subscription-attributes --region us-east-1",
+    "aws_command": "aws sns get-subscription-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns get-topic-attributes --region us-east-1",
+    "aws_command": "aws sns get-topic-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns list-endpoints-by-platform-application --region us-east-1",
+    "aws_command": "aws sns list-endpoints-by-platform-application --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns list-origination-numbers --region us-east-1",
+    "aws_command": "aws sns list-origination-numbers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly: {\"PhoneNumbers\": []}"
+  },
+  {
+    "command": "raws sns list-phone-numbers-opted-out --region us-east-1",
+    "aws_command": "aws sns list-phone-numbers-opted-out --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly: {\"phoneNumbers\": []}"
+  },
+  {
+    "command": "raws sns list-platform-applications --region us-east-1",
+    "aws_command": "aws sns list-platform-applications --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly: {\"PlatformApplications\": []}"
+  },
+  {
+    "command": "raws sns list-sms-sandbox-phone-numbers --region us-east-1",
+    "aws_command": "aws sns list-sms-sandbox-phone-numbers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly: {\"PhoneNumbers\": []}"
+  },
+  {
+    "command": "raws sns list-subscriptions --region us-east-1",
+    "aws_command": "aws sns list-subscriptions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly: {\"Subscriptions\": []}"
+  },
+  {
+    "command": "raws sns list-subscriptions-by-topic --region us-east-1",
+    "aws_command": "aws sns list-subscriptions-by-topic --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns list-tags-for-resource --region us-east-1",
+    "aws_command": "aws sns list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns list-topics --region us-east-1",
+    "aws_command": "aws sns list-topics --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. Text output matches (both empty). Table output: AWS CLI shows empty header row, raws shows nothing for empty results"
+  },
+  {
+    "command": "raws sns opt-in-phone-number --region us-east-1",
+    "aws_command": "aws sns opt-in-phone-number --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns publish --region us-east-1",
+    "aws_command": "aws sns publish --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns publish-batch --region us-east-1",
+    "aws_command": "aws sns publish-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns put-data-protection-policy --region us-east-1",
+    "aws_command": "aws sns put-data-protection-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns remove-permission --region us-east-1",
+    "aws_command": "aws sns remove-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns set-endpoint-attributes --region us-east-1",
+    "aws_command": "aws sns set-endpoint-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns set-platform-application-attributes --region us-east-1",
+    "aws_command": "aws sns set-platform-application-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns set-sms-attributes --region us-east-1",
+    "aws_command": "aws sns set-sms-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns set-subscription-attributes --region us-east-1",
+    "aws_command": "aws sns set-subscription-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns set-topic-attributes --region us-east-1",
+    "aws_command": "aws sns set-topic-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns subscribe --region us-east-1",
+    "aws_command": "aws sns subscribe --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns tag-resource --region us-east-1",
+    "aws_command": "aws sns tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns unsubscribe --region us-east-1",
+    "aws_command": "aws sns unsubscribe --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns untag-resource --region us-east-1",
+    "aws_command": "aws sns untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets InvalidParameter from SNS (exit 254)"
+  },
+  {
+    "command": "raws sns verify-sms-sandbox-phone-number --region us-east-1",
+    "aws_command": "aws sns verify-sms-sandbox-phone-number --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error: AWS CLI returns client-side ParamValidation (exit 252), raws sends to server and gets ValidationError from SNS (exit 254)"
+  }
+]

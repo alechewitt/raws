@@ -1,0 +1,434 @@
+[
+  {
+    "command": "raws kms help",
+    "aws_command": "aws kms help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows simplified operation list; aws shows full man-page with service description, operation docs, and formatted text. All operations present in both."
+  },
+  {
+    "command": "raws kms cancel-key-deletion --region us-east-1",
+    "aws_command": "aws kms cancel-key-deletion --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms connect-custom-key-store --region us-east-1",
+    "aws_command": "aws kms connect-custom-key-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --custom-key-store-id."
+  },
+  {
+    "command": "raws kms create-alias --region us-east-1",
+    "aws_command": "aws kms create-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --alias-name, --target-key-id."
+  },
+  {
+    "command": "raws kms create-custom-key-store --region us-east-1",
+    "aws_command": "aws kms create-custom-key-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --custom-key-store-name."
+  },
+  {
+    "command": "raws kms create-grant --region us-east-1",
+    "aws_command": "aws kms create-grant --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms create-key --region us-east-1",
+    "aws_command": "aws kms create-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both successfully create a key and return KeyMetadata JSON with matching structure. Keys differ only by KeyId (expected)."
+  },
+  {
+    "command": "raws kms decrypt --region us-east-1",
+    "aws_command": "aws kms decrypt --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return identical server-side ValidationException for missing ciphertextBlob, exit 254."
+  },
+  {
+    "command": "raws kms delete-alias --region us-east-1",
+    "aws_command": "aws kms delete-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --alias-name."
+  },
+  {
+    "command": "raws kms delete-custom-key-store --region us-east-1",
+    "aws_command": "aws kms delete-custom-key-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --custom-key-store-id."
+  },
+  {
+    "command": "raws kms delete-imported-key-material --region us-east-1",
+    "aws_command": "aws kms delete-imported-key-material --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms derive-shared-secret --region us-east-1",
+    "aws_command": "aws kms derive-shared-secret --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --key-agreement-algorithm, --public-key."
+  },
+  {
+    "command": "raws kms describe-custom-key-stores --region us-east-1",
+    "aws_command": "aws kms describe-custom-key-stores --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws kms describe-key --region us-east-1",
+    "aws_command": "aws kms describe-key --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms disable-key --region us-east-1",
+    "aws_command": "aws kms disable-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms disable-key-rotation --region us-east-1",
+    "aws_command": "aws kms disable-key-rotation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms disconnect-custom-key-store --region us-east-1",
+    "aws_command": "aws kms disconnect-custom-key-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --custom-key-store-id."
+  },
+  {
+    "command": "raws kms enable-key --region us-east-1",
+    "aws_command": "aws kms enable-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms enable-key-rotation --region us-east-1",
+    "aws_command": "aws kms enable-key-rotation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms encrypt --region us-east-1",
+    "aws_command": "aws kms encrypt --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --plaintext."
+  },
+  {
+    "command": "raws kms generate-data-key --region us-east-1",
+    "aws_command": "aws kms generate-data-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms generate-data-key-pair --region us-east-1",
+    "aws_command": "aws kms generate-data-key-pair --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --key-pair-spec."
+  },
+  {
+    "command": "raws kms generate-data-key-pair-without-plaintext --region us-east-1",
+    "aws_command": "aws kms generate-data-key-pair-without-plaintext --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --key-pair-spec."
+  },
+  {
+    "command": "raws kms generate-data-key-without-plaintext --region us-east-1",
+    "aws_command": "aws kms generate-data-key-without-plaintext --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms generate-mac --region us-east-1",
+    "aws_command": "aws kms generate-mac --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --message, --key-id, --mac-algorithm."
+  },
+  {
+    "command": "raws kms generate-random --region us-east-1",
+    "aws_command": "aws kms generate-random --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return identical server-side ValidationException 'NumberOfBytes is required', exit 254."
+  },
+  {
+    "command": "raws kms get-key-policy --region us-east-1",
+    "aws_command": "aws kms get-key-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms get-key-rotation-status --region us-east-1",
+    "aws_command": "aws kms get-key-rotation-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms get-parameters-for-import --region us-east-1",
+    "aws_command": "aws kms get-parameters-for-import --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --wrapping-algorithm, --wrapping-key-spec."
+  },
+  {
+    "command": "raws kms get-public-key --region us-east-1",
+    "aws_command": "aws kms get-public-key --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms import-key-material --region us-east-1",
+    "aws_command": "aws kms import-key-material --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --import-token, --encrypted-key-material."
+  },
+  {
+    "command": "raws kms list-aliases --region us-east-1",
+    "aws_command": "aws kms list-aliases --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws kms list-grants --region us-east-1",
+    "aws_command": "aws kms list-grants --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms list-key-policies --region us-east-1",
+    "aws_command": "aws kms list-key-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms list-key-rotations --region us-east-1",
+    "aws_command": "aws kms list-key-rotations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms list-keys --region us-east-1",
+    "aws_command": "aws kms list-keys --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON and text output match exactly. Table output differs: raws omits outer operation-level header (ListKeys) and uses single-pipe borders vs aws double-pipe nested borders."
+  },
+  {
+    "command": "raws kms list-resource-tags --region us-east-1",
+    "aws_command": "aws kms list-resource-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms list-retirable-grants --region us-east-1",
+    "aws_command": "aws kms list-retirable-grants --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --retiring-principal."
+  },
+  {
+    "command": "raws kms put-key-policy --region us-east-1",
+    "aws_command": "aws kms put-key-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --policy."
+  },
+  {
+    "command": "raws kms re-encrypt --region us-east-1",
+    "aws_command": "aws kms re-encrypt --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --destination-key-id."
+  },
+  {
+    "command": "raws kms replicate-key --region us-east-1",
+    "aws_command": "aws kms replicate-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --replica-region."
+  },
+  {
+    "command": "raws kms retire-grant --region us-east-1",
+    "aws_command": "aws kms retire-grant --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return identical server-side ValidationException 'Grant token OR (grant ID, key ID) must be specified', exit 254."
+  },
+  {
+    "command": "raws kms revoke-grant --region us-east-1",
+    "aws_command": "aws kms revoke-grant --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --grant-id."
+  },
+  {
+    "command": "raws kms rotate-key-on-demand --region us-east-1",
+    "aws_command": "aws kms rotate-key-on-demand --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms schedule-key-deletion --region us-east-1",
+    "aws_command": "aws kms schedule-key-deletion --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id."
+  },
+  {
+    "command": "raws kms sign --region us-east-1",
+    "aws_command": "aws kms sign --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --message, --signing-algorithm."
+  },
+  {
+    "command": "raws kms tag-resource --region us-east-1",
+    "aws_command": "aws kms tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --tags."
+  },
+  {
+    "command": "raws kms untag-resource --region us-east-1",
+    "aws_command": "aws kms untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --tag-keys."
+  },
+  {
+    "command": "raws kms update-alias --region us-east-1",
+    "aws_command": "aws kms update-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --alias-name, --target-key-id."
+  },
+  {
+    "command": "raws kms update-custom-key-store --region us-east-1",
+    "aws_command": "aws kms update-custom-key-store --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --custom-key-store-id."
+  },
+  {
+    "command": "raws kms update-key-description --region us-east-1",
+    "aws_command": "aws kms update-key-description --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --description."
+  },
+  {
+    "command": "raws kms update-primary-region --region us-east-1",
+    "aws_command": "aws kms update-primary-region --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --primary-region."
+  },
+  {
+    "command": "raws kms verify --region us-east-1",
+    "aws_command": "aws kms verify --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --key-id, --message, --signature, --signing-algorithm."
+  },
+  {
+    "command": "raws kms verify-mac --region us-east-1",
+    "aws_command": "aws kms verify-mac --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param: aws returns client-side ParamValidation (exit 252); raws sends to API and gets server-side ValidationException (exit 254). Both correctly report missing --message, --key-id, --mac-algorithm, --mac."
+  }
+]

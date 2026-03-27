@@ -1,0 +1,490 @@
+[
+  {
+    "command": "raws ecr help",
+    "aws_command": "aws ecr help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows compact operation list; AWS CLI shows full man-page with descriptions. raws is missing get-login-password from help listing (custom AWS CLI command). Both list wait."
+  },
+  {
+    "command": "raws ecr batch-check-layer-availability --region us-east-1",
+    "aws_command": "aws ecr batch-check-layer-availability --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - Credential should be scoped to correct service: 'ecr'. raws is signing with wrong service name for ECR."
+  },
+  {
+    "command": "raws ecr batch-delete-image --region us-east-1",
+    "aws_command": "aws ecr batch-delete-image --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr batch-get-image --region us-east-1",
+    "aws_command": "aws ecr batch-get-image --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr batch-get-repository-scanning-configuration --region us-east-1",
+    "aws_command": "aws ecr batch-get-repository-scanning-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr complete-layer-upload --region us-east-1",
+    "aws_command": "aws ecr complete-layer-upload --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr create-pull-through-cache-rule --region us-east-1",
+    "aws_command": "aws ecr create-pull-through-cache-rule --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr create-repository --region us-east-1",
+    "aws_command": "aws ecr create-repository --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr create-repository-creation-template --region us-east-1",
+    "aws_command": "aws ecr create-repository-creation-template --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr delete-lifecycle-policy --region us-east-1",
+    "aws_command": "aws ecr delete-lifecycle-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr delete-pull-through-cache-rule --region us-east-1",
+    "aws_command": "aws ecr delete-pull-through-cache-rule --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr delete-registry-policy --region us-east-1",
+    "aws_command": "aws ecr delete-registry-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr delete-repository --region us-east-1",
+    "aws_command": "aws ecr delete-repository --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr delete-repository-creation-template --region us-east-1",
+    "aws_command": "aws ecr delete-repository-creation-template --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr delete-repository-policy --region us-east-1",
+    "aws_command": "aws ecr delete-repository-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr delete-signing-configuration --region us-east-1",
+    "aws_command": "aws ecr delete-signing-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr deregister-pull-time-update-exclusion --region us-east-1",
+    "aws_command": "aws ecr deregister-pull-time-update-exclusion --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr describe-image-replication-status --region us-east-1",
+    "aws_command": "aws ecr describe-image-replication-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr describe-image-scan-findings --region us-east-1",
+    "aws_command": "aws ecr describe-image-scan-findings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr describe-image-signing-status --region us-east-1",
+    "aws_command": "aws ecr describe-image-signing-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr describe-images --region us-east-1",
+    "aws_command": "aws ecr describe-images --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr describe-pull-through-cache-rules --region us-east-1",
+    "aws_command": "aws ecr describe-pull-through-cache-rules --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr describe-registry --region us-east-1",
+    "aws_command": "aws ecr describe-registry --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope. AWS CLI returns registryId and replicationConfiguration."
+  },
+  {
+    "command": "raws ecr describe-repositories --region us-east-1",
+    "aws_command": "aws ecr describe-repositories --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope. AWS CLI returns {\"repositories\": []}."
+  },
+  {
+    "command": "raws ecr describe-repository-creation-templates --region us-east-1",
+    "aws_command": "aws ecr describe-repository-creation-templates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr get-account-setting --region us-east-1",
+    "aws_command": "aws ecr get-account-setting --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr get-authorization-token --region us-east-1",
+    "aws_command": "aws ecr get-authorization-token --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope. AWS CLI returns authorizationData with token."
+  },
+  {
+    "command": "raws ecr get-download-url-for-layer --region us-east-1",
+    "aws_command": "aws ecr get-download-url-for-layer --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr get-lifecycle-policy --region us-east-1",
+    "aws_command": "aws ecr get-lifecycle-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr get-lifecycle-policy-preview --region us-east-1",
+    "aws_command": "aws ecr get-lifecycle-policy-preview --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr get-login-password --region us-east-1",
+    "aws_command": "aws ecr get-login-password --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws reports 'Unknown operation get-login-password for service ecr. Operation not found in service model.' AWS CLI returns the password. get-login-password is a custom AWS CLI command not in the botocore model."
+  },
+  {
+    "command": "raws ecr get-registry-policy --region us-east-1",
+    "aws_command": "aws ecr get-registry-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope. AWS CLI returns RegistryPolicyNotFoundException."
+  },
+  {
+    "command": "raws ecr get-registry-scanning-configuration --region us-east-1",
+    "aws_command": "aws ecr get-registry-scanning-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr get-repository-policy --region us-east-1",
+    "aws_command": "aws ecr get-repository-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr get-signing-configuration --region us-east-1",
+    "aws_command": "aws ecr get-signing-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr initiate-layer-upload --region us-east-1",
+    "aws_command": "aws ecr initiate-layer-upload --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr list-image-referrers --region us-east-1",
+    "aws_command": "aws ecr list-image-referrers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr list-images --region us-east-1",
+    "aws_command": "aws ecr list-images --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr list-pull-time-update-exclusions --region us-east-1",
+    "aws_command": "aws ecr list-pull-time-update-exclusions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr list-tags-for-resource --region us-east-1",
+    "aws_command": "aws ecr list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-account-setting --region us-east-1",
+    "aws_command": "aws ecr put-account-setting --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-image --region us-east-1",
+    "aws_command": "aws ecr put-image --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-image-scanning-configuration --region us-east-1",
+    "aws_command": "aws ecr put-image-scanning-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-image-tag-mutability --region us-east-1",
+    "aws_command": "aws ecr put-image-tag-mutability --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-lifecycle-policy --region us-east-1",
+    "aws_command": "aws ecr put-lifecycle-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-registry-policy --region us-east-1",
+    "aws_command": "aws ecr put-registry-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-registry-scanning-configuration --region us-east-1",
+    "aws_command": "aws ecr put-registry-scanning-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-replication-configuration --region us-east-1",
+    "aws_command": "aws ecr put-replication-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr put-signing-configuration --region us-east-1",
+    "aws_command": "aws ecr put-signing-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr register-pull-time-update-exclusion --region us-east-1",
+    "aws_command": "aws ecr register-pull-time-update-exclusion --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr set-repository-policy --region us-east-1",
+    "aws_command": "aws ecr set-repository-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr start-image-scan --region us-east-1",
+    "aws_command": "aws ecr start-image-scan --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr start-lifecycle-policy-preview --region us-east-1",
+    "aws_command": "aws ecr start-lifecycle-policy-preview --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr tag-resource --region us-east-1",
+    "aws_command": "aws ecr tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr untag-resource --region us-east-1",
+    "aws_command": "aws ecr untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr update-image-storage-class --region us-east-1",
+    "aws_command": "aws ecr update-image-storage-class --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr update-pull-through-cache-rule --region us-east-1",
+    "aws_command": "aws ecr update-pull-through-cache-rule --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr update-repository-creation-template --region us-east-1",
+    "aws_command": "aws ecr update-repository-creation-template --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr upload-layer-part --region us-east-1",
+    "aws_command": "aws ecr upload-layer-part --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr validate-pull-through-cache-rule --region us-east-1",
+    "aws_command": "aws ecr validate-pull-through-cache-rule --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BLOCKED: raws fails with InvalidSignatureException - wrong service name in signing credential scope."
+  },
+  {
+    "command": "raws ecr wait --region us-east-1",
+    "aws_command": "aws ecr wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws outputs usage message 'Usage: raws ecr wait <waiter-name> [--params...] Missing waiter name.'; AWS CLI outputs error 'too few arguments'. Different format but both recognize the command."
+  }
+]

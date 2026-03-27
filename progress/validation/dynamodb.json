@@ -1,0 +1,474 @@
+[
+  {
+    "command": "raws dynamodb help",
+    "aws_command": "aws dynamodb help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows a plain list of operations; AWS CLI shows a man-page style with service description, formatted headings, and bullet points. Same commands listed."
+  },
+  {
+    "command": "raws dynamodb batch-execute-statement --region us-east-1",
+    "aws_command": "aws dynamodb batch-execute-statement --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252, 'arguments are required: --statements'). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb batch-get-item --region us-east-1",
+    "aws_command": "aws dynamodb batch-get-item --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254). Both report missing --request-items."
+  },
+  {
+    "command": "raws dynamodb batch-write-item --region us-east-1",
+    "aws_command": "aws dynamodb batch-write-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb create-backup --region us-east-1",
+    "aws_command": "aws dynamodb create-backup --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb create-global-table --region us-east-1",
+    "aws_command": "aws dynamodb create-global-table --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb create-table --region us-east-1",
+    "aws_command": "aws dynamodb create-table --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb delete-backup --region us-east-1",
+    "aws_command": "aws dynamodb delete-backup --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb delete-item --region us-east-1",
+    "aws_command": "aws dynamodb delete-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb delete-resource-policy --region us-east-1",
+    "aws_command": "aws dynamodb delete-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb delete-table --region us-east-1",
+    "aws_command": "aws dynamodb delete-table --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-backup --region us-east-1",
+    "aws_command": "aws dynamodb describe-backup --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-continuous-backups --region us-east-1",
+    "aws_command": "aws dynamodb describe-continuous-backups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-contributor-insights --region us-east-1",
+    "aws_command": "aws dynamodb describe-contributor-insights --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-endpoints --region us-east-1",
+    "aws_command": "aws dynamodb describe-endpoints --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws dynamodb describe-export --region us-east-1",
+    "aws_command": "aws dynamodb describe-export --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-global-table --region us-east-1",
+    "aws_command": "aws dynamodb describe-global-table --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-global-table-settings --region us-east-1",
+    "aws_command": "aws dynamodb describe-global-table-settings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-import --region us-east-1",
+    "aws_command": "aws dynamodb describe-import --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-kinesis-streaming-destination --region us-east-1",
+    "aws_command": "aws dynamodb describe-kinesis-streaming-destination --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-limits --region us-east-1",
+    "aws_command": "aws dynamodb describe-limits --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws dynamodb describe-table --region us-east-1",
+    "aws_command": "aws dynamodb describe-table --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-table-replica-auto-scaling --region us-east-1",
+    "aws_command": "aws dynamodb describe-table-replica-auto-scaling --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb describe-time-to-live --region us-east-1",
+    "aws_command": "aws dynamodb describe-time-to-live --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb disable-kinesis-streaming-destination --region us-east-1",
+    "aws_command": "aws dynamodb disable-kinesis-streaming-destination --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb enable-kinesis-streaming-destination --region us-east-1",
+    "aws_command": "aws dynamodb enable-kinesis-streaming-destination --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb execute-statement --region us-east-1",
+    "aws_command": "aws dynamodb execute-statement --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb execute-transaction --region us-east-1",
+    "aws_command": "aws dynamodb execute-transaction --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb export-table-to-point-in-time --region us-east-1",
+    "aws_command": "aws dynamodb export-table-to-point-in-time --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb get-item --region us-east-1",
+    "aws_command": "aws dynamodb get-item --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb get-resource-policy --region us-east-1",
+    "aws_command": "aws dynamodb get-resource-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb list-backups --region us-east-1",
+    "aws_command": "aws dynamodb list-backups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws dynamodb list-contributor-insights --region us-east-1",
+    "aws_command": "aws dynamodb list-contributor-insights --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes '\"NextToken\": null' in output; AWS CLI omits null fields."
+  },
+  {
+    "command": "raws dynamodb list-exports --region us-east-1",
+    "aws_command": "aws dynamodb list-exports --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes '\"NextToken\": null' in output; AWS CLI omits null fields."
+  },
+  {
+    "command": "raws dynamodb list-global-tables --region us-east-1",
+    "aws_command": "aws dynamodb list-global-tables --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes '\"LastEvaluatedGlobalTableName\": null' in output; AWS CLI omits null fields."
+  },
+  {
+    "command": "raws dynamodb list-imports --region us-east-1",
+    "aws_command": "aws dynamodb list-imports --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes '\"NextToken\": null' in output; AWS CLI omits null fields."
+  },
+  {
+    "command": "raws dynamodb list-tables --region us-east-1",
+    "aws_command": "aws dynamodb list-tables --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON and text output match exactly. Table output differs: AWS CLI shows table header for empty results, raws shows nothing."
+  },
+  {
+    "command": "raws dynamodb list-tags-of-resource --region us-east-1",
+    "aws_command": "aws dynamodb list-tags-of-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb put-item --region us-east-1",
+    "aws_command": "aws dynamodb put-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb put-resource-policy --region us-east-1",
+    "aws_command": "aws dynamodb put-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb query --region us-east-1",
+    "aws_command": "aws dynamodb query --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb restore-table-from-backup --region us-east-1",
+    "aws_command": "aws dynamodb restore-table-from-backup --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb restore-table-to-point-in-time --region us-east-1",
+    "aws_command": "aws dynamodb restore-table-to-point-in-time --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb scan --region us-east-1",
+    "aws_command": "aws dynamodb scan --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb tag-resource --region us-east-1",
+    "aws_command": "aws dynamodb tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb transact-get-items --region us-east-1",
+    "aws_command": "aws dynamodb transact-get-items --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb transact-write-items --region us-east-1",
+    "aws_command": "aws dynamodb transact-write-items --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb untag-resource --region us-east-1",
+    "aws_command": "aws dynamodb untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-continuous-backups --region us-east-1",
+    "aws_command": "aws dynamodb update-continuous-backups --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-contributor-insights --region us-east-1",
+    "aws_command": "aws dynamodb update-contributor-insights --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-global-table --region us-east-1",
+    "aws_command": "aws dynamodb update-global-table --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-global-table-settings --region us-east-1",
+    "aws_command": "aws dynamodb update-global-table-settings --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-item --region us-east-1",
+    "aws_command": "aws dynamodb update-item --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-kinesis-streaming-destination --region us-east-1",
+    "aws_command": "aws dynamodb update-kinesis-streaming-destination --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-table --region us-east-1",
+    "aws_command": "aws dynamodb update-table --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-table-replica-auto-scaling --region us-east-1",
+    "aws_command": "aws dynamodb update-table-replica-auto-scaling --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb update-time-to-live --region us-east-1",
+    "aws_command": "aws dynamodb update-time-to-live --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI validates required params client-side (exit 252). raws sends to server and gets ValidationException (exit 254)."
+  },
+  {
+    "command": "raws dynamodb wait --region us-east-1",
+    "aws_command": "aws dynamodb wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize wait subcommand but error messages differ. AWS: 'too few arguments' (exit 252). raws: 'Missing waiter name' (exit 2)."
+  },
+  {
+    "command": "raws dynamodb wizard --region us-east-1",
+    "aws_command": "aws dynamodb wizard --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws does not support 'wizard' (returns 'Unknown operation'). AWS CLI recognizes wizard as a special CLI feature."
+  }
+]

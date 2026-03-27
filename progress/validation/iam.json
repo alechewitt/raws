@@ -1,0 +1,1434 @@
+[
+  {
+    "command": "raws iam help",
+    "aws_command": "aws iam help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows compact operation list; aws shows full man-page style with NAME, DESCRIPTION, AVAILABLE COMMANDS sections"
+  },
+  {
+    "command": "raws iam accept-delegation-request --region us-east-1",
+    "aws_command": "aws iam accept-delegation-request --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam add-client-id-to-open-id-connect-provider --region us-east-1",
+    "aws_command": "aws iam add-client-id-to-open-id-connect-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam add-role-to-instance-profile --region us-east-1",
+    "aws_command": "aws iam add-role-to-instance-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam add-user-to-group --region us-east-1",
+    "aws_command": "aws iam add-user-to-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam associate-delegation-request --region us-east-1",
+    "aws_command": "aws iam associate-delegation-request --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam attach-group-policy --region us-east-1",
+    "aws_command": "aws iam attach-group-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam attach-role-policy --region us-east-1",
+    "aws_command": "aws iam attach-role-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam attach-user-policy --region us-east-1",
+    "aws_command": "aws iam attach-user-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam change-password --region us-east-1",
+    "aws_command": "aws iam change-password --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-access-key --region us-east-1",
+    "aws_command": "aws iam create-access-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return same server-side ValidationError about non-User credentials"
+  },
+  {
+    "command": "raws iam create-account-alias --region us-east-1",
+    "aws_command": "aws iam create-account-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-delegation-request --region us-east-1",
+    "aws_command": "aws iam create-delegation-request --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-group --region us-east-1",
+    "aws_command": "aws iam create-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-instance-profile --region us-east-1",
+    "aws_command": "aws iam create-instance-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-login-profile --region us-east-1",
+    "aws_command": "aws iam create-login-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-open-id-connect-provider --region us-east-1",
+    "aws_command": "aws iam create-open-id-connect-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-policy --region us-east-1",
+    "aws_command": "aws iam create-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-policy-version --region us-east-1",
+    "aws_command": "aws iam create-policy-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-role --region us-east-1",
+    "aws_command": "aws iam create-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-saml-provider --region us-east-1",
+    "aws_command": "aws iam create-saml-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-service-linked-role --region us-east-1",
+    "aws_command": "aws iam create-service-linked-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-service-specific-credential --region us-east-1",
+    "aws_command": "aws iam create-service-specific-credential --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-user --region us-east-1",
+    "aws_command": "aws iam create-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam create-virtual-mfa-device --region us-east-1",
+    "aws_command": "aws iam create-virtual-mfa-device --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam deactivate-mfa-device --region us-east-1",
+    "aws_command": "aws iam deactivate-mfa-device --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-access-key --region us-east-1",
+    "aws_command": "aws iam delete-access-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-account-alias --region us-east-1",
+    "aws_command": "aws iam delete-account-alias --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-account-password-policy --region us-east-1",
+    "aws_command": "aws iam delete-account-password-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return same NoSuchEntity server error"
+  },
+  {
+    "command": "raws iam delete-group --region us-east-1",
+    "aws_command": "aws iam delete-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-group-policy --region us-east-1",
+    "aws_command": "aws iam delete-group-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-instance-profile --region us-east-1",
+    "aws_command": "aws iam delete-instance-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-login-profile --region us-east-1",
+    "aws_command": "aws iam delete-login-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-open-id-connect-provider --region us-east-1",
+    "aws_command": "aws iam delete-open-id-connect-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-policy --region us-east-1",
+    "aws_command": "aws iam delete-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-policy-version --region us-east-1",
+    "aws_command": "aws iam delete-policy-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-role --region us-east-1",
+    "aws_command": "aws iam delete-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-role-permissions-boundary --region us-east-1",
+    "aws_command": "aws iam delete-role-permissions-boundary --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-role-policy --region us-east-1",
+    "aws_command": "aws iam delete-role-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-saml-provider --region us-east-1",
+    "aws_command": "aws iam delete-saml-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-server-certificate --region us-east-1",
+    "aws_command": "aws iam delete-server-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-service-linked-role --region us-east-1",
+    "aws_command": "aws iam delete-service-linked-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-service-specific-credential --region us-east-1",
+    "aws_command": "aws iam delete-service-specific-credential --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-signing-certificate --region us-east-1",
+    "aws_command": "aws iam delete-signing-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-ssh-public-key --region us-east-1",
+    "aws_command": "aws iam delete-ssh-public-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-user --region us-east-1",
+    "aws_command": "aws iam delete-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-user-permissions-boundary --region us-east-1",
+    "aws_command": "aws iam delete-user-permissions-boundary --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-user-policy --region us-east-1",
+    "aws_command": "aws iam delete-user-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam delete-virtual-mfa-device --region us-east-1",
+    "aws_command": "aws iam delete-virtual-mfa-device --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam detach-group-policy --region us-east-1",
+    "aws_command": "aws iam detach-group-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam detach-role-policy --region us-east-1",
+    "aws_command": "aws iam detach-role-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam detach-user-policy --region us-east-1",
+    "aws_command": "aws iam detach-user-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam disable-organizations-root-credentials-management --region us-east-1",
+    "aws_command": "aws iam disable-organizations-root-credentials-management --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return OrganizationNotFoundException error (no required params)"
+  },
+  {
+    "command": "raws iam disable-organizations-root-sessions --region us-east-1",
+    "aws_command": "aws iam disable-organizations-root-sessions --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return OrganizationNotFoundException error (no required params)"
+  },
+  {
+    "command": "raws iam disable-outbound-web-identity-federation --region us-east-1",
+    "aws_command": "aws iam disable-outbound-web-identity-federation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return FeatureDisabled error (no required params)"
+  },
+  {
+    "command": "raws iam enable-mfa-device --region us-east-1",
+    "aws_command": "aws iam enable-mfa-device --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam enable-organizations-root-credentials-management --region us-east-1",
+    "aws_command": "aws iam enable-organizations-root-credentials-management --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return OrganizationNotFoundException error (no required params)"
+  },
+  {
+    "command": "raws iam enable-organizations-root-sessions --region us-east-1",
+    "aws_command": "aws iam enable-organizations-root-sessions --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return OrganizationNotFoundException error (no required params)"
+  },
+  {
+    "command": "raws iam enable-outbound-web-identity-federation --region us-east-1",
+    "aws_command": "aws iam enable-outbound-web-identity-federation --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Command recognized and succeeds (no required params)"
+  },
+  {
+    "command": "raws iam generate-credential-report --region us-east-1",
+    "aws_command": "aws iam generate-credential-report --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Command recognized and succeeds (no required params)"
+  },
+  {
+    "command": "raws iam generate-organizations-access-report --region us-east-1",
+    "aws_command": "aws iam generate-organizations-access-report --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam generate-service-last-accessed-details --region us-east-1",
+    "aws_command": "aws iam generate-service-last-accessed-details --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-access-key-last-used --region us-east-1",
+    "aws_command": "aws iam get-access-key-last-used --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --access-key-id"
+  },
+  {
+    "command": "raws iam get-account-authorization-details --region us-east-1",
+    "aws_command": "aws iam get-account-authorization-details --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns AssumeRolePolicyDocument and PolicyDocument as URL-encoded strings; aws decodes them to JSON objects"
+  },
+  {
+    "command": "raws iam get-account-password-policy --region us-east-1",
+    "aws_command": "aws iam get-account-password-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return same NoSuchEntity error"
+  },
+  {
+    "command": "raws iam get-account-summary --region us-east-1",
+    "aws_command": "aws iam get-account-summary --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam get-context-keys-for-custom-policy --region us-east-1",
+    "aws_command": "aws iam get-context-keys-for-custom-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --policy-input-list"
+  },
+  {
+    "command": "raws iam get-context-keys-for-principal-policy --region us-east-1",
+    "aws_command": "aws iam get-context-keys-for-principal-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --policy-source-arn"
+  },
+  {
+    "command": "raws iam get-credential-report --region us-east-1",
+    "aws_command": "aws iam get-credential-report --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam get-delegation-request --region us-east-1",
+    "aws_command": "aws iam get-delegation-request --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-group --region us-east-1",
+    "aws_command": "aws iam get-group --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --group-name"
+  },
+  {
+    "command": "raws iam get-group-policy --region us-east-1",
+    "aws_command": "aws iam get-group-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-human-readable-summary --region us-east-1",
+    "aws_command": "aws iam get-human-readable-summary --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-instance-profile --region us-east-1",
+    "aws_command": "aws iam get-instance-profile --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --instance-profile-name"
+  },
+  {
+    "command": "raws iam get-login-profile --region us-east-1",
+    "aws_command": "aws iam get-login-profile --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-mfa-device --region us-east-1",
+    "aws_command": "aws iam get-mfa-device --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --serial-number"
+  },
+  {
+    "command": "raws iam get-open-id-connect-provider --region us-east-1",
+    "aws_command": "aws iam get-open-id-connect-provider --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-organizations-access-report --region us-east-1",
+    "aws_command": "aws iam get-organizations-access-report --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --job-id"
+  },
+  {
+    "command": "raws iam get-outbound-web-identity-federation-info --region us-east-1",
+    "aws_command": "aws iam get-outbound-web-identity-federation-info --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return FeatureDisabled error (no required params)"
+  },
+  {
+    "command": "raws iam get-policy --region us-east-1",
+    "aws_command": "aws iam get-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --policy-arn"
+  },
+  {
+    "command": "raws iam get-policy-version --region us-east-1",
+    "aws_command": "aws iam get-policy-version --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-role --region us-east-1",
+    "aws_command": "aws iam get-role --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --role-name"
+  },
+  {
+    "command": "raws iam get-role-policy --region us-east-1",
+    "aws_command": "aws iam get-role-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-saml-provider --region us-east-1",
+    "aws_command": "aws iam get-saml-provider --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-server-certificate --region us-east-1",
+    "aws_command": "aws iam get-server-certificate --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-service-last-accessed-details --region us-east-1",
+    "aws_command": "aws iam get-service-last-accessed-details --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --job-id"
+  },
+  {
+    "command": "raws iam get-service-last-accessed-details-with-entities --region us-east-1",
+    "aws_command": "aws iam get-service-last-accessed-details-with-entities --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-service-linked-role-deletion-status --region us-east-1",
+    "aws_command": "aws iam get-service-linked-role-deletion-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --deletion-task-id"
+  },
+  {
+    "command": "raws iam get-ssh-public-key --region us-east-1",
+    "aws_command": "aws iam get-ssh-public-key --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam get-user --region us-east-1",
+    "aws_command": "aws iam get-user --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return ValidationError about non-User credentials; raws error format slightly different (no 'Additional error details' section)"
+  },
+  {
+    "command": "raws iam get-user-policy --region us-east-1",
+    "aws_command": "aws iam get-user-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-access-keys --region us-east-1",
+    "aws_command": "aws iam list-access-keys --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return ValidationError about non-User credentials; raws error format slightly different (no 'Additional error details' section)"
+  },
+  {
+    "command": "raws iam list-account-aliases --region us-east-1",
+    "aws_command": "aws iam list-account-aliases --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam list-attached-group-policies --region us-east-1",
+    "aws_command": "aws iam list-attached-group-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --group-name"
+  },
+  {
+    "command": "raws iam list-attached-role-policies --region us-east-1",
+    "aws_command": "aws iam list-attached-role-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --role-name"
+  },
+  {
+    "command": "raws iam list-attached-user-policies --region us-east-1",
+    "aws_command": "aws iam list-attached-user-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --user-name"
+  },
+  {
+    "command": "raws iam list-delegation-requests --region us-east-1",
+    "aws_command": "aws iam list-delegation-requests --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return DelegationRequests list (no required params)"
+  },
+  {
+    "command": "raws iam list-entities-for-policy --region us-east-1",
+    "aws_command": "aws iam list-entities-for-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --policy-arn"
+  },
+  {
+    "command": "raws iam list-group-policies --region us-east-1",
+    "aws_command": "aws iam list-group-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --group-name"
+  },
+  {
+    "command": "raws iam list-groups --region us-east-1",
+    "aws_command": "aws iam list-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam list-groups-for-user --region us-east-1",
+    "aws_command": "aws iam list-groups-for-user --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --user-name"
+  },
+  {
+    "command": "raws iam list-instance-profile-tags --region us-east-1",
+    "aws_command": "aws iam list-instance-profile-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-instance-profiles --region us-east-1",
+    "aws_command": "aws iam list-instance-profiles --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam list-instance-profiles-for-role --region us-east-1",
+    "aws_command": "aws iam list-instance-profiles-for-role --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --role-name"
+  },
+  {
+    "command": "raws iam list-mfa-device-tags --region us-east-1",
+    "aws_command": "aws iam list-mfa-device-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-mfa-devices --region us-east-1",
+    "aws_command": "aws iam list-mfa-devices --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return ValidationError about non-User credentials; raws error format slightly different (no 'Additional error details' section)"
+  },
+  {
+    "command": "raws iam list-open-id-connect-provider-tags --region us-east-1",
+    "aws_command": "aws iam list-open-id-connect-provider-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-open-id-connect-providers --region us-east-1",
+    "aws_command": "aws iam list-open-id-connect-providers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam list-organizations-features --region us-east-1",
+    "aws_command": "aws iam list-organizations-features --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return OrganizationNotFoundException error"
+  },
+  {
+    "command": "raws iam list-policies --region us-east-1",
+    "aws_command": "aws iam list-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BUG: raws list-policies works without params but fails with SignatureDoesNotMatch when ANY optional parameter is passed (--scope, --max-items, --path-prefix, --only-attached). Likely query protocol signing bug with optional params on IAM global endpoint."
+  },
+  {
+    "command": "raws iam list-policies-granting-service-access --region us-east-1",
+    "aws_command": "aws iam list-policies-granting-service-access --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-policy-tags --region us-east-1",
+    "aws_command": "aws iam list-policy-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-policy-versions --region us-east-1",
+    "aws_command": "aws iam list-policy-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-role-policies --region us-east-1",
+    "aws_command": "aws iam list-role-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --role-name"
+  },
+  {
+    "command": "raws iam list-role-tags --region us-east-1",
+    "aws_command": "aws iam list-role-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --role-name"
+  },
+  {
+    "command": "raws iam list-roles --region us-east-1",
+    "aws_command": "aws iam list-roles --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns AssumeRolePolicyDocument as URL-encoded string; aws decodes it to JSON object. Also MaxSessionDuration may differ for some roles."
+  },
+  {
+    "command": "raws iam list-saml-provider-tags --region us-east-1",
+    "aws_command": "aws iam list-saml-provider-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-saml-providers --region us-east-1",
+    "aws_command": "aws iam list-saml-providers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam list-server-certificate-tags --region us-east-1",
+    "aws_command": "aws iam list-server-certificate-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam list-server-certificates --region us-east-1",
+    "aws_command": "aws iam list-server-certificates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam list-service-specific-credentials --region us-east-1",
+    "aws_command": "aws iam list-service-specific-credentials --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return InvalidInput error about non-user principal"
+  },
+  {
+    "command": "raws iam list-signing-certificates --region us-east-1",
+    "aws_command": "aws iam list-signing-certificates --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return ValidationError about non-User credentials; raws error format slightly different (no 'Additional error details' section)"
+  },
+  {
+    "command": "raws iam list-ssh-public-keys --region us-east-1",
+    "aws_command": "aws iam list-ssh-public-keys --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both return ValidationError about non-User credentials; raws error format slightly different (no 'Additional error details' section)"
+  },
+  {
+    "command": "raws iam list-user-policies --region us-east-1",
+    "aws_command": "aws iam list-user-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --user-name"
+  },
+  {
+    "command": "raws iam list-user-tags --region us-east-1",
+    "aws_command": "aws iam list-user-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --user-name"
+  },
+  {
+    "command": "raws iam list-users --region us-east-1",
+    "aws_command": "aws iam list-users --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam list-virtual-mfa-devices --region us-east-1",
+    "aws_command": "aws iam list-virtual-mfa-devices --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws iam put-group-policy --region us-east-1",
+    "aws_command": "aws iam put-group-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam put-role-permissions-boundary --region us-east-1",
+    "aws_command": "aws iam put-role-permissions-boundary --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam put-role-policy --region us-east-1",
+    "aws_command": "aws iam put-role-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam put-user-permissions-boundary --region us-east-1",
+    "aws_command": "aws iam put-user-permissions-boundary --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam put-user-policy --region us-east-1",
+    "aws_command": "aws iam put-user-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam reject-delegation-request --region us-east-1",
+    "aws_command": "aws iam reject-delegation-request --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam remove-client-id-from-open-id-connect-provider --region us-east-1",
+    "aws_command": "aws iam remove-client-id-from-open-id-connect-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam remove-role-from-instance-profile --region us-east-1",
+    "aws_command": "aws iam remove-role-from-instance-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam remove-user-from-group --region us-east-1",
+    "aws_command": "aws iam remove-user-from-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam reset-service-specific-credential --region us-east-1",
+    "aws_command": "aws iam reset-service-specific-credential --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam resync-mfa-device --region us-east-1",
+    "aws_command": "aws iam resync-mfa-device --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam send-delegation-token --region us-east-1",
+    "aws_command": "aws iam send-delegation-token --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam set-default-policy-version --region us-east-1",
+    "aws_command": "aws iam set-default-policy-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam set-security-token-service-preferences --region us-east-1",
+    "aws_command": "aws iam set-security-token-service-preferences --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam simulate-custom-policy --region us-east-1",
+    "aws_command": "aws iam simulate-custom-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --policy-input-list and --action-names"
+  },
+  {
+    "command": "raws iam simulate-principal-policy --region us-east-1",
+    "aws_command": "aws iam simulate-principal-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error for missing --policy-source-arn and --action-names"
+  },
+  {
+    "command": "raws iam tag-instance-profile --region us-east-1",
+    "aws_command": "aws iam tag-instance-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam tag-mfa-device --region us-east-1",
+    "aws_command": "aws iam tag-mfa-device --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam tag-open-id-connect-provider --region us-east-1",
+    "aws_command": "aws iam tag-open-id-connect-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam tag-policy --region us-east-1",
+    "aws_command": "aws iam tag-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam tag-role --region us-east-1",
+    "aws_command": "aws iam tag-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam tag-saml-provider --region us-east-1",
+    "aws_command": "aws iam tag-saml-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam tag-server-certificate --region us-east-1",
+    "aws_command": "aws iam tag-server-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam tag-user --region us-east-1",
+    "aws_command": "aws iam tag-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-instance-profile --region us-east-1",
+    "aws_command": "aws iam untag-instance-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-mfa-device --region us-east-1",
+    "aws_command": "aws iam untag-mfa-device --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-open-id-connect-provider --region us-east-1",
+    "aws_command": "aws iam untag-open-id-connect-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-policy --region us-east-1",
+    "aws_command": "aws iam untag-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-role --region us-east-1",
+    "aws_command": "aws iam untag-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-saml-provider --region us-east-1",
+    "aws_command": "aws iam untag-saml-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-server-certificate --region us-east-1",
+    "aws_command": "aws iam untag-server-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam untag-user --region us-east-1",
+    "aws_command": "aws iam untag-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-access-key --region us-east-1",
+    "aws_command": "aws iam update-access-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-account-password-policy --region us-east-1",
+    "aws_command": "aws iam update-account-password-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Both succeed with empty output (no required params)"
+  },
+  {
+    "command": "raws iam update-assume-role-policy --region us-east-1",
+    "aws_command": "aws iam update-assume-role-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-delegation-request --region us-east-1",
+    "aws_command": "aws iam update-delegation-request --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-group --region us-east-1",
+    "aws_command": "aws iam update-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-login-profile --region us-east-1",
+    "aws_command": "aws iam update-login-profile --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-open-id-connect-provider-thumbprint --region us-east-1",
+    "aws_command": "aws iam update-open-id-connect-provider-thumbprint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-role --region us-east-1",
+    "aws_command": "aws iam update-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-role-description --region us-east-1",
+    "aws_command": "aws iam update-role-description --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-saml-provider --region us-east-1",
+    "aws_command": "aws iam update-saml-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-server-certificate --region us-east-1",
+    "aws_command": "aws iam update-server-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-service-specific-credential --region us-east-1",
+    "aws_command": "aws iam update-service-specific-credential --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-signing-certificate --region us-east-1",
+    "aws_command": "aws iam update-signing-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-ssh-public-key --region us-east-1",
+    "aws_command": "aws iam update-ssh-public-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam update-user --region us-east-1",
+    "aws_command": "aws iam update-user --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam upload-server-certificate --region us-east-1",
+    "aws_command": "aws iam upload-server-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam upload-signing-certificate --region us-east-1",
+    "aws_command": "aws iam upload-signing-certificate --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam upload-ssh-public-key --region us-east-1",
+    "aws_command": "aws iam upload-ssh-public-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to AWS (server-side validation error); aws validates client-side with ParamValidation error"
+  },
+  {
+    "command": "raws iam wait --region us-east-1",
+    "aws_command": "aws iam wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows 'Usage: raws iam wait <waiter-name>'; aws shows ParamValidation 'too few arguments'. Different error format but both recognize the command."
+  },
+  {
+    "command": "raws iam wizard --region us-east-1",
+    "aws_command": "aws iam wizard --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws says 'Unknown operation wizard'; aws recognizes wizard as a subcommand category. wizard is not supported by raws."
+  }
+]

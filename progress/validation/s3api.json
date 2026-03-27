@@ -1,0 +1,874 @@
+[
+  {
+    "command": "raws s3api help",
+    "aws_command": "aws s3api help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws uses simple list format; AWS uses man-page format with bold/underline. Same commands listed."
+  },
+  {
+    "command": "raws s3api abort-multipart-upload --region us-east-1",
+    "aws_command": "aws s3api abort-multipart-upload --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws says 'URI template variable Bucket not found' vs AWS says 'the following arguments are required: --bucket, --key, --upload-id'. Exit code differs (255 vs 252)."
+  },
+  {
+    "command": "raws s3api complete-multipart-upload --region us-east-1",
+    "aws_command": "aws s3api complete-multipart-upload --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws says 'URI template variable Bucket not found' vs AWS lists required args. Exit code differs (255 vs 252)."
+  },
+  {
+    "command": "raws s3api copy-object --region us-east-1",
+    "aws_command": "aws s3api copy-object --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws says 'URI template variable Bucket not found' vs AWS lists required args. Exit code differs (255 vs 252)."
+  },
+  {
+    "command": "raws s3api create-bucket --region us-east-1",
+    "aws_command": "aws s3api create-bucket --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws says 'URI template variable Bucket not found' vs AWS lists required args. Exit code differs (255 vs 252)."
+  },
+  {
+    "command": "raws s3api create-bucket-metadata-configuration --region us-east-1",
+    "aws_command": "aws s3api create-bucket-metadata-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api create-bucket-metadata-table-configuration --region us-east-1",
+    "aws_command": "aws s3api create-bucket-metadata-table-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api create-multipart-upload --region us-east-1",
+    "aws_command": "aws s3api create-multipart-upload --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api create-session --region us-east-1",
+    "aws_command": "aws s3api create-session --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket --region us-east-1",
+    "aws_command": "aws s3api delete-bucket --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-analytics-configuration --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-analytics-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-cors --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-cors --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-encryption --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-encryption --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-intelligent-tiering-configuration --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-intelligent-tiering-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-inventory-configuration --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-inventory-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-lifecycle --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-lifecycle --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-metadata-configuration --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-metadata-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-metadata-table-configuration --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-metadata-table-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-metrics-configuration --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-metrics-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-ownership-controls --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-ownership-controls --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-policy --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-replication --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-replication --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-tagging --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-tagging --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-bucket-website --region us-east-1",
+    "aws_command": "aws s3api delete-bucket-website --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-object --region us-east-1",
+    "aws_command": "aws s3api delete-object --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-object-tagging --region us-east-1",
+    "aws_command": "aws s3api delete-object-tagging --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-objects --region us-east-1",
+    "aws_command": "aws s3api delete-objects --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api delete-public-access-block --region us-east-1",
+    "aws_command": "aws s3api delete-public-access-block --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api get-bucket-abac --region us-east-1",
+    "aws_command": "aws s3api get-bucket-abac --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches. Both return {\"AbacStatus\":{\"Status\":\"Disabled\"}}."
+  },
+  {
+    "command": "raws s3api get-bucket-accelerate-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-accelerate-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws returns {\"Status\":null,\"RequestCharged\":null} where AWS returns empty output. raws includes null fields AWS omits."
+  },
+  {
+    "command": "raws s3api get-bucket-acl --region us-east-1",
+    "aws_command": "aws s3api get-bucket-acl --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws missing 'Type' field in Grantee object. AWS includes '\"Type\": \"CanonicalUser\"' but raws omits it."
+  },
+  {
+    "command": "raws s3api get-bucket-analytics-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-analytics-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --id'."
+  },
+  {
+    "command": "raws s3api get-bucket-cors --region us-east-1",
+    "aws_command": "aws s3api get-bucket-cors --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Service error message matches but AWS includes 'Additional error details: BucketName:...' that raws omits. Also AWS prefixes with 'aws: [ERROR]:'."
+  },
+  {
+    "command": "raws s3api get-bucket-encryption --region us-east-1",
+    "aws_command": "aws s3api get-bucket-encryption --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly."
+  },
+  {
+    "command": "raws s3api get-bucket-intelligent-tiering-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-intelligent-tiering-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --id'."
+  },
+  {
+    "command": "raws s3api get-bucket-inventory-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-inventory-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --id'."
+  },
+  {
+    "command": "raws s3api get-bucket-lifecycle-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-lifecycle-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "Content matches; key ordering differs (cosmetic). Rules and TransitionDefaultMinimumObjectSize both present."
+  },
+  {
+    "command": "raws s3api get-bucket-location --region us-east-1",
+    "aws_command": "aws s3api get-bucket-location --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly: {\"LocationConstraint\": null}."
+  },
+  {
+    "command": "raws s3api get-bucket-logging --region us-east-1",
+    "aws_command": "aws s3api get-bucket-logging --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS returns empty output; raws returns {\"LoggingEnabled\":null}. raws includes null fields AWS omits."
+  },
+  {
+    "command": "raws s3api get-bucket-metadata-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-metadata-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Service error matches but AWS includes 'Additional error details:' that raws omits. AWS prefix differs."
+  },
+  {
+    "command": "raws s3api get-bucket-metadata-table-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-metadata-table-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Service error matches but AWS includes 'Additional error details:' that raws omits. AWS prefix differs."
+  },
+  {
+    "command": "raws s3api get-bucket-metrics-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-metrics-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --id'."
+  },
+  {
+    "command": "raws s3api get-bucket-notification-configuration --region us-east-1",
+    "aws_command": "aws s3api get-bucket-notification-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (TopicConfigurations, QueueConfigurations, LambdaFunctionConfigurations) that AWS omits."
+  },
+  {
+    "command": "raws s3api get-bucket-ownership-controls --region us-east-1",
+    "aws_command": "aws s3api get-bucket-ownership-controls --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly."
+  },
+  {
+    "command": "raws s3api get-bucket-policy --region us-east-1",
+    "aws_command": "aws s3api get-bucket-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly including escaped policy JSON string."
+  },
+  {
+    "command": "raws s3api get-bucket-policy-status --region us-east-1",
+    "aws_command": "aws s3api get-bucket-policy-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly."
+  },
+  {
+    "command": "raws s3api get-bucket-replication --region us-east-1",
+    "aws_command": "aws s3api get-bucket-replication --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Service error matches but AWS includes 'Additional error details: BucketName:...' that raws omits."
+  },
+  {
+    "command": "raws s3api get-bucket-request-payment --region us-east-1",
+    "aws_command": "aws s3api get-bucket-request-payment --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly."
+  },
+  {
+    "command": "raws s3api get-bucket-tagging --region us-east-1",
+    "aws_command": "aws s3api get-bucket-tagging --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Service error matches but AWS includes 'Additional error details: BucketName:...' that raws omits."
+  },
+  {
+    "command": "raws s3api get-bucket-versioning --region us-east-1",
+    "aws_command": "aws s3api get-bucket-versioning --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS returns empty output; raws returns {\"Status\":null,\"MFADelete\":null}. raws includes null fields AWS omits."
+  },
+  {
+    "command": "raws s3api get-bucket-website --region us-east-1",
+    "aws_command": "aws s3api get-bucket-website --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Service error matches but AWS includes 'Additional error details: BucketName:...' that raws omits."
+  },
+  {
+    "command": "raws s3api get-object --region us-east-1",
+    "aws_command": "aws s3api get-object --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key, outfile'."
+  },
+  {
+    "command": "raws s3api get-object-acl --region us-east-1",
+    "aws_command": "aws s3api get-object-acl --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key'."
+  },
+  {
+    "command": "raws s3api get-object-attributes --region us-east-1",
+    "aws_command": "aws s3api get-object-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key, --object-attributes'."
+  },
+  {
+    "command": "raws s3api get-object-legal-hold --region us-east-1",
+    "aws_command": "aws s3api get-object-legal-hold --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key'."
+  },
+  {
+    "command": "raws s3api get-object-lock-configuration --region us-east-1",
+    "aws_command": "aws s3api get-object-lock-configuration --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Service error matches but AWS includes 'Additional error details: BucketName:...' that raws omits."
+  },
+  {
+    "command": "raws s3api get-object-retention --region us-east-1",
+    "aws_command": "aws s3api get-object-retention --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key'."
+  },
+  {
+    "command": "raws s3api get-object-tagging --region us-east-1",
+    "aws_command": "aws s3api get-object-tagging --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key'."
+  },
+  {
+    "command": "raws s3api get-object-torrent --region us-east-1",
+    "aws_command": "aws s3api get-object-torrent --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key, outfile'."
+  },
+  {
+    "command": "raws s3api get-public-access-block --region us-east-1",
+    "aws_command": "aws s3api get-public-access-block --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly."
+  },
+  {
+    "command": "raws s3api head-bucket --region us-east-1",
+    "aws_command": "aws s3api head-bucket --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (BucketLocationType, BucketLocationName). Also fails with 'Unknown' error on us-east-1 native buckets where AWS succeeds."
+  },
+  {
+    "command": "raws s3api head-object --region us-east-1",
+    "aws_command": "aws s3api head-object --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key'."
+  },
+  {
+    "command": "raws s3api list-bucket-analytics-configurations --region us-east-1",
+    "aws_command": "aws s3api list-bucket-analytics-configurations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (ContinuationToken, NextContinuationToken, AnalyticsConfigurationList) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-bucket-intelligent-tiering-configurations --region us-east-1",
+    "aws_command": "aws s3api list-bucket-intelligent-tiering-configurations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (ContinuationToken, NextContinuationToken, IntelligentTieringConfigurationList) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-bucket-inventory-configurations --region us-east-1",
+    "aws_command": "aws s3api list-bucket-inventory-configurations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (ContinuationToken, InventoryConfigurationList, NextContinuationToken) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-bucket-metrics-configurations --region us-east-1",
+    "aws_command": "aws s3api list-bucket-metrics-configurations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (ContinuationToken, NextContinuationToken, MetricsConfigurationList) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-buckets --region us-east-1",
+    "aws_command": "aws s3api list-buckets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly. Text output matches exactly. Table output has minor formatting difference (raws splits into separate sub-tables vs AWS uses one combined table)."
+  },
+  {
+    "command": "raws s3api list-directory-buckets --region us-east-1",
+    "aws_command": "aws s3api list-directory-buckets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "BUG: raws returns all buckets (like list-buckets) instead of only directory buckets. AWS correctly returns empty list."
+  },
+  {
+    "command": "raws s3api list-multipart-uploads --region us-east-1",
+    "aws_command": "aws s3api list-multipart-uploads --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null/empty fields (Bucket, KeyMarker, UploadIdMarker, MaxUploads, Delimiter, EncodingType, CommonPrefixes, Uploads) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-object-versions --region us-east-1",
+    "aws_command": "aws s3api list-object-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null/empty fields (KeyMarker, VersionIdMarker, Name, MaxKeys, CommonPrefixes, EncodingType, Versions, DeleteMarkers, Delimiter) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-objects --region us-east-1",
+    "aws_command": "aws s3api list-objects --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null/empty fields (Marker, Name, MaxKeys, EncodingType, Contents, Delimiter, CommonPrefixes) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-objects-v2 --region us-east-1",
+    "aws_command": "aws s3api list-objects-v2 --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (Name, MaxKeys, KeyCount, StartAfter, Contents, Delimiter, CommonPrefixes, EncodingType, ContinuationToken) that AWS omits."
+  },
+  {
+    "command": "raws s3api list-parts --region us-east-1",
+    "aws_command": "aws s3api list-parts --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key, --upload-id'."
+  },
+  {
+    "command": "raws s3api put-bucket-abac --region us-east-1",
+    "aws_command": "aws s3api put-bucket-abac --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-accelerate-configuration --region us-east-1",
+    "aws_command": "aws s3api put-bucket-accelerate-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-acl --region us-east-1",
+    "aws_command": "aws s3api put-bucket-acl --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-analytics-configuration --region us-east-1",
+    "aws_command": "aws s3api put-bucket-analytics-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-cors --region us-east-1",
+    "aws_command": "aws s3api put-bucket-cors --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-encryption --region us-east-1",
+    "aws_command": "aws s3api put-bucket-encryption --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-intelligent-tiering-configuration --region us-east-1",
+    "aws_command": "aws s3api put-bucket-intelligent-tiering-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-inventory-configuration --region us-east-1",
+    "aws_command": "aws s3api put-bucket-inventory-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-lifecycle-configuration --region us-east-1",
+    "aws_command": "aws s3api put-bucket-lifecycle-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-logging --region us-east-1",
+    "aws_command": "aws s3api put-bucket-logging --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-metrics-configuration --region us-east-1",
+    "aws_command": "aws s3api put-bucket-metrics-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-notification-configuration --region us-east-1",
+    "aws_command": "aws s3api put-bucket-notification-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-ownership-controls --region us-east-1",
+    "aws_command": "aws s3api put-bucket-ownership-controls --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-policy --region us-east-1",
+    "aws_command": "aws s3api put-bucket-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-replication --region us-east-1",
+    "aws_command": "aws s3api put-bucket-replication --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-request-payment --region us-east-1",
+    "aws_command": "aws s3api put-bucket-request-payment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-tagging --region us-east-1",
+    "aws_command": "aws s3api put-bucket-tagging --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-versioning --region us-east-1",
+    "aws_command": "aws s3api put-bucket-versioning --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-bucket-website --region us-east-1",
+    "aws_command": "aws s3api put-bucket-website --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-object --region us-east-1",
+    "aws_command": "aws s3api put-object --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key'."
+  },
+  {
+    "command": "raws s3api put-object-acl --region us-east-1",
+    "aws_command": "aws s3api put-object-acl --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-object-legal-hold --region us-east-1",
+    "aws_command": "aws s3api put-object-legal-hold --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-object-lock-configuration --region us-east-1",
+    "aws_command": "aws s3api put-object-lock-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-object-retention --region us-east-1",
+    "aws_command": "aws s3api put-object-retention --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-object-tagging --region us-east-1",
+    "aws_command": "aws s3api put-object-tagging --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api put-public-access-block --region us-east-1",
+    "aws_command": "aws s3api put-public-access-block --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api rename-object --region us-east-1",
+    "aws_command": "aws s3api rename-object --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api restore-object --region us-east-1",
+    "aws_command": "aws s3api restore-object --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api select-object-content --region us-east-1",
+    "aws_command": "aws s3api select-object-content --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing param error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key, --expression, --expression-type, --input-serialization, --output-serialization, outfile'."
+  },
+  {
+    "command": "raws s3api update-bucket-metadata-inventory-table-configuration --region us-east-1",
+    "aws_command": "aws s3api update-bucket-metadata-inventory-table-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api update-bucket-metadata-journal-table-configuration --region us-east-1",
+    "aws_command": "aws s3api update-bucket-metadata-journal-table-configuration --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api update-object-encryption --region us-east-1",
+    "aws_command": "aws s3api update-object-encryption --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required'."
+  },
+  {
+    "command": "raws s3api upload-part --region us-east-1",
+    "aws_command": "aws s3api upload-part --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --key, --part-number, --upload-id'."
+  },
+  {
+    "command": "raws s3api upload-part-copy --region us-east-1",
+    "aws_command": "aws s3api upload-part-copy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize command. Error format differs: raws 'URI template variable' vs AWS 'arguments are required: --bucket, --copy-source, --key, --part-number, --upload-id'."
+  },
+  {
+    "command": "raws s3api wait --region us-east-1",
+    "aws_command": "aws s3api wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize wait command. Error format differs: raws 'Missing waiter name.' vs AWS 'too few arguments'. Both correctly indicate a waiter name is needed."
+  },
+  {
+    "command": "raws s3api write-get-object-response --region us-east-1",
+    "aws_command": "aws s3api write-get-object-response --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends the API call without required params and gets PreconditionFailed from server. AWS validates locally first and reports 'arguments are required: --request-route, --request-token'."
+  }
+]

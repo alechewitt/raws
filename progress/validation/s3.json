@@ -1,0 +1,82 @@
+[
+  {
+    "command": "raws s3 help",
+    "aws_command": "aws s3 help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "aws s3 help outputs a full man-page-style document with detailed sections on path arguments, operations, filters, etc. raws s3 help outputs a concise usage summary listing subcommands only (ls, cp, mv, rm, sync, mb, rb, presign). Functional but much less detailed."
+  },
+  {
+    "command": "raws s3 cp --region us-east-1",
+    "aws_command": "aws s3 cp --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both exit 0 and report missing args. aws says 'aws: [ERROR]: An error occurred (ParamValidation): the following arguments are required: paths'. raws says 's3 cp requires a source and destination argument.' with usage example. Error format differs but both correctly reject missing args."
+  },
+  {
+    "command": "raws s3 ls --region us-east-1",
+    "aws_command": "aws s3 ls --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "List-all-buckets output matches exactly (same date format, same bucket names). However, s3 ls s3://<bucket>/ fails in raws with 'ListObjectsV2 failed (HTTP 301)' even with the correct region, while aws CLI works. raws likely uses path-style addressing instead of virtual-hosted-style, causing S3 to return a 301 redirect that raws does not follow. Bucket listing works, but object listing within a bucket is broken."
+  },
+  {
+    "command": "raws s3 mb --region us-east-1",
+    "aws_command": "aws s3 mb --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both exit 0 and report missing args. aws says 'aws: [ERROR]: An error occurred (ParamValidation): the following arguments are required: path'. raws says 's3 mb requires an S3 URL argument.' with usage example. Error message format differs but both correctly reject missing args."
+  },
+  {
+    "command": "raws s3 mv --region us-east-1",
+    "aws_command": "aws s3 mv --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both exit 0 and report missing args. aws says 'aws: [ERROR]: An error occurred (ParamValidation): the following arguments are required: paths'. raws says 's3 mv requires a source and destination argument.' with usage example. Error message format differs but both correctly reject missing args."
+  },
+  {
+    "command": "raws s3 presign --region us-east-1",
+    "aws_command": "aws s3 presign --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both exit 0 and report missing args. aws says 'aws: [ERROR]: An error occurred (ParamValidation): the following arguments are required: path'. raws says 's3 presign requires an S3 URL argument: s3://bucket/key'. Error message format differs but both correctly reject missing args."
+  },
+  {
+    "command": "raws s3 rb --region us-east-1",
+    "aws_command": "aws s3 rb --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both exit 0 and report missing args. aws says 'aws: [ERROR]: An error occurred (ParamValidation): the following arguments are required: path'. raws says 's3 rb requires an S3 URL argument.' with usage example. Error message format differs but both correctly reject missing args."
+  },
+  {
+    "command": "raws s3 rm --region us-east-1",
+    "aws_command": "aws s3 rm --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both exit 0 and report missing args. aws says 'aws: [ERROR]: An error occurred (ParamValidation): the following arguments are required: paths'. raws says 's3 rm requires an S3 URL argument.' with usage example. Error message format differs but both correctly reject missing args."
+  },
+  {
+    "command": "raws s3 sync --region us-east-1",
+    "aws_command": "aws s3 sync --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both exit 0 and report missing args. aws says 'aws: [ERROR]: An error occurred (ParamValidation): the following arguments are required: paths'. raws says 's3 sync requires a source and destination argument.' with usage example. Error message format differs but both correctly reject missing args."
+  },
+  {
+    "command": "raws s3 website --region us-east-1",
+    "aws_command": "aws s3 website --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws does not implement the 'website' subcommand. Returns: 'Unknown s3 subcommand website'. aws CLI recognizes it and reports missing required path argument. raws lists available subcommands as: ls, cp, mv, rm, sync, mb, rb, presign."
+  }
+]

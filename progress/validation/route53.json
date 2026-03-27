@@ -1,0 +1,586 @@
+[
+  {
+    "command": "raws route53 help",
+    "aws_command": "aws route53 help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI shows man-page style help with descriptions; raws shows simple command listing"
+  },
+  {
+    "command": "raws route53 activate-key-signing-key --region us-east-1",
+    "aws_command": "aws route53 activate-key-signing-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HostedZoneId not found'"
+  },
+  {
+    "command": "raws route53 associate-vpc-with-hosted-zone --region us-east-1",
+    "aws_command": "aws route53 associate-vpc-with-hosted-zone --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 change-cidr-collection --region us-east-1",
+    "aws_command": "aws route53 change-cidr-collection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable CidrCollectionId not found'"
+  },
+  {
+    "command": "raws route53 change-resource-record-sets --region us-east-1",
+    "aws_command": "aws route53 change-resource-record-sets --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 change-tags-for-resource --region us-east-1",
+    "aws_command": "aws route53 change-tags-for-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable ResourceType not found'"
+  },
+  {
+    "command": "raws route53 create-cidr-collection --region us-east-1",
+    "aws_command": "aws route53 create-cidr-collection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-health-check --region us-east-1",
+    "aws_command": "aws route53 create-health-check --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-hosted-zone --region us-east-1",
+    "aws_command": "aws route53 create-hosted-zone --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-key-signing-key --region us-east-1",
+    "aws_command": "aws route53 create-key-signing-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-query-logging-config --region us-east-1",
+    "aws_command": "aws route53 create-query-logging-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-reusable-delegation-set --region us-east-1",
+    "aws_command": "aws route53 create-reusable-delegation-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-traffic-policy --region us-east-1",
+    "aws_command": "aws route53 create-traffic-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-traffic-policy-instance --region us-east-1",
+    "aws_command": "aws route53 create-traffic-policy-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends request to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 create-traffic-policy-version --region us-east-1",
+    "aws_command": "aws route53 create-traffic-policy-version --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 create-vpc-association-authorization --region us-east-1",
+    "aws_command": "aws route53 create-vpc-association-authorization --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 deactivate-key-signing-key --region us-east-1",
+    "aws_command": "aws route53 deactivate-key-signing-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HostedZoneId not found'"
+  },
+  {
+    "command": "raws route53 delete-cidr-collection --region us-east-1",
+    "aws_command": "aws route53 delete-cidr-collection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable CidrCollectionId not found'"
+  },
+  {
+    "command": "raws route53 delete-health-check --region us-east-1",
+    "aws_command": "aws route53 delete-health-check --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HealthCheckId not found'"
+  },
+  {
+    "command": "raws route53 delete-hosted-zone --region us-east-1",
+    "aws_command": "aws route53 delete-hosted-zone --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 delete-key-signing-key --region us-east-1",
+    "aws_command": "aws route53 delete-key-signing-key --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HostedZoneId not found'"
+  },
+  {
+    "command": "raws route53 delete-query-logging-config --region us-east-1",
+    "aws_command": "aws route53 delete-query-logging-config --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 delete-reusable-delegation-set --region us-east-1",
+    "aws_command": "aws route53 delete-reusable-delegation-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 delete-traffic-policy --region us-east-1",
+    "aws_command": "aws route53 delete-traffic-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 delete-traffic-policy-instance --region us-east-1",
+    "aws_command": "aws route53 delete-traffic-policy-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 delete-vpc-association-authorization --region us-east-1",
+    "aws_command": "aws route53 delete-vpc-association-authorization --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 disable-hosted-zone-dnssec --region us-east-1",
+    "aws_command": "aws route53 disable-hosted-zone-dnssec --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 disassociate-vpc-from-hosted-zone --region us-east-1",
+    "aws_command": "aws route53 disassociate-vpc-from-hosted-zone --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 enable-hosted-zone-dnssec --region us-east-1",
+    "aws_command": "aws route53 enable-hosted-zone-dnssec --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-account-limit --region us-east-1",
+    "aws_command": "aws route53 get-account-limit --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "FAIL: raws returns SignatureDoesNotMatch 'Credential should be scoped to a valid region' - signing region issue for Route53 global endpoint. AWS CLI succeeds with --type MAX_HOSTED_ZONES_BY_OWNER"
+  },
+  {
+    "command": "raws route53 get-change --region us-east-1",
+    "aws_command": "aws route53 get-change --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-checker-ip-ranges --region us-east-1",
+    "aws_command": "aws route53 get-checker-ip-ranges --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws route53 get-dnssec --region us-east-1",
+    "aws_command": "aws route53 get-dnssec --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-geo-location --region us-east-1",
+    "aws_command": "aws route53 get-geo-location --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws route53 get-health-check --region us-east-1",
+    "aws_command": "aws route53 get-health-check --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HealthCheckId not found'"
+  },
+  {
+    "command": "raws route53 get-health-check-count --region us-east-1",
+    "aws_command": "aws route53 get-health-check-count --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws route53 get-health-check-last-failure-reason --region us-east-1",
+    "aws_command": "aws route53 get-health-check-last-failure-reason --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HealthCheckId not found'"
+  },
+  {
+    "command": "raws route53 get-health-check-status --region us-east-1",
+    "aws_command": "aws route53 get-health-check-status --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HealthCheckId not found'"
+  },
+  {
+    "command": "raws route53 get-hosted-zone --region us-east-1",
+    "aws_command": "aws route53 get-hosted-zone --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-hosted-zone-count --region us-east-1",
+    "aws_command": "aws route53 get-hosted-zone-count --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws route53 get-hosted-zone-limit --region us-east-1",
+    "aws_command": "aws route53 get-hosted-zone-limit --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-query-logging-config --region us-east-1",
+    "aws_command": "aws route53 get-query-logging-config --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-reusable-delegation-set --region us-east-1",
+    "aws_command": "aws route53 get-reusable-delegation-set --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-reusable-delegation-set-limit --region us-east-1",
+    "aws_command": "aws route53 get-reusable-delegation-set-limit --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-traffic-policy --region us-east-1",
+    "aws_command": "aws route53 get-traffic-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-traffic-policy-instance --region us-east-1",
+    "aws_command": "aws route53 get-traffic-policy-instance --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 get-traffic-policy-instance-count --region us-east-1",
+    "aws_command": "aws route53 get-traffic-policy-instance-count --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws route53 list-cidr-blocks --region us-east-1",
+    "aws_command": "aws route53 list-cidr-blocks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable CidrCollectionId not found'"
+  },
+  {
+    "command": "raws route53 list-cidr-collections --region us-east-1",
+    "aws_command": "aws route53 list-cidr-collections --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws route53 list-cidr-locations --region us-east-1",
+    "aws_command": "aws route53 list-cidr-locations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable CidrCollectionId not found'"
+  },
+  {
+    "command": "raws route53 list-geo-locations --region us-east-1",
+    "aws_command": "aws route53 list-geo-locations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON data matches but raws includes extra null fields (NextContinentCode, NextCountryCode, NextSubdivisionCode). Text output shows extra 'None' values and different tab spacing"
+  },
+  {
+    "command": "raws route53 list-health-checks --region us-east-1",
+    "aws_command": "aws route53 list-health-checks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (MaxItems, Marker) that AWS CLI omits"
+  },
+  {
+    "command": "raws route53 list-hosted-zones --region us-east-1",
+    "aws_command": "aws route53 list-hosted-zones --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra fields (MaxItems: '100', Marker: null) that AWS CLI omits. Text/table output also shows these extra null fields"
+  },
+  {
+    "command": "raws route53 list-hosted-zones-by-name --region us-east-1",
+    "aws_command": "aws route53 list-hosted-zones-by-name --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (DNSName, HostedZoneId, NextDNSName, NextHostedZoneId) that AWS CLI omits"
+  },
+  {
+    "command": "raws route53 list-hosted-zones-by-vpc --region us-east-1",
+    "aws_command": "aws route53 list-hosted-zones-by-vpc --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends to server and gets InvalidInput 'Invalid region name null'"
+  },
+  {
+    "command": "raws route53 list-query-logging-configs --region us-east-1",
+    "aws_command": "aws route53 list-query-logging-configs --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws route53 list-resource-record-sets --region us-east-1",
+    "aws_command": "aws route53 list-resource-record-sets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 list-reusable-delegation-sets --region us-east-1",
+    "aws_command": "aws route53 list-reusable-delegation-sets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (Marker: null, NextMarker: null) that AWS CLI omits"
+  },
+  {
+    "command": "raws route53 list-tags-for-resource --region us-east-1",
+    "aws_command": "aws route53 list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable ResourceType not found'"
+  },
+  {
+    "command": "raws route53 list-tags-for-resources --region us-east-1",
+    "aws_command": "aws route53 list-tags-for-resources --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable ResourceType not found'"
+  },
+  {
+    "command": "raws route53 list-traffic-policies --region us-east-1",
+    "aws_command": "aws route53 list-traffic-policies --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null field (TrafficPolicyIdMarker: null) that AWS CLI omits. Table output differs in layout"
+  },
+  {
+    "command": "raws route53 list-traffic-policy-instances --region us-east-1",
+    "aws_command": "aws route53 list-traffic-policy-instances --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes extra null fields (HostedZoneIdMarker, TrafficPolicyInstanceNameMarker, TrafficPolicyInstanceTypeMarker) that AWS CLI omits"
+  },
+  {
+    "command": "raws route53 list-traffic-policy-instances-by-hosted-zone --region us-east-1",
+    "aws_command": "aws route53 list-traffic-policy-instances-by-hosted-zone --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 list-traffic-policy-instances-by-policy --region us-east-1",
+    "aws_command": "aws route53 list-traffic-policy-instances-by-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 list-traffic-policy-versions --region us-east-1",
+    "aws_command": "aws route53 list-traffic-policy-versions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 list-vpc-association-authorizations --region us-east-1",
+    "aws_command": "aws route53 list-vpc-association-authorizations --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 test-dns-answer --region us-east-1",
+    "aws_command": "aws route53 test-dns-answer --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws sends to server and gets InvalidInput server-side validation error"
+  },
+  {
+    "command": "raws route53 update-health-check --region us-east-1",
+    "aws_command": "aws route53 update-health-check --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable HealthCheckId not found'"
+  },
+  {
+    "command": "raws route53 update-hosted-zone-comment --region us-east-1",
+    "aws_command": "aws route53 update-hosted-zone-comment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 update-hosted-zone-features --region us-east-1",
+    "aws_command": "aws route53 update-hosted-zone-features --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 update-traffic-policy-comment --region us-east-1",
+    "aws_command": "aws route53 update-traffic-policy-comment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 update-traffic-policy-instance --region us-east-1",
+    "aws_command": "aws route53 update-traffic-policy-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing params but differently: AWS shows client-side ParamValidation; raws shows 'URI template variable Id not found'"
+  },
+  {
+    "command": "raws route53 wait --region us-east-1",
+    "aws_command": "aws route53 wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both error on missing waiter name but differently: AWS shows ParamValidation 'too few arguments'; raws shows 'Usage: raws route53 wait <waiter-name>... Missing waiter name.'"
+  }
+]

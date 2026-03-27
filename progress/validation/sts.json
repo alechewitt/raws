@@ -1,0 +1,98 @@
+[
+  {
+    "command": "raws sts help",
+    "aws_command": "aws sts help",
+    "category": "help",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "raws uses a simpler columnar format without man-page styling; all 11 operations listed match AWS CLI"
+  },
+  {
+    "command": "raws sts assume-role --region us-east-1",
+    "aws_command": "aws sts assume-role --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side 'ParamValidation: the following arguments are required: --role-arn, --role-session-name'; raws shows server-style 'ValidationError...Value null at roleArn/roleSessionName failed to satisfy constraint'"
+  },
+  {
+    "command": "raws sts assume-role-with-saml --region us-east-1",
+    "aws_command": "aws sts assume-role-with-saml --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side 'ParamValidation: the following arguments are required: --role-arn, --principal-arn, --saml-assertion'; raws shows server-style ValidationError with camelCase field names"
+  },
+  {
+    "command": "raws sts assume-role-with-web-identity --region us-east-1",
+    "aws_command": "aws sts assume-role-with-web-identity --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side ParamValidation with --kebab-case param names; raws shows server-style ValidationError with camelCase field names"
+  },
+  {
+    "command": "raws sts assume-root --region us-east-1",
+    "aws_command": "aws sts assume-root --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side ParamValidation with --kebab-case param names; raws shows server-style ValidationError with camelCase field names"
+  },
+  {
+    "command": "raws sts decode-authorization-message --region us-east-1",
+    "aws_command": "aws sts decode-authorization-message --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side 'ParamValidation: the following arguments are required: --encoded-message'; raws shows server-style ValidationError with camelCase field name"
+  },
+  {
+    "command": "raws sts get-access-key-info --region us-east-1",
+    "aws_command": "aws sts get-access-key-info --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches exactly when called with --access-key-id. Missing-param error format differs (client-side ParamValidation vs server-style ValidationError) but functional result is correct"
+  },
+  {
+    "command": "raws sts get-caller-identity --region us-east-1",
+    "aws_command": "aws sts get-caller-identity --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON, text, and table output all match exactly"
+  },
+  {
+    "command": "raws sts get-delegated-access-token --region us-east-1",
+    "aws_command": "aws sts get-delegated-access-token --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side ParamValidation; raws shows server-style ValidationError with camelCase field name"
+  },
+  {
+    "command": "raws sts get-federation-token --region us-east-1",
+    "aws_command": "aws sts get-federation-token --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side ParamValidation; raws shows server-style ValidationError with camelCase field name"
+  },
+  {
+    "command": "raws sts get-session-token --region us-east-1",
+    "aws_command": "aws sts get-session-token --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both return same AccessDenied error (session credentials), but AWS CLI appends 'Additional error details: Type: Sender' which raws omits"
+  },
+  {
+    "command": "raws sts get-web-identity-token --region us-east-1",
+    "aws_command": "aws sts get-web-identity-token --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Command exists. Missing-param error differs: AWS CLI shows client-side ParamValidation with --kebab-case names; raws shows server-style ValidationError with camelCase field names"
+  }
+]

@@ -1,0 +1,91 @@
+[
+  {
+    "id": "validation-ecr-wrong-signing-service",
+    "description": "ECR fails with InvalidSignatureException on every API call: 'Credential should be scoped to correct service: ecr'. raws uses the wrong service name when signing SigV4 requests for ECR (possibly using api.ecr or the endpoint prefix instead of ecr). All 57 ECR API operations are completely blocked.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws ecr describe-repositories --region us-east-1 2>&1", "expect": "Should return repositories list, not InvalidSignatureException" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. The signingName in the botocore model may differ from the endpoint prefix. raws needs to use the model's signingName for SigV4."]
+  },
+  {
+    "id": "validation-region-flag-priority",
+    "description": "AWS_REGION environment variable overrides the --region CLI flag. AWS CLI correctly prioritizes --region over AWS_REGION. This causes raws to hit the wrong region when both are set. Confirmed on Kinesis, likely affects all services.",
+    "severity": "critical",
+    "verify": [
+      { "run": "AWS_REGION=us-west-2 raws sts get-caller-identity --region us-east-1 --output json 2>&1", "expect": "Should hit us-east-1 (from --region flag), not us-west-2 (from env var)" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. AWS CLI region precedence: --region > AWS_REGION > AWS_DEFAULT_REGION > config file."]
+  },
+  {
+    "id": "validation-apigateway-empty-lists-null",
+    "description": "API Gateway rest-json responses return null instead of empty arrays for list fields. Example: get-rest-apis returns {\"items\": null} instead of {\"items\": []}. Also get-account returns features as a bare string instead of an array.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws apigateway get-rest-apis --region us-east-1 --output json 2>&1", "expect": "items should be [] not null" },
+      { "run": "raws apigateway get-account --region us-east-1 --output json 2>&1", "expect": "features should be [\"UsagePlans\"] not \"UsagePlans\"" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. May affect other rest-json services too. The features string-vs-array issue suggests a list member deserialization bug."]
+  },
+  {
+    "id": "validation-cloudfront-empty-list-suppression",
+    "description": "CloudFront list commands (list-distributions, list-cloud-front-origin-access-identities, etc.) return full JSON wrapper objects with Marker/MaxItems/IsTruncated/Quantity when the list is empty. AWS CLI returns zero bytes for these cases (suppresses empty wrapper objects).",
+    "severity": "low",
+    "verify": [
+      { "run": "raws cloudfront list-distributions --region us-east-1 --output json 2>&1", "expect": "Should return empty output (zero bytes) when no distributions exist, not the wrapper JSON" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. AWS CLI has special handling to suppress empty wrapper objects for some CloudFront responses."]
+  },
+  {
+    "id": "validation-elb-query-param-serialization",
+    "description": "ELB (Classic) query protocol parameter serialization is broken. describe-load-balancer-attributes --load-balancer-name and describe-tags --load-balancer-names do not send parameters to the API. describe-load-balancers --load-balancer-names returns empty instead of filtering.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws elb describe-load-balancers --load-balancer-names raws-test --region us-east-1 2>&1", "expect": "Should filter to the named load balancer, not return empty or all" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Query protocol parameter serialization works for IAM/STS/AutoScaling but not for ELB. May be related to list parameter encoding."]
+  },
+  {
+    "id": "validation-elasticache-list-tags-auth-error",
+    "description": "ElastiCache list-tags-for-resource fails with 'InvalidParameterValue: Unauthorized call. Please check the region or customer id' when given a valid resource ARN. AWS CLI succeeds. Likely an ARN parameter encoding issue in the query protocol request.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws elasticache list-tags-for-resource --resource-name <valid-arn> --region us-east-1 2>&1", "expect": "Should return tag list, not authorization error" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent."]
+  },
+  {
+    "id": "validation-kinesis-map-list-serialization",
+    "description": "Kinesis map and list-of-structure shorthand serialization fails. --tags Key=Value (map shorthand) and --records '{...}' '{...}' (list-of-structures) cause SerializationException. AWS CLI handles these correctly.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws kinesis add-tags-to-stream --stream-name test --tags Key1=Value1 --region us-east-1 2>&1", "expect": "Should not get SerializationException for map shorthand" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Shorthand syntax for maps and lists of structures needs work."]
+  },
+  {
+    "id": "validation-stepfunctions-json-params-null",
+    "description": "Step Functions (JSON protocol) sends null for all parameters in the request body despite them being provided on the command line. Same root cause as SQS and CloudWatch Logs parameter serialization bug. Only parameterless commands work.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws stepfunctions describe-state-machine --state-machine-arn arn:aws:states:us-east-1:123:stateMachine:test --region us-east-1 2>&1", "expect": "Should not get null constraint violation" }
+    ],
+    "passes": false,
+    "affected_files": [],
+    "notes": ["Found by validation agent. Confirms the JSON protocol parameter serialization bug affects SQS, Logs, and Step Functions but not DynamoDB, KMS, or ECS."]
+  }
+]

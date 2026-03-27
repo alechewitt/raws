@@ -1,0 +1,482 @@
+[
+  {
+    "command": "raws codebuild help",
+    "aws_command": "aws codebuild help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows compact 2-column operation list; AWS CLI shows full man-page style with description and nested sub-headings"
+  },
+  {
+    "command": "raws codebuild batch-delete-builds --region us-east-1",
+    "aws_command": "aws codebuild batch-delete-builds --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --ids locally with ParamValidation exit 252. With --ids dummy-id-123: both get server error but different messages (raws: 'empty list', aws: 'Invalid build ID')"
+  },
+  {
+    "command": "raws codebuild batch-get-build-batches --region us-east-1",
+    "aws_command": "aws codebuild batch-get-build-batches --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --ids param with valid batch IDs)"
+  },
+  {
+    "command": "raws codebuild batch-get-builds --region us-east-1",
+    "aws_command": "aws codebuild batch-get-builds --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --ids param with valid build IDs)"
+  },
+  {
+    "command": "raws codebuild batch-get-command-executions --region us-east-1",
+    "aws_command": "aws codebuild batch-get-command-executions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --ids param)"
+  },
+  {
+    "command": "raws codebuild batch-get-fleets --region us-east-1",
+    "aws_command": "aws codebuild batch-get-fleets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --names param)"
+  },
+  {
+    "command": "raws codebuild batch-get-projects --region us-east-1",
+    "aws_command": "aws codebuild batch-get-projects --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --names param)"
+  },
+  {
+    "command": "raws codebuild batch-get-report-groups --region us-east-1",
+    "aws_command": "aws codebuild batch-get-report-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --report-group-arns param)"
+  },
+  {
+    "command": "raws codebuild batch-get-reports --region us-east-1",
+    "aws_command": "aws codebuild batch-get-reports --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --report-arns param)"
+  },
+  {
+    "command": "raws codebuild batch-get-sandboxes --region us-east-1",
+    "aws_command": "aws codebuild batch-get-sandboxes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --ids param)"
+  },
+  {
+    "command": "raws codebuild create-fleet --region us-east-1",
+    "aws_command": "aws codebuild create-fleet --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --name/--base-capacity/--environment-type/--compute-type locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild create-project --region us-east-1",
+    "aws_command": "aws codebuild create-project --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --name/--source/--artifacts/--environment/--service-role locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild create-report-group --region us-east-1",
+    "aws_command": "aws codebuild create-report-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --name/--type/--export-config locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild create-webhook --region us-east-1",
+    "aws_command": "aws codebuild create-webhook --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --project-name locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-build-batch --region us-east-1",
+    "aws_command": "aws codebuild delete-build-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --id locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-fleet --region us-east-1",
+    "aws_command": "aws codebuild delete-fleet --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-project --region us-east-1",
+    "aws_command": "aws codebuild delete-project --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --name locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-report --region us-east-1",
+    "aws_command": "aws codebuild delete-report --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-report-group --region us-east-1",
+    "aws_command": "aws codebuild delete-report-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-resource-policy --region us-east-1",
+    "aws_command": "aws codebuild delete-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --resource-arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-source-credentials --region us-east-1",
+    "aws_command": "aws codebuild delete-source-credentials --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild delete-webhook --region us-east-1",
+    "aws_command": "aws codebuild delete-webhook --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --project-name locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild describe-code-coverages --region us-east-1",
+    "aws_command": "aws codebuild describe-code-coverages --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --report-arn param)"
+  },
+  {
+    "command": "raws codebuild describe-test-cases --region us-east-1",
+    "aws_command": "aws codebuild describe-test-cases --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --report-arn param)"
+  },
+  {
+    "command": "raws codebuild get-report-group-trend --region us-east-1",
+    "aws_command": "aws codebuild get-report-group-trend --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --report-group-arn and --trend-field params)"
+  },
+  {
+    "command": "raws codebuild get-resource-policy --region us-east-1",
+    "aws_command": "aws codebuild get-resource-policy --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --resource-arn param)"
+  },
+  {
+    "command": "raws codebuild import-source-credentials --region us-east-1",
+    "aws_command": "aws codebuild import-source-credentials --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --token/--server-type/--auth-type locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild invalidate-project-cache --region us-east-1",
+    "aws_command": "aws codebuild invalidate-project-cache --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --project-name locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild list-build-batches --region us-east-1",
+    "aws_command": "aws codebuild list-build-batches --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-build-batches-for-project --region us-east-1",
+    "aws_command": "aws codebuild list-build-batches-for-project --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --project-name param)"
+  },
+  {
+    "command": "raws codebuild list-builds --region us-east-1",
+    "aws_command": "aws codebuild list-builds --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-builds-for-project --region us-east-1",
+    "aws_command": "aws codebuild list-builds-for-project --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --project-name param)"
+  },
+  {
+    "command": "raws codebuild list-command-executions-for-sandbox --region us-east-1",
+    "aws_command": "aws codebuild list-command-executions-for-sandbox --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --sandbox-id param)"
+  },
+  {
+    "command": "raws codebuild list-curated-environment-images --region us-east-1",
+    "aws_command": "aws codebuild list-curated-environment-images --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON and text output identical. Table output differs: raws dumps JSON blobs into cells for nested structures instead of rendering nested sub-tables like AWS CLI"
+  },
+  {
+    "command": "raws codebuild list-fleets --region us-east-1",
+    "aws_command": "aws codebuild list-fleets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws includes 'nextToken': null in JSON output; AWS CLI omits null fields"
+  },
+  {
+    "command": "raws codebuild list-projects --region us-east-1",
+    "aws_command": "aws codebuild list-projects --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-report-groups --region us-east-1",
+    "aws_command": "aws codebuild list-report-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-reports --region us-east-1",
+    "aws_command": "aws codebuild list-reports --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-reports-for-report-group --region us-east-1",
+    "aws_command": "aws codebuild list-reports-for-report-group --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --report-group-arn param)"
+  },
+  {
+    "command": "raws codebuild list-sandboxes --region us-east-1",
+    "aws_command": "aws codebuild list-sandboxes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-sandboxes-for-project --region us-east-1",
+    "aws_command": "aws codebuild list-sandboxes-for-project --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": "Not tested (requires --project-name param)"
+  },
+  {
+    "command": "raws codebuild list-shared-projects --region us-east-1",
+    "aws_command": "aws codebuild list-shared-projects --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-shared-report-groups --region us-east-1",
+    "aws_command": "aws codebuild list-shared-report-groups --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild list-source-credentials --region us-east-1",
+    "aws_command": "aws codebuild list-source-credentials --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild put-resource-policy --region us-east-1",
+    "aws_command": "aws codebuild put-resource-policy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --policy/--resource-arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild retry-build --region us-east-1",
+    "aws_command": "aws codebuild retry-build --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild retry-build-batch --region us-east-1",
+    "aws_command": "aws codebuild retry-build-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild start-build --region us-east-1",
+    "aws_command": "aws codebuild start-build --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --project-name locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild start-build-batch --region us-east-1",
+    "aws_command": "aws codebuild start-build-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --project-name locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild start-command-execution --region us-east-1",
+    "aws_command": "aws codebuild start-command-execution --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --sandbox-id/--command locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild start-sandbox --region us-east-1",
+    "aws_command": "aws codebuild start-sandbox --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws codebuild start-sandbox-connection --region us-east-1",
+    "aws_command": "aws codebuild start-sandbox-connection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --sandbox-id locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild stop-build --region us-east-1",
+    "aws_command": "aws codebuild stop-build --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --id locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild stop-build-batch --region us-east-1",
+    "aws_command": "aws codebuild stop-build-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --id locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild stop-sandbox --region us-east-1",
+    "aws_command": "aws codebuild stop-sandbox --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --id locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild update-fleet --region us-east-1",
+    "aws_command": "aws codebuild update-fleet --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild update-project --region us-east-1",
+    "aws_command": "aws codebuild update-project --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --name locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild update-project-visibility --region us-east-1",
+    "aws_command": "aws codebuild update-project-visibility --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --project-arn/--project-visibility locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild update-report-group --region us-east-1",
+    "aws_command": "aws codebuild update-report-group --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --arn locally with ParamValidation exit 252"
+  },
+  {
+    "command": "raws codebuild update-webhook --region us-east-1",
+    "aws_command": "aws codebuild update-webhook --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws lacks client-side required param validation: sends empty request to server, gets InvalidInputException exit 254; AWS catches missing --project-name locally with ParamValidation exit 252"
+  }
+]

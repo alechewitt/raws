@@ -1,0 +1,194 @@
+[
+  {
+    "command": "raws sqs help",
+    "aws_command": "aws sqs help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows compact two-column operation list; aws shows manpage-style help with description, formatted text, and bullet-listed commands. Both list all 21 operations."
+  },
+  {
+    "command": "raws sqs add-permission --region us-east-1",
+    "aws_command": "aws sqs add-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs cancel-message-move-task --region us-east-1",
+    "aws_command": "aws sqs cancel-message-move-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets MissingRequiredParameterException server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs change-message-visibility --region us-east-1",
+    "aws_command": "aws sqs change-message-visibility --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs change-message-visibility-batch --region us-east-1",
+    "aws_command": "aws sqs change-message-visibility-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs create-queue --region us-east-1",
+    "aws_command": "aws sqs create-queue --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets InvalidParameterValueException server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs delete-message --region us-east-1",
+    "aws_command": "aws sqs delete-message --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs delete-message-batch --region us-east-1",
+    "aws_command": "aws sqs delete-message-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs delete-queue --region us-east-1",
+    "aws_command": "aws sqs delete-queue --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs get-queue-attributes --region us-east-1",
+    "aws_command": "aws sqs get-queue-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "CRITICAL: raws does not serialize --queue-url parameter in request body. Against a live queue, raws gets QueueDoesNotExist; with --attribute-names gets SerializationException ('Unexpected field type'). aws validates required params client-side."
+  },
+  {
+    "command": "raws sqs get-queue-url --region us-east-1",
+    "aws_command": "aws sqs get-queue-url --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "CRITICAL: raws does not serialize --queue-name parameter in request body. Against a live queue, raws still gets QueueDoesNotExist. aws validates required params client-side."
+  },
+  {
+    "command": "raws sqs list-dead-letter-source-queues --region us-east-1",
+    "aws_command": "aws sqs list-dead-letter-source-queues --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Likely same serialization bug as other queue-url commands."
+  },
+  {
+    "command": "raws sqs list-message-move-tasks --region us-east-1",
+    "aws_command": "aws sqs list-message-move-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets MissingRequiredParameterException server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs list-queue-tags --region us-east-1",
+    "aws_command": "aws sqs list-queue-tags --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "CRITICAL: raws does not serialize --queue-url parameter in request body. Against a live queue, raws gets QueueDoesNotExist while aws succeeds. aws validates required params client-side when param missing."
+  },
+  {
+    "command": "raws sqs list-queues --region us-east-1",
+    "aws_command": "aws sqs list-queues --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": "JSON output matches when queues exist. --output text matches. --output table differs: raws shows flat 'QueueUrls' table, aws shows nested 'ListQueues' > 'QueueUrls' table. When no queues: raws used to return {\"QueueUrls\": null} but now appears to return empty like aws."
+  },
+  {
+    "command": "raws sqs purge-queue --region us-east-1",
+    "aws_command": "aws sqs purge-queue --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs receive-message --region us-east-1",
+    "aws_command": "aws sqs receive-message --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "CRITICAL: raws does not serialize --queue-url parameter in request body. Against a live queue, raws gets QueueDoesNotExist while aws succeeds (returns empty). aws validates required params client-side when param missing."
+  },
+  {
+    "command": "raws sqs remove-permission --region us-east-1",
+    "aws_command": "aws sqs remove-permission --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs send-message --region us-east-1",
+    "aws_command": "aws sqs send-message --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs send-message-batch --region us-east-1",
+    "aws_command": "aws sqs send-message-batch --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs set-queue-attributes --region us-east-1",
+    "aws_command": "aws sqs set-queue-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs start-message-move-task --region us-east-1",
+    "aws_command": "aws sqs start-message-move-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets MissingRequiredParameterException server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs tag-queue --region us-east-1",
+    "aws_command": "aws sqs tag-queue --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  },
+  {
+    "command": "raws sqs untag-queue --region us-east-1",
+    "aws_command": "aws sqs untag-queue --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws sends request to API (gets QueueDoesNotExist server error, exit 254); aws validates required params client-side (ParamValidation error, exit 252). Command is recognized."
+  }
+]

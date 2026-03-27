@@ -1,0 +1,562 @@
+[
+  {
+    "command": "raws ecs help",
+    "aws_command": "aws ecs help",
+    "category": "help",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws shows compact 2-column operation list; AWS CLI shows full man-page with description. raws missing 'deploy' (custom CLI command), 'wait', and 'monitor-express-gateway-service' (custom CLI command). Both list all botocore operations."
+  },
+  {
+    "command": "raws ecs create-capacity-provider --region us-east-1",
+    "aws_command": "aws ecs create-capacity-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252, ParamValidation), raws sends to server and gets server-side error (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs create-cluster --region us-east-1",
+    "aws_command": "aws ecs create-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs create-express-gateway-service --region us-east-1",
+    "aws_command": "aws ecs create-express-gateway-service --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs create-service --region us-east-1",
+    "aws_command": "aws ecs create-service --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs create-task-set --region us-east-1",
+    "aws_command": "aws ecs create-task-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs delete-account-setting --region us-east-1",
+    "aws_command": "aws ecs delete-account-setting --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs delete-attributes --region us-east-1",
+    "aws_command": "aws ecs delete-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs delete-capacity-provider --region us-east-1",
+    "aws_command": "aws ecs delete-capacity-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs delete-cluster --region us-east-1",
+    "aws_command": "aws ecs delete-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs delete-express-gateway-service --region us-east-1",
+    "aws_command": "aws ecs delete-express-gateway-service --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs delete-service --region us-east-1",
+    "aws_command": "aws ecs delete-service --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs delete-task-definitions --region us-east-1",
+    "aws_command": "aws ecs delete-task-definitions --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs delete-task-set --region us-east-1",
+    "aws_command": "aws ecs delete-task-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs deploy --region us-east-1",
+    "aws_command": "aws ecs deploy --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws: 'Unknown operation deploy' (exit 2). AWS CLI: ParamValidation error requesting --service, --task-definition, --codedeploy-appspec (exit 252). 'deploy' is a custom AWS CLI command not in botocore model."
+  },
+  {
+    "command": "raws ecs deregister-container-instance --region us-east-1",
+    "aws_command": "aws ecs deregister-container-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs deregister-task-definition --region us-east-1",
+    "aws_command": "aws ecs deregister-task-definition --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs describe-capacity-providers --region us-east-1",
+    "aws_command": "aws ecs describe-capacity-providers --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "JSON output nearly identical but raws includes 'nextToken: null' which AWS CLI omits. Text output: raws prints 'None' for null nextToken, AWS CLI omits it."
+  },
+  {
+    "command": "raws ecs describe-clusters --region us-east-1",
+    "aws_command": "aws ecs describe-clusters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs describe-container-instances --region us-east-1",
+    "aws_command": "aws ecs describe-container-instances --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --container-instances required), raws sends to server (exit 254, InvalidParameterException: Container instance cannot be empty)."
+  },
+  {
+    "command": "raws ecs describe-express-gateway-service --region us-east-1",
+    "aws_command": "aws ecs describe-express-gateway-service --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --service-arn required), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs describe-service-deployments --region us-east-1",
+    "aws_command": "aws ecs describe-service-deployments --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs describe-service-revisions --region us-east-1",
+    "aws_command": "aws ecs describe-service-revisions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs describe-services --region us-east-1",
+    "aws_command": "aws ecs describe-services --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --services required), raws sends to server (exit 254, InvalidParameterException: Services cannot be empty)."
+  },
+  {
+    "command": "raws ecs describe-task-definition --region us-east-1",
+    "aws_command": "aws ecs describe-task-definition --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --task-definition required), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs describe-task-sets --region us-east-1",
+    "aws_command": "aws ecs describe-task-sets --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --cluster, --service required), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs describe-tasks --region us-east-1",
+    "aws_command": "aws ecs describe-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --tasks required), raws sends to server (exit 254, InvalidParameterException: Tasks cannot be empty)."
+  },
+  {
+    "command": "raws ecs discover-poll-endpoint --region us-east-1",
+    "aws_command": "aws ecs discover-poll-endpoint --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs execute-command --region us-east-1",
+    "aws_command": "aws ecs execute-command --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs get-task-protection --region us-east-1",
+    "aws_command": "aws ecs get-task-protection --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --cluster required), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs list-account-settings --region us-east-1",
+    "aws_command": "aws ecs list-account-settings --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs list-attributes --region us-east-1",
+    "aws_command": "aws ecs list-attributes --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --target-type required), raws sends to server (exit 254, InvalidParameterException: TargetType can not be blank)."
+  },
+  {
+    "command": "raws ecs list-clusters --region us-east-1",
+    "aws_command": "aws ecs list-clusters --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs list-container-instances --region us-east-1",
+    "aws_command": "aws ecs list-container-instances --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs list-service-deployments --region us-east-1",
+    "aws_command": "aws ecs list-service-deployments --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --service required), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs list-services --region us-east-1",
+    "aws_command": "aws ecs list-services --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs list-services-by-namespace --region us-east-1",
+    "aws_command": "aws ecs list-services-by-namespace --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --namespace required), raws sends to server (exit 254, ServerException: Service Unavailable)."
+  },
+  {
+    "command": "raws ecs list-tags-for-resource --region us-east-1",
+    "aws_command": "aws ecs list-tags-for-resource --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Missing-param error differs: AWS validates client-side (exit 252, ParamValidation: --resource-arn required), raws sends to server (exit 254, InvalidParameterException)."
+  },
+  {
+    "command": "raws ecs list-task-definition-families --region us-east-1",
+    "aws_command": "aws ecs list-task-definition-families --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs list-task-definitions --region us-east-1",
+    "aws_command": "aws ecs list-task-definitions --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs list-tasks --region us-east-1",
+    "aws_command": "aws ecs list-tasks --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs monitor-express-gateway-service --region us-east-1",
+    "aws_command": "aws ecs monitor-express-gateway-service --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "raws: 'Unknown operation monitor-express-gateway-service' (exit 2). AWS CLI: ParamValidation error requesting --service-arn (exit 252). This is a custom AWS CLI command not in the botocore model."
+  },
+  {
+    "command": "raws ecs put-account-setting --region us-east-1",
+    "aws_command": "aws ecs put-account-setting --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs put-account-setting-default --region us-east-1",
+    "aws_command": "aws ecs put-account-setting-default --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs put-attributes --region us-east-1",
+    "aws_command": "aws ecs put-attributes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs put-cluster-capacity-providers --region us-east-1",
+    "aws_command": "aws ecs put-cluster-capacity-providers --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs register-container-instance --region us-east-1",
+    "aws_command": "aws ecs register-container-instance --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs register-task-definition --region us-east-1",
+    "aws_command": "aws ecs register-task-definition --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs run-task --region us-east-1",
+    "aws_command": "aws ecs run-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognized. Missing-param error differs: AWS validates client-side (exit 252), raws sends to server (exit 254)."
+  },
+  {
+    "command": "raws ecs start-task --region us-east-1",
+    "aws_command": "aws ecs start-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs stop-service-deployment --region us-east-1",
+    "aws_command": "aws ecs stop-service-deployment --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs stop-task --region us-east-1",
+    "aws_command": "aws ecs stop-task --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs submit-attachment-state-changes --region us-east-1",
+    "aws_command": "aws ecs submit-attachment-state-changes --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs submit-container-state-change --region us-east-1",
+    "aws_command": "aws ecs submit-container-state-change --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs submit-task-state-change --region us-east-1",
+    "aws_command": "aws ecs submit-task-state-change --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs tag-resource --region us-east-1",
+    "aws_command": "aws ecs tag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs untag-resource --region us-east-1",
+    "aws_command": "aws ecs untag-resource --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-capacity-provider --region us-east-1",
+    "aws_command": "aws ecs update-capacity-provider --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-cluster --region us-east-1",
+    "aws_command": "aws ecs update-cluster --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-cluster-settings --region us-east-1",
+    "aws_command": "aws ecs update-cluster-settings --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-container-agent --region us-east-1",
+    "aws_command": "aws ecs update-container-agent --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-container-instances-state --region us-east-1",
+    "aws_command": "aws ecs update-container-instances-state --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-express-gateway-service --region us-east-1",
+    "aws_command": "aws ecs update-express-gateway-service --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-service --region us-east-1",
+    "aws_command": "aws ecs update-service --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-service-primary-task-set --region us-east-1",
+    "aws_command": "aws ecs update-service-primary-task-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-task-protection --region us-east-1",
+    "aws_command": "aws ecs update-task-protection --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs update-task-set --region us-east-1",
+    "aws_command": "aws ecs update-task-set --region us-east-1",
+    "category": "write",
+    "matches_aws_cli": null,
+    "tested": false,
+    "difference": null
+  },
+  {
+    "command": "raws ecs wait --region us-east-1",
+    "aws_command": "aws ecs wait --region us-east-1",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "Both recognize 'wait'. raws: 'Missing waiter name' (exit 2). AWS: 'too few arguments' (exit 252). Different error messages but both indicate wait is supported."
+  },
+  {
+    "command": "raws ecs list-clusters --region us-east-1 --output text",
+    "aws_command": "aws ecs list-clusters --region us-east-1 --output text",
+    "category": "read",
+    "matches_aws_cli": true,
+    "tested": true,
+    "difference": null
+  },
+  {
+    "command": "raws ecs list-clusters --region us-east-1 --output table",
+    "aws_command": "aws ecs list-clusters --region us-east-1 --output table",
+    "category": "read",
+    "matches_aws_cli": false,
+    "tested": true,
+    "difference": "AWS CLI shows table header 'ListClusters' with border even for empty list. raws shows nothing for empty list."
+  }
+]
