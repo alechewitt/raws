@@ -48,6 +48,10 @@ impl std::error::Error for RawsError {}
 pub enum CliExitError {
     /// AWS service error (API returned error) -> exit 254
     ServiceError(String),
+    /// No credentials available -> exit 253
+    NoCredentials(String),
+    /// Parameter validation error -> exit 252
+    ParamValidation(String),
     /// Usage/argument error (missing args, unknown service) -> exit 2
     Usage(String),
     /// Waiter failure or timeout -> exit 255
@@ -60,6 +64,8 @@ impl fmt::Display for CliExitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CliExitError::ServiceError(msg) => write!(f, "{msg}"),
+            CliExitError::NoCredentials(msg) => write!(f, "{msg}"),
+            CliExitError::ParamValidation(msg) => write!(f, "{msg}"),
             CliExitError::Usage(msg) => write!(f, "{msg}"),
             CliExitError::Waiter(msg) => write!(f, "{msg}"),
             CliExitError::ClientError(msg) => write!(f, "{msg}"),
@@ -73,26 +79,32 @@ impl std::error::Error for CliExitError {}
 ///
 /// Exit codes:
 /// - 0: success (not handled here)
-/// - 1: client error (HTTP 4xx)
 /// - 2: usage error (missing args, unknown service/operation)
 /// - 130: SIGINT (handled in main.rs)
-/// - 255: internal/server error, waiter failures
+/// - 252: parameter validation error
+/// - 253: no credentials available
+/// - 254: AWS service error (API returned error)
+/// - 255: internal/server error, waiter failures, other client errors
 pub fn classify_exit_code(err: &anyhow::Error) -> i32 {
     // 1. Check for explicit CliExitError
     if let Some(cli_err) = err.downcast_ref::<CliExitError>() {
         return match cli_err {
             CliExitError::ServiceError(_) => 254,
+            CliExitError::NoCredentials(_) => 253,
+            CliExitError::ParamValidation(_) => 252,
             CliExitError::Usage(_) => 2,
             CliExitError::Waiter(_) => 255,
             CliExitError::ClientError(_) => 255,
         };
     }
 
-    // 2. Check for RawsError::Service with HTTP status -> 254 (service error)
-    if err.downcast_ref::<RawsError>().is_some() {
-        if let Some(RawsError::Service { .. }) = err.downcast_ref::<RawsError>() {
-            return 254;
-        }
+    // 2. Check for RawsError variants
+    if let Some(raws_err) = err.downcast_ref::<RawsError>() {
+        return match raws_err {
+            RawsError::Service { .. } => 254,
+            RawsError::Credential(_) => 253,
+            _ => 255,
+        };
     }
 
     // 3. Message-based heuristic fallback
@@ -104,6 +116,9 @@ pub fn classify_exit_code(err: &anyhow::Error) -> i32 {
         || msg.contains("Service model not found")
     {
         return 2;
+    }
+    if msg.contains("Unable to locate credentials") {
+        return 253;
     }
     if msg.contains("Waiter") && (msg.contains("failed") || msg.contains("timed out")) {
         return 255;
@@ -140,9 +155,27 @@ mod tests {
     }
 
     #[test]
+    fn test_classify_no_credentials_error() {
+        let err = anyhow::Error::new(CliExitError::NoCredentials("Unable to locate credentials".into()));
+        assert_eq!(classify_exit_code(&err), 253);
+    }
+
+    #[test]
+    fn test_classify_param_validation_error() {
+        let err = anyhow::Error::new(CliExitError::ParamValidation("Missing required param".into()));
+        assert_eq!(classify_exit_code(&err), 252);
+    }
+
+    #[test]
     fn test_classify_client_error() {
         let err = anyhow::Error::new(CliExitError::ClientError("Internal".into()));
         assert_eq!(classify_exit_code(&err), 255);
+    }
+
+    #[test]
+    fn test_classify_raws_credential_error() {
+        let err = anyhow::Error::new(RawsError::Credential("No creds".into()));
+        assert_eq!(classify_exit_code(&err), 253);
     }
 
     #[test]
@@ -193,6 +226,12 @@ mod tests {
     fn test_classify_message_aws_error() {
         let err = anyhow::anyhow!("An error occurred (NoSuchBucket) when calling the GetObject operation: not found");
         assert_eq!(classify_exit_code(&err), 254);
+    }
+
+    #[test]
+    fn test_classify_message_unable_to_locate_credentials() {
+        let err = anyhow::anyhow!("Unable to locate credentials. You can configure credentials by running \"raws configure\".");
+        assert_eq!(classify_exit_code(&err), 253);
     }
 
     #[test]

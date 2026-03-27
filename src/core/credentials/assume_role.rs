@@ -132,44 +132,43 @@ impl AssumeRoleProvider {
         )
         .context("Failed to sign STS AssumeRole request")?;
 
-        // Build the reqwest request using the async client inside a new runtime.
-        // We cannot use reqwest::blocking because the feature is not enabled,
-        // and the CredentialProvider trait is sync, so we spin up a small runtime.
-        let rt = tokio::runtime::Runtime::new()
-            .context("Failed to create tokio runtime for STS call")?;
+        // Run the async HTTP request on the current tokio runtime.
+        // We use block_in_place + Handle::current().block_on() so this works
+        // correctly when called from inside the async main() context.
+        let response_body = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                let client = reqwest::Client::builder()
+                    .use_rustls_tls()
+                    .build()
+                    .context("Failed to build HTTP client for STS")?;
 
-        let response_body = rt.block_on(async {
-            let client = reqwest::Client::builder()
-                .use_rustls_tls()
-                .build()
-                .context("Failed to build HTTP client for STS")?;
+                let mut req_builder = client.post(endpoint);
+                for (k, v) in &headers {
+                    req_builder = req_builder.header(k, v);
+                }
+                req_builder = req_builder.body(body);
 
-            let mut req_builder = client.post(endpoint);
-            for (k, v) in &headers {
-                req_builder = req_builder.header(k, v);
-            }
-            req_builder = req_builder.body(body);
+                let resp = req_builder
+                    .send()
+                    .await
+                    .context("STS AssumeRole HTTP request failed")?;
 
-            let resp = req_builder
-                .send()
-                .await
-                .context("STS AssumeRole HTTP request failed")?;
+                let status = resp.status().as_u16();
+                let resp_body = resp
+                    .text()
+                    .await
+                    .context("Failed to read STS AssumeRole response body")?;
 
-            let status = resp.status().as_u16();
-            let resp_body = resp
-                .text()
-                .await
-                .context("Failed to read STS AssumeRole response body")?;
+                if !(200..300).contains(&status) {
+                    bail!(
+                        "STS AssumeRole failed with status {}: {}",
+                        status,
+                        resp_body
+                    );
+                }
 
-            if !(200..300).contains(&status) {
-                bail!(
-                    "STS AssumeRole failed with status {}: {}",
-                    status,
-                    resp_body
-                );
-            }
-
-            Ok::<String, anyhow::Error>(resp_body)
+                Ok::<String, anyhow::Error>(resp_body)
+            })
         })?;
 
         Ok(response_body)

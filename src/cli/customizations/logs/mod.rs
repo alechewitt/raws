@@ -69,9 +69,7 @@ async fn handle_tail(args: &GlobalArgs) -> Result<()> {
     // Resolve credentials
     let explicit_profile = args.profile.is_some();
     let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
-    let credentials = chain
-        .resolve()
-        .context("Failed to resolve AWS credentials")?;
+    let credentials = chain.resolve()?;
 
     if args.debug {
         eprintln!(

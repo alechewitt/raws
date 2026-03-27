@@ -16,7 +16,7 @@ async fn main() {
         Ok(()) => process::exit(0),
         Err(e) => {
             let code = crate::core::error::classify_exit_code(&e);
-            eprintln!("{e:#}");
+            eprintln!("raws: [ERROR]: {e:#}");
             process::exit(code);
         }
     }

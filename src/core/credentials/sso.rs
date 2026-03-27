@@ -266,10 +266,8 @@ fn get_role_credentials(config: &SsoConfig, token: &str) -> Result<Credentials> 
         config.sso_region
     );
 
-    let rt = tokio::runtime::Runtime::new()
-        .context("Failed to create tokio runtime for SSO GetRoleCredentials call")?;
-
-    let response_body = rt.block_on(async {
+    let response_body = tokio::task::block_in_place(|| {
+        tokio::runtime::Handle::current().block_on(async {
         let client = reqwest::Client::builder()
             .use_rustls_tls()
             .build()
@@ -301,6 +299,7 @@ fn get_role_credentials(config: &SsoConfig, token: &str) -> Result<Credentials> 
         }
 
         Ok::<String, anyhow::Error>(body)
+        })
     })?;
 
     parse_sso_credentials_response(&response_body)

@@ -6,9 +6,9 @@
     "verify": [
       { "run": "raws s3api get-bucket-versioning --bucket <bucket> --region us-east-1", "expect": "JSON output should omit null fields, matching AWS CLI behavior" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Systemic issue across all protocols. AWS CLI strips null values from JSON responses."]
+    "passes": true,
+    "affected_files": ["src/cli/formatter/json.rs", "src/cli/formatter/mod.rs"],
+    "notes": ["Found by validation agent. Systemic issue across all protocols. AWS CLI strips null values from JSON responses.", "Fixed: Added strip_nulls() that recursively removes null fields before formatting."]
   },
   {
     "id": "validation-systemic-error-prefix",
@@ -17,9 +17,9 @@
     "verify": [
       { "run": "raws ec2 describe-vpcs --no-sign-request --region us-east-1 2>&1", "expect": "Error should be prefixed with 'raws: [ERROR]: ' (or equivalent branding)" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Affects all error output across all services."]
+    "passes": true,
+    "affected_files": ["src/main.rs"],
+    "notes": ["Found by validation agent. Affects all error output across all services.", "Fixed: Changed error output to use 'raws: [ERROR]: ' prefix in main.rs."]
   },
   {
     "id": "validation-systemic-client-side-validation",
@@ -40,9 +40,9 @@
       { "run": "raws sts assume-role --region us-east-1 2>&1; echo $?", "expect": "Exit code 252 for missing params" },
       { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN raws sts get-caller-identity --region us-east-1 2>&1; echo $?", "expect": "Exit code 253 for no credentials" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Exit codes differ for parameter validation (raws: 255, aws: 252) and no-credentials (raws: 255, aws: 253)."]
+    "passes": true,
+    "affected_files": ["src/core/error.rs", "src/core/credentials/chain.rs"],
+    "notes": ["Found by validation agent. Exit codes differ for parameter validation (raws: 255, aws: 252) and no-credentials (raws: 255, aws: 253).", "Fixed: Added CliExitError variants for NoCredentials (253) and ParamValidation (252), updated classify_exit_code()."]
   },
   {
     "id": "validation-systemic-table-nested",
@@ -173,9 +173,9 @@
     "verify": [
       { "run": "env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN raws sts get-caller-identity --region us-east-1 2>&1; echo $?", "expect": "Should say 'Unable to locate credentials' with exit code 253" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent."]
+    "passes": true,
+    "affected_files": ["src/core/credentials/chain.rs", "src/core/error.rs"],
+    "notes": ["Found by validation agent.", "Fixed: Changed credential chain to emit CliExitError::NoCredentials with AWS CLI-matching message, exit code 253."]
   },
   {
     "id": "validation-auth-bad-profile-prefix",
@@ -184,9 +184,9 @@
     "verify": [
       { "run": "raws sts get-caller-identity --profile nonexistent-profile-xyz --region us-east-1 2>&1", "expect": "Error should be prefixed with 'raws: [ERROR]: ' or similar" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Related to the systemic error prefix issue."]
+    "passes": true,
+    "affected_files": ["src/main.rs"],
+    "notes": ["Found by validation agent. Related to the systemic error prefix issue.", "Fixed by the systemic error prefix fix in main.rs."]
   },
   {
     "id": "validation-s3-website-not-implemented",

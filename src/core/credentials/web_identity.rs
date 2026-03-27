@@ -135,7 +135,8 @@ impl CredentialProvider for WebIdentityTokenProvider {
         let (token_file, role_arn, session_name) = self.resolve_config()?;
         let token = Self::read_token_file(&token_file)?;
         let body = Self::build_request_body(&role_arn, &session_name, &token);
-        let xml = Self::call_sts(&body)?;
+        // Use block_in_place to allow reqwest::blocking inside the tokio async runtime.
+        let xml = tokio::task::block_in_place(|| Self::call_sts(&body))?;
         Self::parse_assume_role_response(&xml)
     }
 }

@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 
 use super::assume_role::AssumeRoleProvider;
 use super::env::EnvCredentialProvider;
@@ -8,6 +8,7 @@ use super::profile::ProfileCredentialProvider;
 use super::sso::SsoCredentialProvider;
 use super::web_identity::WebIdentityTokenProvider;
 use super::{CredentialProvider, Credentials};
+use crate::core::error::CliExitError;
 
 pub struct ChainCredentialProvider {
     providers: Vec<Box<dyn CredentialProvider>>,
@@ -27,7 +28,9 @@ impl CredentialProvider for ChainCredentialProvider {
                 Err(_) => continue,
             }
         }
-        bail!("No credentials found. Configure credentials via environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY), ~/.aws/credentials, or --profile")
+        Err(CliExitError::NoCredentials(
+            "Unable to locate credentials. You can configure credentials by running \"raws configure\".".to_string()
+        ).into())
     }
 }
 
@@ -71,7 +74,9 @@ mod tests {
     #[test]
     fn test_credential_chain_empty() {
         let chain = ChainCredentialProvider::new(vec![]);
-        assert!(chain.resolve().is_err());
+        let err = chain.resolve().unwrap_err();
+        let msg = format!("{err}");
+        assert!(msg.contains("Unable to locate credentials"), "expected 'Unable to locate credentials', got: {msg}");
     }
 
     #[test]
@@ -80,14 +85,24 @@ mod tests {
         struct FailingProvider;
         impl CredentialProvider for FailingProvider {
             fn resolve(&self) -> Result<Credentials> {
-                bail!("always fails")
+                anyhow::bail!("always fails")
             }
         }
         let chain = ChainCredentialProvider::new(vec![
             Box::new(FailingProvider),
             Box::new(FailingProvider),
         ]);
-        assert!(chain.resolve().is_err());
+        let err = chain.resolve().unwrap_err();
+        let msg = format!("{err}");
+        assert!(msg.contains("Unable to locate credentials"), "expected 'Unable to locate credentials', got: {msg}");
+    }
+
+    #[test]
+    fn test_credential_chain_no_creds_exit_code_253() {
+        let chain = ChainCredentialProvider::new(vec![]);
+        let err = chain.resolve().unwrap_err();
+        let code = crate::core::error::classify_exit_code(&err);
+        assert_eq!(code, 253, "no-credentials error should exit with 253");
     }
 
     #[test]
@@ -105,7 +120,7 @@ mod tests {
         struct FailingProvider;
         impl CredentialProvider for FailingProvider {
             fn resolve(&self) -> Result<Credentials> {
-                bail!("always fails")
+                anyhow::bail!("always fails")
             }
         }
         let chain = ChainCredentialProvider::new(vec![

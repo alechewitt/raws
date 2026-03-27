@@ -137,15 +137,20 @@ impl ImdsCredentialProvider {
 
 impl CredentialProvider for ImdsCredentialProvider {
     fn resolve(&self) -> Result<Credentials> {
-        let client = Self::build_client()?;
+        // Use block_in_place to allow reqwest::blocking inside the tokio async runtime.
+        // reqwest::blocking creates its own internal runtime which panics if called
+        // directly inside an async context.
+        tokio::task::block_in_place(|| {
+            let client = Self::build_client()?;
 
-        // Try ECS container credentials first
-        if std::env::var("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI").is_ok() {
-            return Self::try_ecs_container(&client);
-        }
+            // Try ECS container credentials first
+            if std::env::var("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI").is_ok() {
+                return Self::try_ecs_container(&client);
+            }
 
-        // Fall back to EC2 IMDSv2
-        Self::try_imdsv2(&client)
+            // Fall back to EC2 IMDSv2
+            Self::try_imdsv2(&client)
+        })
     }
 }
 

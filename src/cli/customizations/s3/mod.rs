@@ -137,7 +137,7 @@ fn build_s3_context(args: &GlobalArgs) -> Result<S3CommandContext> {
     } else {
         let explicit_profile = args.profile.is_some();
         let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
-        chain.resolve().context("Failed to resolve AWS credentials")?
+        chain.resolve()?
     };
 
     // 3. Resolve endpoint URL (with dualstack/FIPS variant support)

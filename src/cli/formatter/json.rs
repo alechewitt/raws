@@ -1,6 +1,28 @@
 use anyhow::{Context, Result};
 use serde_json::Value;
 
+/// Recursively strip null values from a JSON value.
+///
+/// AWS CLI omits null-valued fields from JSON output. For example,
+/// `get-bucket-versioning` on a bucket that has never had versioning enabled
+/// returns `{}` rather than `{"Status": null, "MFADelete": null}`.
+pub fn strip_nulls(value: &Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let filtered: serde_json::Map<String, Value> = map
+                .iter()
+                .filter(|(_, v)| !v.is_null())
+                .map(|(k, v)| (k.clone(), strip_nulls(v)))
+                .collect();
+            Value::Object(filtered)
+        }
+        Value::Array(arr) => {
+            Value::Array(arr.iter().map(strip_nulls).collect())
+        }
+        other => other.clone(),
+    }
+}
+
 /// Format JSON output with 4-space indentation, matching AWS CLI output.
 pub fn format_json(value: &Value) -> Result<String> {
     let mut buf = Vec::new();
@@ -81,5 +103,60 @@ mod tests {
         let value = serde_json::json!([]);
         let output = format_json(&value).unwrap();
         assert_eq!(output, "[]");
+    }
+
+    #[test]
+    fn test_strip_nulls_removes_null_fields() {
+        let value = serde_json::json!({"Status": null, "MFADelete": null});
+        let result = strip_nulls(&value);
+        assert_eq!(result, serde_json::json!({}));
+    }
+
+    #[test]
+    fn test_strip_nulls_preserves_non_null() {
+        let value = serde_json::json!({"Status": "Enabled", "MFADelete": null});
+        let result = strip_nulls(&value);
+        assert_eq!(result, serde_json::json!({"Status": "Enabled"}));
+    }
+
+    #[test]
+    fn test_strip_nulls_recursive() {
+        let value = serde_json::json!({
+            "Outer": {
+                "Keep": "yes",
+                "Drop": null,
+                "Inner": {
+                    "A": 1,
+                    "B": null
+                }
+            },
+            "TopNull": null
+        });
+        let result = strip_nulls(&value);
+        let expected = serde_json::json!({
+            "Outer": {
+                "Keep": "yes",
+                "Inner": {
+                    "A": 1
+                }
+            }
+        });
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_strip_nulls_in_arrays() {
+        // Nulls inside arrays are kept (they are array elements, not object fields)
+        let value = serde_json::json!([{"A": null, "B": 1}, {"C": null}]);
+        let result = strip_nulls(&value);
+        assert_eq!(result, serde_json::json!([{"B": 1}, {}]));
+    }
+
+    #[test]
+    fn test_strip_nulls_scalar_passthrough() {
+        assert_eq!(strip_nulls(&serde_json::json!(42)), serde_json::json!(42));
+        assert_eq!(strip_nulls(&serde_json::json!("hello")), serde_json::json!("hello"));
+        assert_eq!(strip_nulls(&serde_json::json!(true)), serde_json::json!(true));
+        assert_eq!(strip_nulls(&Value::Null), Value::Null);
     }
 }

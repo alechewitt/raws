@@ -239,8 +239,7 @@ pub async fn run() -> Result<()> {
     } else {
         let explicit_profile = args.profile.is_some();
         let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
-        let resolved = chain.resolve()
-            .context("Failed to resolve AWS credentials")?;
+        let resolved = chain.resolve()?;
         if args.debug {
             eprintln!("[debug] credentials resolved: access_key={}...", &resolved.access_key_id[..8.min(resolved.access_key_id.len())]);
         }
@@ -502,7 +501,7 @@ async fn handle_wait_command(
     } else {
         let explicit_profile = args.profile.is_some();
         let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
-        chain.resolve().context("Failed to resolve AWS credentials")?
+        chain.resolve()?
     };
 
     // Resolve endpoint
