@@ -18,7 +18,7 @@
   },
   "issues": {
     "1": { "total": 6, "passing": 6, "file": "issues-01.json", "description": "AWS CLI parity gaps: credential chain, --profile behavior, output defaults" },
-    "2": { "total": 18, "passing": 2, "file": "issues-02.json", "description": "Validation: global_options, authentication, sts, iam, s3api, ec2, dynamodb, lambda, kms, s3" },
+    "2": { "total": 18, "passing": 3, "file": "issues-02.json", "description": "Validation: global_options, authentication, sts, iam, s3api, ec2, dynamodb, lambda, kms, s3" },
     "3": { "total": 5, "passing": 0, "file": "issues-03.json", "description": "Validation: sns, sqs, cloudformation, ecs, rds" },
     "4": { "total": 9, "passing": 0, "file": "issues-04.json", "description": "Validation: cloudwatch, logs, secretsmanager, ssm, route53" },
     "5": { "total": 8, "passing": 0, "file": "issues-05.json", "description": "Validation: cloudfront, elasticache, elb, elbv2, autoscaling, apigateway, kinesis, stepfunctions, codebuild, codepipeline, ecr" }

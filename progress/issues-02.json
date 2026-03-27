@@ -107,9 +107,9 @@
     "verify": [
       { "run": "raws iam list-policies --scope Local --region us-east-1 2>&1", "expect": "Should return policies scoped to Local, not a SignatureDoesNotMatch error" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. This breaks many IAM commands that use optional filters."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. This breaks many IAM commands that use optional filters.", "Fixed: Root cause was --region after operation args captured as trailing var args. Added fixup_global_flags_in_trailing_args() and strip_global_flags() to properly handle global flags mixed with operation args."]
   },
   {
     "id": "validation-s3-redirect-handling",

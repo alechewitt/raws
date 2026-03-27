@@ -27,7 +27,14 @@ use crate::core::retry;
 use crate::core::waiter;
 
 pub async fn run() -> Result<()> {
-    let args = GlobalArgs::parse();
+    let mut args = GlobalArgs::parse();
+
+    // Fix global flags that leaked into operation args.  When a user writes
+    // `raws iam list-policies --scope Local --region us-east-1`, clap's
+    // trailing_var_arg mode captures `--region us-east-1` as operation args
+    // instead of recognizing them as global flags.  Extract them here and
+    // patch the GlobalArgs so region/profile/output/etc. take effect.
+    fixup_global_flags_in_trailing_args(&mut args);
 
     let service = match &args.service {
         Some(s) => s,
@@ -1788,25 +1795,204 @@ fn build_map_params(
     map_params
 }
 
+/// Global flags that take a value argument. When these leak into operation args
+/// (because clap's trailing_var_arg consumes them), we must strip both the flag
+/// and its following value.
+const GLOBAL_FLAGS_WITH_VALUE: &[&str] = &[
+    "--region",
+    "--profile",
+    "--output",
+    "--query",
+    "--endpoint-url",
+    "--cli-connect-timeout",
+    "--cli-read-timeout",
+];
+
+/// Global boolean flags (no value). Strip just the flag itself.
+const GLOBAL_BOOLEAN_FLAGS: &[&str] = &[
+    "--debug",
+    "--no-paginate",
+    "--use-dualstack-endpoint",
+    "--use-fips-endpoint",
+    "--no-sign-request",
+    "--no-verify-ssl",
+];
+
+/// Extract global flags from the trailing operation args and apply them to GlobalArgs.
+///
+/// When a user writes `raws iam list-policies --scope Local --region us-east-1`,
+/// clap's `trailing_var_arg` mode captures `--region us-east-1` as operation args
+/// instead of recognizing them as global flags. This function scans `args.args`,
+/// extracts any global flags, applies their values to the corresponding GlobalArgs
+/// fields (only if clap didn't already parse them), and removes them from `args.args`.
+fn fixup_global_flags_in_trailing_args(args: &mut GlobalArgs) {
+    let mut cleaned = Vec::new();
+    let mut i = 0;
+    let raw = &args.args;
+
+    while i < raw.len() {
+        let flag = raw[i].as_str();
+        match flag {
+            "--region" => {
+                if let Some(val) = raw.get(i + 1) {
+                    if args.region.is_none() {
+                        args.region = Some(val.clone());
+                    }
+                    i += 2;
+                } else {
+                    cleaned.push(raw[i].clone());
+                    i += 1;
+                }
+            }
+            "--profile" => {
+                if let Some(val) = raw.get(i + 1) {
+                    if args.profile.is_none() {
+                        args.profile = Some(val.clone());
+                    }
+                    i += 2;
+                } else {
+                    cleaned.push(raw[i].clone());
+                    i += 1;
+                }
+            }
+            "--output" => {
+                if let Some(val) = raw.get(i + 1) {
+                    if args.output.is_none() {
+                        args.output = Some(val.clone());
+                    }
+                    i += 2;
+                } else {
+                    cleaned.push(raw[i].clone());
+                    i += 1;
+                }
+            }
+            "--query" => {
+                if let Some(val) = raw.get(i + 1) {
+                    if args.query.is_none() {
+                        args.query = Some(val.clone());
+                    }
+                    i += 2;
+                } else {
+                    cleaned.push(raw[i].clone());
+                    i += 1;
+                }
+            }
+            "--endpoint-url" => {
+                if let Some(val) = raw.get(i + 1) {
+                    if args.endpoint_url.is_none() {
+                        args.endpoint_url = Some(val.clone());
+                    }
+                    i += 2;
+                } else {
+                    cleaned.push(raw[i].clone());
+                    i += 1;
+                }
+            }
+            "--cli-connect-timeout" => {
+                if let Some(val) = raw.get(i + 1) {
+                    if args.cli_connect_timeout.is_none() {
+                        args.cli_connect_timeout = val.parse().ok();
+                    }
+                    i += 2;
+                } else {
+                    cleaned.push(raw[i].clone());
+                    i += 1;
+                }
+            }
+            "--cli-read-timeout" => {
+                if let Some(val) = raw.get(i + 1) {
+                    if args.cli_read_timeout.is_none() {
+                        args.cli_read_timeout = val.parse().ok();
+                    }
+                    i += 2;
+                } else {
+                    cleaned.push(raw[i].clone());
+                    i += 1;
+                }
+            }
+            "--debug" => {
+                args.debug = true;
+                i += 1;
+            }
+            "--no-paginate" => {
+                args.no_paginate = true;
+                i += 1;
+            }
+            "--use-dualstack-endpoint" => {
+                args.use_dualstack_endpoint = true;
+                i += 1;
+            }
+            "--use-fips-endpoint" => {
+                args.use_fips_endpoint = true;
+                i += 1;
+            }
+            "--no-sign-request" => {
+                args.no_sign_request = true;
+                i += 1;
+            }
+            "--no-verify-ssl" => {
+                args.no_verify_ssl = true;
+                i += 1;
+            }
+            _ => {
+                cleaned.push(raw[i].clone());
+                i += 1;
+            }
+        }
+    }
+
+    args.args = cleaned;
+}
+
+/// Strip global CLI flags from an argument list.
+///
+/// Used by `parse_operation_args` as a safety net in case any global flags
+/// still remain after `fixup_global_flags_in_trailing_args` (e.g., when
+/// called from code paths that don't go through the main `run()` function).
+fn strip_global_flags(args: &[String]) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut i = 0;
+    while i < args.len() {
+        let arg = args[i].as_str();
+        if GLOBAL_FLAGS_WITH_VALUE.contains(&arg) {
+            // Skip this flag and its value
+            i += 2;
+        } else if GLOBAL_BOOLEAN_FLAGS.contains(&arg) {
+            // Skip this flag only
+            i += 1;
+        } else {
+            result.push(args[i].clone());
+            i += 1;
+        }
+    }
+    result
+}
+
 fn parse_operation_args(
     args: &[String],
     list_params: &std::collections::HashSet<String>,
     map_params: &std::collections::HashSet<String>,
 ) -> Result<serde_json::Value> {
+    // 0. Strip global flags that leaked into operation args.
+    //    This happens when a global flag (e.g., --region us-east-1) appears after
+    //    operation-specific arguments: clap's trailing_var_arg consumes them as
+    //    operation args instead of recognizing them as global flags.
+    let filtered_args = strip_global_flags(args);
+
     // 1. Scan for --cli-input-json and extract its value, collecting remaining args
     let mut remaining_args: Vec<&String> = Vec::new();
     let mut cli_input_json_value: Option<&String> = None;
     let mut i = 0;
-    while i < args.len() {
-        if args[i] == "--cli-input-json" {
-            if i + 1 < args.len() {
-                cli_input_json_value = Some(&args[i + 1]);
+    while i < filtered_args.len() {
+        if filtered_args[i] == "--cli-input-json" {
+            if i + 1 < filtered_args.len() {
+                cli_input_json_value = Some(&filtered_args[i + 1]);
                 i += 2;
             } else {
                 bail!("--cli-input-json requires a value (inline JSON or file://path)");
             }
         } else {
-            remaining_args.push(&args[i]);
+            remaining_args.push(&filtered_args[i]);
             i += 1;
         }
     }
@@ -2985,5 +3171,265 @@ mod tests {
 
         apply_output_customizations("sts", "decode-authorization-message", &mut response, "", &empty_shapes());
         assert_eq!(response, original);
+    }
+
+    // ---------------------------------------------------------------
+    // fixup_global_flags_in_trailing_args tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_fixup_global_flags_region_in_trailing_args() {
+        // Simulates: raws iam list-policies --scope Local --region us-east-1
+        let mut args = GlobalArgs {
+            region: None,
+            profile: None,
+            output: None,
+            debug: false,
+            no_paginate: false,
+            use_dualstack_endpoint: false,
+            use_fips_endpoint: false,
+            query: None,
+            endpoint_url: None,
+            cli_connect_timeout: None,
+            cli_read_timeout: None,
+            no_sign_request: false,
+            no_verify_ssl: false,
+            service: Some("iam".to_string()),
+            operation: Some("list-policies".to_string()),
+            args: vec![
+                "--scope".to_string(),
+                "Local".to_string(),
+                "--region".to_string(),
+                "us-east-1".to_string(),
+            ],
+        };
+        fixup_global_flags_in_trailing_args(&mut args);
+        assert_eq!(args.region, Some("us-east-1".to_string()));
+        assert_eq!(args.args, vec!["--scope", "Local"]);
+    }
+
+    #[test]
+    fn test_fixup_global_flags_debug_in_trailing_args() {
+        // Simulates: raws iam list-policies --scope Local --debug
+        let mut args = GlobalArgs {
+            region: None,
+            profile: None,
+            output: None,
+            debug: false,
+            no_paginate: false,
+            use_dualstack_endpoint: false,
+            use_fips_endpoint: false,
+            query: None,
+            endpoint_url: None,
+            cli_connect_timeout: None,
+            cli_read_timeout: None,
+            no_sign_request: false,
+            no_verify_ssl: false,
+            service: Some("iam".to_string()),
+            operation: Some("list-policies".to_string()),
+            args: vec![
+                "--scope".to_string(),
+                "Local".to_string(),
+                "--debug".to_string(),
+            ],
+        };
+        fixup_global_flags_in_trailing_args(&mut args);
+        assert!(args.debug);
+        assert_eq!(args.args, vec!["--scope", "Local"]);
+    }
+
+    #[test]
+    fn test_fixup_global_flags_multiple_in_trailing_args() {
+        // Simulates: raws iam list-policies --scope Local --region us-east-1 --debug --output text
+        let mut args = GlobalArgs {
+            region: None,
+            profile: None,
+            output: None,
+            debug: false,
+            no_paginate: false,
+            use_dualstack_endpoint: false,
+            use_fips_endpoint: false,
+            query: None,
+            endpoint_url: None,
+            cli_connect_timeout: None,
+            cli_read_timeout: None,
+            no_sign_request: false,
+            no_verify_ssl: false,
+            service: Some("iam".to_string()),
+            operation: Some("list-policies".to_string()),
+            args: vec![
+                "--scope".to_string(),
+                "Local".to_string(),
+                "--region".to_string(),
+                "us-east-1".to_string(),
+                "--debug".to_string(),
+                "--output".to_string(),
+                "text".to_string(),
+            ],
+        };
+        fixup_global_flags_in_trailing_args(&mut args);
+        assert_eq!(args.region, Some("us-east-1".to_string()));
+        assert!(args.debug);
+        assert_eq!(args.output, Some("text".to_string()));
+        assert_eq!(args.args, vec!["--scope", "Local"]);
+    }
+
+    #[test]
+    fn test_fixup_global_flags_no_override_when_clap_parsed() {
+        // If clap already parsed --region, the trailing --region should not override it
+        let mut args = GlobalArgs {
+            region: Some("eu-west-1".to_string()),
+            profile: None,
+            output: None,
+            debug: false,
+            no_paginate: false,
+            use_dualstack_endpoint: false,
+            use_fips_endpoint: false,
+            query: None,
+            endpoint_url: None,
+            cli_connect_timeout: None,
+            cli_read_timeout: None,
+            no_sign_request: false,
+            no_verify_ssl: false,
+            service: Some("iam".to_string()),
+            operation: Some("list-policies".to_string()),
+            args: vec![
+                "--scope".to_string(),
+                "Local".to_string(),
+                "--region".to_string(),
+                "us-east-1".to_string(),
+            ],
+        };
+        fixup_global_flags_in_trailing_args(&mut args);
+        // clap-parsed value should be preserved
+        assert_eq!(args.region, Some("eu-west-1".to_string()));
+        assert_eq!(args.args, vec!["--scope", "Local"]);
+    }
+
+    #[test]
+    fn test_fixup_global_flags_no_trailing_globals() {
+        // No global flags in trailing args: should be unchanged
+        let mut args = GlobalArgs {
+            region: Some("us-east-1".to_string()),
+            profile: None,
+            output: None,
+            debug: false,
+            no_paginate: false,
+            use_dualstack_endpoint: false,
+            use_fips_endpoint: false,
+            query: None,
+            endpoint_url: None,
+            cli_connect_timeout: None,
+            cli_read_timeout: None,
+            no_sign_request: false,
+            no_verify_ssl: false,
+            service: Some("iam".to_string()),
+            operation: Some("list-policies".to_string()),
+            args: vec![
+                "--scope".to_string(),
+                "Local".to_string(),
+            ],
+        };
+        fixup_global_flags_in_trailing_args(&mut args);
+        assert_eq!(args.region, Some("us-east-1".to_string()));
+        assert_eq!(args.args, vec!["--scope", "Local"]);
+    }
+
+    #[test]
+    fn test_fixup_global_flags_empty_args() {
+        let mut args = GlobalArgs {
+            region: None,
+            profile: None,
+            output: None,
+            debug: false,
+            no_paginate: false,
+            use_dualstack_endpoint: false,
+            use_fips_endpoint: false,
+            query: None,
+            endpoint_url: None,
+            cli_connect_timeout: None,
+            cli_read_timeout: None,
+            no_sign_request: false,
+            no_verify_ssl: false,
+            service: Some("sts".to_string()),
+            operation: Some("get-caller-identity".to_string()),
+            args: vec![],
+        };
+        fixup_global_flags_in_trailing_args(&mut args);
+        assert!(args.args.is_empty());
+    }
+
+    // ---------------------------------------------------------------
+    // strip_global_flags tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_strip_global_flags_region() {
+        let args = vec![
+            "--scope".to_string(),
+            "Local".to_string(),
+            "--region".to_string(),
+            "us-east-1".to_string(),
+        ];
+        let result = strip_global_flags(&args);
+        assert_eq!(result, vec!["--scope", "Local"]);
+    }
+
+    #[test]
+    fn test_strip_global_flags_boolean() {
+        let args = vec![
+            "--scope".to_string(),
+            "Local".to_string(),
+            "--debug".to_string(),
+        ];
+        let result = strip_global_flags(&args);
+        assert_eq!(result, vec!["--scope", "Local"]);
+    }
+
+    #[test]
+    fn test_strip_global_flags_no_globals() {
+        let args = vec![
+            "--scope".to_string(),
+            "Local".to_string(),
+            "--path-prefix".to_string(),
+            "/".to_string(),
+        ];
+        let result = strip_global_flags(&args);
+        assert_eq!(result, vec!["--scope", "Local", "--path-prefix", "/"]);
+    }
+
+    #[test]
+    fn test_strip_global_flags_empty() {
+        let args: Vec<String> = vec![];
+        let result = strip_global_flags(&args);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_parse_operation_args_strips_global_flags() {
+        // Ensure parse_operation_args filters out leaked global flags
+        let args = vec![
+            "--scope".to_string(),
+            "Local".to_string(),
+            "--region".to_string(),
+            "us-east-1".to_string(),
+        ];
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        assert_eq!(result["Scope"].as_str(), Some("Local"));
+        // --region should NOT appear as a "Region" key
+        assert!(result.get("Region").is_none());
+    }
+
+    #[test]
+    fn test_parse_operation_args_strips_debug_flag() {
+        let args = vec![
+            "--scope".to_string(),
+            "Local".to_string(),
+            "--debug".to_string(),
+        ];
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        assert_eq!(result["Scope"].as_str(), Some("Local"));
+        // --debug should NOT appear as "Debug: true"
+        assert!(result.get("Debug").is_none());
     }
 }
