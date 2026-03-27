@@ -96,8 +96,8 @@
     "verify": [
       { "run": "raws ssm list-documents --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return DocumentIdentifiers list, not empty output" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Other SSM list commands work correctly."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Other SSM list commands work correctly.", "Fixed by earlier fixes (model-aware arg parsing, global flags trailing args fix)."]
   }
 ]

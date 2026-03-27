@@ -11,6 +11,7 @@ use crate::cli::customizations::s3 as s3_commands;
 use crate::cli::formatter;
 use crate::cli::jmespath;
 use crate::core::auth::sigv4::{self, SigningParams};
+use crate::core::error::CliExitError;
 use crate::core::config::provider::ConfigProvider;
 use crate::core::credentials::chain::build_credential_chain;
 use crate::core::credentials::CredentialProvider;
@@ -224,6 +225,9 @@ pub async fn run() -> Result<()> {
 
     // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
     apply_route53_customizations(model_service, &mut input);
+
+    // Validate required parameters are present (client-side, before making API call)
+    validate_required_params(service, operation, op.input_shape.as_deref(), &input, &service_model.shapes)?;
 
     if args.debug {
         eprintln!("[debug] input: {input}");
@@ -1897,6 +1901,58 @@ fn generate_skeleton_inner(
         }
         _ => serde_json::Value::String(String::new()),
     }
+}
+
+/// Validate that all required parameters for an operation are present in the input.
+///
+/// Reads the `"required"` list from the operation's input shape in the model and
+/// checks that each required member exists in the parsed input JSON.  If any are
+/// missing, returns a `CliExitError::ParamValidation` (exit code 252) with a
+/// message matching the AWS CLI format.
+fn validate_required_params(
+    service: &str,
+    operation: &str,
+    input_shape: Option<&str>,
+    input: &serde_json::Value,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) -> Result<()> {
+    let shape_name = match input_shape {
+        Some(s) => s,
+        None => return Ok(()),
+    };
+    let shape = match shapes.get(shape_name) {
+        Some(s) => s,
+        None => return Ok(()),
+    };
+    let required = match shape.get("required").and_then(|r| r.as_array()) {
+        Some(r) => r,
+        None => return Ok(()),
+    };
+    let input_obj = input.as_object();
+
+    let mut missing: Vec<String> = Vec::new();
+    for req in required {
+        if let Some(member_name) = req.as_str() {
+            let present = input_obj
+                .map(|obj| obj.contains_key(member_name))
+                .unwrap_or(false);
+            if !present {
+                missing.push(format!("--{}", model::pascal_to_kebab(member_name)));
+            }
+        }
+    }
+
+    if !missing.is_empty() {
+        let msg = format!(
+            "usage: raws {} {}\nthe following arguments are required: {}",
+            service,
+            operation,
+            missing.join(", ")
+        );
+        return Err(CliExitError::ParamValidation(msg).into());
+    }
+
+    Ok(())
 }
 
 /// Build a mapping from kebab-case CLI argument names to the actual model member names.
@@ -3981,5 +4037,105 @@ mod tests {
         let mut input = serde_json::json!({});
         fill_idempotency_tokens(&mut input, None, &shapes).unwrap();
         assert_eq!(input, serde_json::json!({}));
+    }
+
+    // ---------------------------------------------------------------
+    // validate_required_params tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_validate_required_params_all_present() {
+        let shapes = test_shapes();
+        let input = serde_json::json!({"UserName": "alice"});
+        let result = validate_required_params("iam", "create-user", Some("CreateUserRequest"), &input, &shapes);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_required_params_missing_one() {
+        let shapes = test_shapes();
+        let input = serde_json::json!({});
+        let err = validate_required_params("iam", "create-user", Some("CreateUserRequest"), &input, &shapes).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("the following arguments are required: --user-name"), "Expected missing --user-name, got: {msg}");
+        assert!(msg.contains("usage: raws iam create-user"), "Expected usage line, got: {msg}");
+
+        // Verify exit code classification
+        let code = crate::core::error::classify_exit_code(&err);
+        assert_eq!(code, 252, "Missing required param should exit with 252");
+    }
+
+    #[test]
+    fn test_validate_required_params_missing_multiple() {
+        let shapes: std::collections::HashMap<String, serde_json::Value> =
+            serde_json::from_str(r#"{
+                "AssumeRoleRequest": {
+                    "type": "structure",
+                    "required": ["RoleArn", "RoleSessionName"],
+                    "members": {
+                        "RoleArn": { "shape": "arnType" },
+                        "RoleSessionName": { "shape": "sessionNameType" },
+                        "DurationSeconds": { "shape": "intType" }
+                    }
+                },
+                "arnType": { "type": "string" },
+                "sessionNameType": { "type": "string" },
+                "intType": { "type": "integer" }
+            }"#).unwrap();
+        let input = serde_json::json!({});
+        let err = validate_required_params("sts", "assume-role", Some("AssumeRoleRequest"), &input, &shapes).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("--role-arn"), "Expected --role-arn in message, got: {msg}");
+        assert!(msg.contains("--role-session-name"), "Expected --role-session-name in message, got: {msg}");
+        assert!(msg.contains("usage: raws sts assume-role"), "Expected usage line, got: {msg}");
+    }
+
+    #[test]
+    fn test_validate_required_params_no_required_list() {
+        let shapes = test_shapes();
+        let input = serde_json::json!({});
+        // GetCallerIdentityRequest has no "required" field
+        let result = validate_required_params("sts", "get-caller-identity", Some("GetCallerIdentityRequest"), &input, &shapes);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_required_params_no_input_shape() {
+        let shapes = test_shapes();
+        let input = serde_json::json!({});
+        let result = validate_required_params("sts", "get-caller-identity", None, &input, &shapes);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_required_params_unknown_shape() {
+        let shapes = test_shapes();
+        let input = serde_json::json!({});
+        let result = validate_required_params("sts", "op", Some("NonExistentShape"), &input, &shapes);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_validate_required_params_partial_present() {
+        // Only one of two required params is provided
+        let shapes: std::collections::HashMap<String, serde_json::Value> =
+            serde_json::from_str(r#"{
+                "TestRequest": {
+                    "type": "structure",
+                    "required": ["ParamA", "ParamB"],
+                    "members": {
+                        "ParamA": { "shape": "StringType" },
+                        "ParamB": { "shape": "StringType" },
+                        "OptionalC": { "shape": "StringType" }
+                    }
+                },
+                "StringType": { "type": "string" }
+            }"#).unwrap();
+        let input = serde_json::json!({"ParamA": "value"});
+        let err = validate_required_params("svc", "test-op", Some("TestRequest"), &input, &shapes).unwrap_err();
+        let msg = err.to_string();
+        assert!(msg.contains("--param-b"), "Expected --param-b in message, got: {msg}");
+        assert!(!msg.contains("--param-a"), "Should NOT mention --param-a (it was provided), got: {msg}");
+        assert!(!msg.contains("--optional-c"), "Should NOT mention --optional-c (it is not required), got: {msg}");
     }
 }

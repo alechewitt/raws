@@ -28,9 +28,9 @@
     "verify": [
       { "run": "raws sts assume-role --region us-east-1 2>&1; echo $?", "expect": "Should show 'the following arguments are required: --role-arn, --role-session-name' with exit code 252" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. This is the single largest source of test failures across all services. AWS CLI validates required params before making API calls."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. This is the single largest source of test failures across all services. AWS CLI validates required params before making API calls.", "Fixed: Added validate_required_params() that checks model required fields before making API calls."]
   },
   {
     "id": "validation-systemic-exit-codes",
