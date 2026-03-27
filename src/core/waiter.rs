@@ -209,6 +209,7 @@ pub fn format_timeout_message(waiter_cli_name: &str, max_attempts: u32) -> Strin
 /// Load waiter definitions from waiters-2.json in the given service version directory.
 ///
 /// Returns an empty map if the file does not exist.
+#[allow(dead_code)]
 pub fn load_waiters(service_version_dir: &Path) -> Result<HashMap<String, WaiterConfig>> {
     let waiters_path = service_version_dir.join("waiters-2.json");
     if !waiters_path.exists() {

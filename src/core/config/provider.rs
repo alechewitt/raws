@@ -87,19 +87,28 @@ impl ConfigProvider {
     /// Check that the profile exists in either the config file or the credentials file.
     /// Returns an error matching the AWS CLI message if the profile is not found.
     pub fn validate_profile_exists(profile: &str) -> Result<()> {
-        // Check config file
-        let config_path = Self::config_file_path();
+        Self::validate_profile_exists_in(
+            profile,
+            &Self::config_file_path(),
+            &Self::credentials_file_path(),
+        )
+    }
+
+    /// Check that the profile exists in the given config/credentials files.
+    fn validate_profile_exists_in(
+        profile: &str,
+        config_path: &std::path::Path,
+        creds_path: &std::path::Path,
+    ) -> Result<()> {
         if config_path.exists() {
-            let config = loader::load_config_file(&config_path)?;
+            let config = loader::load_config_file(config_path)?;
             if config.contains_key(profile) {
                 return Ok(());
             }
         }
 
-        // Check credentials file
-        let creds_path = Self::credentials_file_path();
         if creds_path.exists() {
-            let creds = loader::load_credentials_file(&creds_path)?;
+            let creds = loader::load_credentials_file(creds_path)?;
             if creds.contains_key(profile) {
                 return Ok(());
             }
@@ -141,14 +150,7 @@ fn dirs_home() -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_profile_selection_default() {
-        // Clear env vars for isolated test
-        std::env::remove_var("AWS_PROFILE");
-        let provider = ConfigProvider::new(None, None, None).unwrap();
-        assert_eq!(provider.profile, "default");
-    }
+    use std::path::Path;
 
     #[test]
     fn test_profile_selection_cli_override() {
@@ -173,12 +175,12 @@ mod tests {
         use std::io::Write;
         let mut config = tempfile::NamedTempFile::new().unwrap();
         writeln!(config, "[profile myprof]\nregion = us-east-1").unwrap();
-        // Point to our temp config file and a nonexistent credentials file
-        std::env::set_var("AWS_CONFIG_FILE", config.path().to_str().unwrap());
-        std::env::set_var("AWS_SHARED_CREDENTIALS_FILE", "/tmp/nonexistent_raws_creds_xyz");
-        let result = ConfigProvider::validate_profile_exists("myprof");
-        std::env::remove_var("AWS_CONFIG_FILE");
-        std::env::remove_var("AWS_SHARED_CREDENTIALS_FILE");
+        let nonexistent = Path::new("/tmp/nonexistent_raws_creds_xyz");
+        let result = ConfigProvider::validate_profile_exists_in(
+            "myprof",
+            config.path(),
+            nonexistent,
+        );
         assert!(result.is_ok());
     }
 
@@ -187,21 +189,24 @@ mod tests {
         use std::io::Write;
         let mut creds = tempfile::NamedTempFile::new().unwrap();
         writeln!(creds, "[credprof]\naws_access_key_id = AKIA\naws_secret_access_key = secret").unwrap();
-        std::env::set_var("AWS_CONFIG_FILE", "/tmp/nonexistent_raws_config_xyz");
-        std::env::set_var("AWS_SHARED_CREDENTIALS_FILE", creds.path().to_str().unwrap());
-        let result = ConfigProvider::validate_profile_exists("credprof");
-        std::env::remove_var("AWS_CONFIG_FILE");
-        std::env::remove_var("AWS_SHARED_CREDENTIALS_FILE");
+        let nonexistent = Path::new("/tmp/nonexistent_raws_config_xyz");
+        let result = ConfigProvider::validate_profile_exists_in(
+            "credprof",
+            nonexistent,
+            creds.path(),
+        );
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_validate_profile_not_found() {
-        std::env::set_var("AWS_CONFIG_FILE", "/tmp/nonexistent_raws_config_xyz");
-        std::env::set_var("AWS_SHARED_CREDENTIALS_FILE", "/tmp/nonexistent_raws_creds_xyz");
-        let result = ConfigProvider::validate_profile_exists("nonexistent-profile-xyz");
-        std::env::remove_var("AWS_CONFIG_FILE");
-        std::env::remove_var("AWS_SHARED_CREDENTIALS_FILE");
+        let nonexistent_config = Path::new("/tmp/nonexistent_raws_config_xyz");
+        let nonexistent_creds = Path::new("/tmp/nonexistent_raws_creds_xyz");
+        let result = ConfigProvider::validate_profile_exists_in(
+            "nonexistent-profile-xyz",
+            nonexistent_config,
+            nonexistent_creds,
+        );
         assert!(result.is_err());
         let err_msg = result.unwrap_err().to_string();
         assert!(

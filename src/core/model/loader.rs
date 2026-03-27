@@ -5,6 +5,7 @@ use std::path::Path;
 
 use super::{Operation, ServiceMetadata, ServiceModel};
 
+#[allow(dead_code)]
 pub fn load_service_model(path: &Path) -> Result<ServiceModel> {
     let content = std::fs::read_to_string(path)
         .with_context(|| format!("Failed to read service model: {}", path.display()))?;

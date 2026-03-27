@@ -4,10 +4,13 @@ use serde_json::Value;
 use std::path::Path;
 use std::sync::OnceLock;
 
+use crate::core::model::store;
+
 /// Cached parsed endpoints.json data, loaded once on first use.
 static ENDPOINTS_DATA: OnceLock<Value> = OnceLock::new();
 
-/// Load and parse models/endpoints.json, returning the parsed JSON.
+/// Load and parse an endpoints.json file from a filesystem path.
+#[allow(dead_code)]
 pub fn load_endpoints(path: &Path) -> Result<Value> {
     let content = std::fs::read_to_string(path)
         .with_context(|| format!("Failed to read endpoints file: {}", path.display()))?;
@@ -16,14 +19,14 @@ pub fn load_endpoints(path: &Path) -> Result<Value> {
     Ok(data)
 }
 
-/// Get the cached endpoints data, loading from disk on first call.
+/// Get the cached endpoints data, loading from embedded data or disk on first call.
 fn get_endpoints_data() -> Result<&'static Value> {
     if let Some(data) = ENDPOINTS_DATA.get() {
         return Ok(data);
     }
-    let path = Path::new("models/endpoints.json");
-    let data = load_endpoints(path)?;
-    // If another thread raced us, that's fine -- just use whoever won.
+    let content = store::get_endpoints_str()?;
+    let data: Value = serde_json::from_str(&content)
+        .context("Failed to parse endpoints JSON")?;
     Ok(ENDPOINTS_DATA.get_or_init(|| data))
 }
 

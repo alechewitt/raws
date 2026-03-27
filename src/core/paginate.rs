@@ -28,6 +28,7 @@ pub struct PaginatorConfig {
 ///
 /// The `service_version_dir` should point to the directory containing service-2.json
 /// (e.g., models/dynamodb/2012-08-10/).
+#[allow(dead_code)]
 pub fn load_paginators(service_version_dir: &Path) -> Result<HashMap<String, PaginatorConfig>> {
     let paginators_path = service_version_dir.join("paginators-1.json");
     if !paginators_path.exists() {

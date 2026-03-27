@@ -1,6 +1,5 @@
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use std::path::Path;
 
 use crate::cli::args::GlobalArgs;
 use crate::cli::commands::configure;
@@ -123,15 +122,10 @@ pub async fn run() -> Result<()> {
     // Load the service model early so help commands work without region/credentials.
     // Map CLI service names to model directory names (e.g., s3api -> s3)
     let model_service = resolve_service_name(service);
-    let models_dir = Path::new("models").join(model_service);
-    let model_path = loader::find_service_model(&models_dir)
-        .ok_or_else(|| anyhow::anyhow!(
-            "Service model not found for '{}'. Check that models/{} exists.",
-            service, model_service
-        ))?;
-
-    let service_model = loader::load_service_model(&model_path)
+    let model_str = model::store::get_service_model_str(model_service)
         .with_context(|| format!("Failed to load service model for '{}'", service))?;
+    let service_model = loader::parse_service_model(&model_str)
+        .with_context(|| format!("Failed to parse service model for '{}'", service))?;
 
     // Handle "raws <service> help": list all operations for this service
     if operation == "help" {
@@ -141,7 +135,7 @@ pub async fn run() -> Result<()> {
 
     // Handle "raws <service> wait <waiter-name> [--params...]"
     if operation == "wait" {
-        return handle_wait_command(service, &args, &model_path, &service_model).await;
+        return handle_wait_command(service, &args, model_service, &service_model).await;
     }
 
     // Find the operation (convert kebab-case CLI name to PascalCase)
@@ -272,10 +266,10 @@ pub async fn run() -> Result<()> {
 
     // 7. Load paginator config for possible auto-pagination
     let paginator_config = if !args.no_paginate {
-        // model_path points to service-2.json; paginators-1.json is in the same directory
-        let service_version_dir = model_path.parent().unwrap_or_else(|| Path::new("."));
-        let paginators = paginate::load_paginators(service_version_dir)
-            .unwrap_or_default();
+        let paginators = match model::store::get_paginators_str(model_service) {
+            Some(content) => paginate::parse_paginators(&content).unwrap_or_default(),
+            None => std::collections::HashMap::new(),
+        };
         paginators.get(&operation_name).cloned()
     } else {
         None
@@ -426,7 +420,7 @@ pub async fn run() -> Result<()> {
 async fn handle_wait_command(
     service: &str,
     args: &GlobalArgs,
-    model_path: &Path,
+    model_service: &str,
     service_model: &model::ServiceModel,
 ) -> Result<()> {
     // First arg is the waiter name, rest are operation params
@@ -437,9 +431,11 @@ async fn handle_wait_command(
     let remaining_args: Vec<String> = args.args[1..].to_vec();
 
     // Load waiters
-    let service_version_dir = model_path.parent().unwrap_or_else(|| Path::new("."));
-    let waiters = waiter::load_waiters(service_version_dir)
-        .with_context(|| format!("Failed to load waiters for service '{service}'"))?;
+    let waiters = match model::store::get_waiters_str(model_service) {
+        Some(content) => waiter::parse_waiters(&content)
+            .with_context(|| format!("Failed to load waiters for service '{service}'"))?,
+        None => std::collections::HashMap::new(),
+    };
 
     if waiters.is_empty() {
         bail!("Service '{service}' has no waiters defined.");
@@ -1400,8 +1396,7 @@ fn print_service_help() {
     println!("raws - AWS CLI reimplementation in Rust\n");
     println!("Usage: raws <service> <operation> [--params...]\n");
 
-    let models_dir = std::path::Path::new("models");
-    match loader::discover_services(models_dir) {
+    match model::store::discover_services() {
         Ok(services) if !services.is_empty() => {
             println!("Available services ({}):\n", services.len());
             // Print in columns for readability

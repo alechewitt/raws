@@ -1,4 +1,7 @@
+#[cfg(feature = "embed-models")]
+pub mod embedded;
 pub mod loader;
+pub mod store;
 
 use heck::ToKebabCase;
 use serde_json::Value;

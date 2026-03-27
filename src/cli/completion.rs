@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 
-use crate::core::model::{loader, pascal_to_kebab};
+use crate::core::model::{loader, pascal_to_kebab, store};
 
 /// Global flags shared across all shell completion scripts.
 const GLOBAL_FLAGS: &[&str] = &[
@@ -31,36 +31,12 @@ pub fn generate_completion(shell: &str) -> Result<String> {
     }
 }
 
-/// Resolve the models directory path.
+/// List available services.
 ///
-/// Checks, in order:
-/// 1. The `RAWS_MODELS_DIR` environment variable
-/// 2. A `models/` directory next to the current executable
-/// 3. `models/` in the current working directory (fallback)
-fn resolve_models_dir() -> std::path::PathBuf {
-    if let Ok(dir) = std::env::var("RAWS_MODELS_DIR") {
-        return std::path::PathBuf::from(dir);
-    }
-
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(parent) = exe.parent() {
-            let candidate = parent.join("models");
-            if candidate.is_dir() {
-                return candidate;
-            }
-        }
-    }
-
-    std::path::PathBuf::from("models")
-}
-
-/// List available service directories from the models directory.
-///
-/// Returns an empty `Vec` (rather than an error) when the models directory
-/// does not exist, so callers can degrade gracefully.
+/// Returns an empty `Vec` (rather than an error) when no models are available,
+/// so callers can degrade gracefully.
 pub fn list_services() -> Vec<String> {
-    let models_dir = resolve_models_dir();
-    loader::discover_services(&models_dir).unwrap_or_default()
+    store::discover_services().unwrap_or_default()
 }
 
 /// List operations for a given service in kebab-case CLI form.
@@ -68,15 +44,12 @@ pub fn list_services() -> Vec<String> {
 /// Returns an empty `Vec` when the service is unknown or its model cannot be
 /// loaded, so callers can degrade gracefully.
 pub fn list_operations(service: &str) -> Vec<String> {
-    let models_dir = resolve_models_dir();
-    let service_dir = models_dir.join(service);
-
-    let model_path = match loader::find_service_model(&service_dir) {
-        Some(p) => p,
-        None => return Vec::new(),
+    let model_str = match store::get_service_model_str(service) {
+        Ok(s) => s,
+        Err(_) => return Vec::new(),
     };
 
-    let model = match loader::load_service_model(&model_path) {
+    let model = match loader::parse_service_model(&model_str) {
         Ok(m) => m,
         Err(_) => return Vec::new(),
     };
