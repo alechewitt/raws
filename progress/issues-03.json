@@ -7,9 +7,9 @@
       { "run": "raws sqs list-queues --region us-east-1 --output json 2>&1", "expect": "This works - returns queue URLs" },
       { "run": "raws sqs get-queue-url --queue-name <existing-queue> --region us-east-1 2>&1", "expect": "Should return QueueUrl, not QueueDoesNotExist" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. SQS uses JSON protocol. The request body is being sent empty despite parameters being provided on the command line."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. SQS uses JSON protocol. The request body is being sent empty despite parameters being provided on the command line.", "Fixed by build_member_name_map() - same root cause as validation-json-protocol-params-not-serialized in issues-04."]
   },
   {
     "id": "validation-rds-output-format-broken",

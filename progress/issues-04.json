@@ -18,9 +18,9 @@
       { "run": "raws sqs get-queue-url --queue-name <existing-queue> --region us-east-1 2>&1", "expect": "Should return QueueUrl, not QueueDoesNotExist" },
       { "run": "raws logs create-log-group --log-group-name test-group --region us-east-1 2>&1", "expect": "Should create log group, not fail with null constraint violation" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Affects SQS and CloudWatch Logs confirmed. DynamoDB and KMS (also JSON protocol) seem to work, so this may be selective. Note: supersedes the SQS-specific issue in issues-03.json."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Affects SQS and CloudWatch Logs confirmed. DynamoDB and KMS (also JSON protocol) seem to work, so this may be selective. Note: supersedes the SQS-specific issue in issues-03.json.", "Fixed: Root cause was parse_operation_args() always using PascalCase for member names, but camelCase services (Logs, SQS, StepFunctions) need the original model member names. Added build_member_name_map() to resolve correct names from the model."]
   },
   {
     "id": "validation-secretsmanager-region-ignored",

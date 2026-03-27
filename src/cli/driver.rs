@@ -214,9 +214,10 @@ pub async fn run() -> Result<()> {
     }
 
     // 4. Parse operation-specific arguments into JSON input (model-aware for list/map params)
+    let member_name_map = build_member_name_map(op.input_shape.as_deref(), &service_model.shapes);
     let list_params = build_list_params(op.input_shape.as_deref(), &service_model.shapes);
     let map_params = build_map_params(op.input_shape.as_deref(), &service_model.shapes);
-    let mut input = parse_operation_args(&args.args, &list_params, &map_params)?;
+    let mut input = parse_operation_args(&args.args, &list_params, &map_params, &member_name_map)?;
 
     // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
     apply_route53_customizations(model_service, &mut input);
@@ -524,9 +525,10 @@ async fn handle_wait_command(
     let http_config = build_http_config(args);
 
     // Parse operation-specific arguments (model-aware for list/map params)
+    let member_name_map = build_member_name_map(op.input_shape.as_deref(), &service_model.shapes);
     let list_params = build_list_params(op.input_shape.as_deref(), &service_model.shapes);
     let map_params_set = build_map_params(op.input_shape.as_deref(), &service_model.shapes);
-    let mut input = parse_operation_args(&remaining_args, &list_params, &map_params_set)?;
+    let mut input = parse_operation_args(&remaining_args, &list_params, &map_params_set, &member_name_map)?;
 
     // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
     apply_route53_customizations(model_service, &mut input);
@@ -1739,7 +1741,34 @@ fn generate_skeleton_inner(
     }
 }
 
-/// Build a set of PascalCase parameter names that are list types for an operation's input shape.
+/// Build a mapping from kebab-case CLI argument names to the actual model member names.
+///
+/// The AWS model uses the actual member name (e.g., `logGroupName` for CloudWatch Logs,
+/// `TableName` for DynamoDB).  The CLI converts these to kebab-case for the `--` flags.
+/// This map lets us go back from `--log-group-name` to the correct `logGroupName`.
+fn build_member_name_map(
+    input_shape: Option<&str>,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) -> std::collections::HashMap<String, String> {
+    let mut name_map = std::collections::HashMap::new();
+    let shape_name = match input_shape {
+        Some(s) => s,
+        None => return name_map,
+    };
+    let shape = match shapes.get(shape_name) {
+        Some(s) => s,
+        None => return name_map,
+    };
+    if let Some(members) = shape.get("members").and_then(|m| m.as_object()) {
+        for member_name in members.keys() {
+            let kebab = model::pascal_to_kebab(member_name);
+            name_map.insert(kebab, member_name.clone());
+        }
+    }
+    name_map
+}
+
+/// Build a set of actual model member names that are list types for an operation's input shape.
 fn build_list_params(
     input_shape: Option<&str>,
     shapes: &std::collections::HashMap<String, serde_json::Value>,
@@ -1767,7 +1796,7 @@ fn build_list_params(
     list_params
 }
 
-/// Build a set of PascalCase parameter names that are map types for an operation's input shape.
+/// Build a set of actual model member names that are map types for an operation's input shape.
 fn build_map_params(
     input_shape: Option<&str>,
     shapes: &std::collections::HashMap<String, serde_json::Value>,
@@ -1972,6 +2001,7 @@ fn parse_operation_args(
     args: &[String],
     list_params: &std::collections::HashSet<String>,
     map_params: &std::collections::HashSet<String>,
+    member_name_map: &std::collections::HashMap<String, String>,
 ) -> Result<serde_json::Value> {
     // 0. Strip global flags that leaked into operation args.
     //    This happens when a global flag (e.g., --region us-east-1) appears after
@@ -2020,11 +2050,18 @@ fn parse_operation_args(
     while j < remaining_args.len() {
         let arg = remaining_args[j];
         if let Some(key) = arg.strip_prefix("--") {
-            // Convert kebab-case key to PascalCase for the API
-            let pascal_key = model::kebab_to_pascal(key);
+            // Resolve the correct API member name from the model via the kebab-to-member map.
+            // This handles services that use camelCase member names (e.g., CloudWatch Logs
+            // uses `logGroupName`, Step Functions uses `name`) as well as PascalCase services
+            // (e.g., DynamoDB uses `TableName`).  Falls back to PascalCase when the arg is
+            // not found in the model (e.g., meta-args handled elsewhere).
+            let api_key = match member_name_map.get(key) {
+                Some(actual) => actual.clone(),
+                None => model::kebab_to_pascal(key),
+            };
 
-            let is_list = list_params.contains(&pascal_key);
-            let is_map = map_params.contains(&pascal_key);
+            let is_list = list_params.contains(&api_key);
+            let is_map = map_params.contains(&api_key);
 
             if is_list {
                 // For list-type params, consume ALL following non-flag values into an array
@@ -2042,7 +2079,7 @@ fn parse_operation_args(
                     }
                     j += 1;
                 }
-                map.insert(pascal_key, serde_json::Value::Array(values));
+                map.insert(api_key, serde_json::Value::Array(values));
             } else if is_map {
                 // For map-type params, consume following non-flag values and parse shorthand
                 // Shorthand: Key1=Value1,Key2=Value2 OR Key1=Value1 Key2=Value2
@@ -2067,17 +2104,17 @@ fn parse_operation_args(
                     }
                     j += 1;
                 }
-                map.insert(pascal_key, serde_json::Value::Object(map_obj));
+                map.insert(api_key, serde_json::Value::Object(map_obj));
             } else if j + 1 < remaining_args.len() && !remaining_args[j + 1].starts_with("--") {
                 let value = remaining_args[j + 1];
                 // Try to parse as JSON first, otherwise use as string
                 let json_value = serde_json::from_str(value)
                     .unwrap_or_else(|_| serde_json::Value::String(value.clone()));
-                map.insert(pascal_key, json_value);
+                map.insert(api_key, json_value);
                 j += 2;
             } else {
                 // Flag without value: treat as boolean true
-                map.insert(pascal_key, serde_json::Value::Bool(true));
+                map.insert(api_key, serde_json::Value::Bool(true));
                 j += 1;
             }
         } else {
@@ -2096,9 +2133,13 @@ mod tests {
         std::collections::HashSet::new()
     }
 
+    fn empty_map() -> std::collections::HashMap<String, String> {
+        std::collections::HashMap::new()
+    }
+
     #[test]
     fn test_parse_operation_args_empty() {
-        let result = parse_operation_args(&[], &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&[], &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result, serde_json::json!({}));
     }
 
@@ -2108,7 +2149,7 @@ mod tests {
             "--user-name".to_string(),
             "alice".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
     }
 
@@ -2120,7 +2161,7 @@ mod tests {
             "--path".to_string(),
             "/admins/".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
         assert_eq!(result["Path"].as_str(), Some("/admins/"));
     }
@@ -2130,7 +2171,7 @@ mod tests {
         let args = vec![
             "--dry-run".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["DryRun"].as_bool(), Some(true));
     }
 
@@ -2140,7 +2181,7 @@ mod tests {
             "--tags".to_string(),
             r#"[{"Key":"env","Value":"prod"}]"#.to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert!(result["Tags"].is_array());
     }
 
@@ -2152,7 +2193,7 @@ mod tests {
             "--owners".to_string(),
             "self".to_string(),
         ];
-        let result = parse_operation_args(&args, &list_params, &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &list_params, &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["Owners"], serde_json::json!(["self"]));
     }
 
@@ -2166,7 +2207,7 @@ mod tests {
             "amazon".to_string(),
             "--dry-run".to_string(),
         ];
-        let result = parse_operation_args(&args, &list_params, &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &list_params, &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["Owners"], serde_json::json!(["self", "amazon"]));
         assert_eq!(result["DryRun"].as_bool(), Some(true));
     }
@@ -2179,7 +2220,7 @@ mod tests {
             "--instance-ids".to_string(),
             r#"["i-123","i-456"]"#.to_string(),
         ];
-        let result = parse_operation_args(&args, &list_params, &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &list_params, &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["InstanceIds"], serde_json::json!(["i-123", "i-456"]));
     }
 
@@ -2191,7 +2232,7 @@ mod tests {
             "--tags".to_string(),
             "Key1=Value1,Key2=Value2".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &map_params).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &map_params, &empty_map()).unwrap();
         let tags = result["Tags"].as_object().unwrap();
         assert_eq!(tags["Key1"].as_str(), Some("Value1"));
         assert_eq!(tags["Key2"].as_str(), Some("Value2"));
@@ -2207,7 +2248,7 @@ mod tests {
             "--cli-input-json".to_string(),
             r#"{"UserName":"alice","Path":"/admins/"}"#.to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
         assert_eq!(result["Path"].as_str(), Some("/admins/"));
     }
@@ -2222,7 +2263,7 @@ mod tests {
             "--cli-input-json".to_string(),
             format!("file://{}", file_path.display()),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("from-file"));
         assert_eq!(result["Path"].as_str(), Some("/"));
     }
@@ -2235,7 +2276,7 @@ mod tests {
             "--user-name".to_string(),
             "bob".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         // Explicit --user-name bob should override the JSON value
         assert_eq!(result["UserName"].as_str(), Some("bob"));
         // Path from JSON should remain since it was not overridden
@@ -2249,7 +2290,7 @@ mod tests {
             "--user-name".to_string(),
             "alice".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
     }
 
@@ -3414,7 +3455,7 @@ mod tests {
             "--region".to_string(),
             "us-east-1".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["Scope"].as_str(), Some("Local"));
         // --region should NOT appear as a "Region" key
         assert!(result.get("Region").is_none());
@@ -3427,9 +3468,129 @@ mod tests {
             "Local".to_string(),
             "--debug".to_string(),
         ];
-        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
         assert_eq!(result["Scope"].as_str(), Some("Local"));
         // --debug should NOT appear as "Debug: true"
         assert!(result.get("Debug").is_none());
+    }
+
+    // ---------------------------------------------------------------
+    // Feature: model-aware member name mapping (camelCase support)
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_build_member_name_map_camel_case() {
+        // Simulate CloudWatch Logs style shapes with camelCase member names
+        let mut shapes = std::collections::HashMap::new();
+        shapes.insert("CreateLogGroupRequest".to_string(), serde_json::json!({
+            "type": "structure",
+            "members": {
+                "logGroupName": { "shape": "LogGroupName" },
+                "kmsKeyId": { "shape": "KmsKeyId" },
+                "tags": { "shape": "Tags" }
+            }
+        }));
+        let name_map = build_member_name_map(Some("CreateLogGroupRequest"), &shapes);
+        assert_eq!(name_map.get("log-group-name"), Some(&"logGroupName".to_string()));
+        assert_eq!(name_map.get("kms-key-id"), Some(&"kmsKeyId".to_string()));
+        assert_eq!(name_map.get("tags"), Some(&"tags".to_string()));
+    }
+
+    #[test]
+    fn test_build_member_name_map_pascal_case() {
+        // Simulate DynamoDB/SQS style shapes with PascalCase member names
+        let mut shapes = std::collections::HashMap::new();
+        shapes.insert("GetQueueUrlRequest".to_string(), serde_json::json!({
+            "type": "structure",
+            "members": {
+                "QueueName": { "shape": "String" },
+                "QueueOwnerAWSAccountId": { "shape": "String" }
+            }
+        }));
+        let name_map = build_member_name_map(Some("GetQueueUrlRequest"), &shapes);
+        assert_eq!(name_map.get("queue-name"), Some(&"QueueName".to_string()));
+        assert_eq!(name_map.get("queue-owner-aws-account-id"), Some(&"QueueOwnerAWSAccountId".to_string()));
+    }
+
+    #[test]
+    fn test_build_member_name_map_empty_shape() {
+        let shapes = std::collections::HashMap::new();
+        let name_map = build_member_name_map(None, &shapes);
+        assert!(name_map.is_empty());
+    }
+
+    #[test]
+    fn test_parse_operation_args_uses_member_name_map_camel_case() {
+        // When the model has camelCase member names (like CloudWatch Logs),
+        // the member name map should cause parse_operation_args to use those
+        // instead of PascalCase.
+        let mut member_map = std::collections::HashMap::new();
+        member_map.insert("log-group-name".to_string(), "logGroupName".to_string());
+        member_map.insert("kms-key-id".to_string(), "kmsKeyId".to_string());
+
+        let args = vec![
+            "--log-group-name".to_string(),
+            "my-group".to_string(),
+            "--kms-key-id".to_string(),
+            "arn:aws:kms:us-east-1:123:key/abc".to_string(),
+        ];
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &member_map).unwrap();
+        // Should use camelCase keys from the model, NOT PascalCase
+        assert_eq!(result.get("logGroupName").and_then(|v| v.as_str()), Some("my-group"));
+        assert_eq!(result.get("kmsKeyId").and_then(|v| v.as_str()), Some("arn:aws:kms:us-east-1:123:key/abc"));
+        // PascalCase keys should NOT be present
+        assert!(result.get("LogGroupName").is_none());
+        assert!(result.get("KmsKeyId").is_none());
+    }
+
+    #[test]
+    fn test_parse_operation_args_uses_member_name_map_pascal_case() {
+        // When the model has PascalCase member names (like DynamoDB),
+        // the member name map should resolve to the same PascalCase.
+        let mut member_map = std::collections::HashMap::new();
+        member_map.insert("table-name".to_string(), "TableName".to_string());
+        member_map.insert("limit".to_string(), "Limit".to_string());
+
+        let args = vec![
+            "--table-name".to_string(),
+            "my-table".to_string(),
+            "--limit".to_string(),
+            "10".to_string(),
+        ];
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &member_map).unwrap();
+        assert_eq!(result.get("TableName").and_then(|v| v.as_str()), Some("my-table"));
+        assert_eq!(result.get("Limit").and_then(|v| v.as_i64()), Some(10));
+    }
+
+    #[test]
+    fn test_parse_operation_args_fallback_without_map() {
+        // When no member name map is provided, it should fall back to PascalCase
+        let args = vec![
+            "--some-param".to_string(),
+            "value".to_string(),
+        ];
+        let result = parse_operation_args(&args, &empty_set(), &empty_set(), &empty_map()).unwrap();
+        assert_eq!(result.get("SomeParam").and_then(|v| v.as_str()), Some("value"));
+    }
+
+    #[test]
+    fn test_parse_operation_args_list_with_member_name_map() {
+        // Ensure list params work correctly with the member name map
+        let mut member_map = std::collections::HashMap::new();
+        member_map.insert("tag-keys".to_string(), "tagKeys".to_string());
+
+        let mut list_params = std::collections::HashSet::new();
+        list_params.insert("tagKeys".to_string());
+
+        let args = vec![
+            "--tag-keys".to_string(),
+            "key1".to_string(),
+            "key2".to_string(),
+        ];
+        let result = parse_operation_args(&args, &list_params, &empty_set(), &member_map).unwrap();
+        let tag_keys = result.get("tagKeys").and_then(|v| v.as_array()).unwrap();
+        assert_eq!(tag_keys.len(), 2);
+        assert_eq!(tag_keys[0], "key1");
+        assert_eq!(tag_keys[1], "key2");
     }
 }

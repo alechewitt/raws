@@ -84,8 +84,8 @@
     "verify": [
       { "run": "raws stepfunctions describe-state-machine --state-machine-arn arn:aws:states:us-east-1:123:stateMachine:test --region us-east-1 2>&1", "expect": "Should not get null constraint violation" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Confirms the JSON protocol parameter serialization bug affects SQS, Logs, and Step Functions but not DynamoDB, KMS, or ECS."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Confirms the JSON protocol parameter serialization bug affects SQS, Logs, and Step Functions but not DynamoDB, KMS, or ECS.", "Fixed by build_member_name_map() - same root cause: camelCase model member names not matched by PascalCase arg conversion."]
   }
 ]
