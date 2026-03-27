@@ -476,3 +476,70 @@ FUTURE WORK:
 - Support smithy-rpc-v2-cbor protocol (CloudWatch newer versions)
 - E2E testing of credential providers with real profiles (credential_process, SSO, assume_role)
 - More parity testing against AWS CLI for edge cases
+
+=== Session 9: Major Issue Fixes (2026-03-27) ===
+
+ACCOMPLISHED:
+- Fixed 26 issues across issues-02 through issues-05 (from 6/46 to 34/46 passing)
+- Three key systemic fixes cascaded to resolve many issues at once:
+  1. fixup_global_flags_in_trailing_args() - Fixed clap capturing --region/--output/--query 
+     as trailing var args instead of global flags. Resolved 6+ issues.
+  2. build_member_name_map() - Fixed camelCase vs PascalCase model member names.
+     Resolved SQS/Logs/StepFunctions JSON protocol serialization (3 issues).
+  3. build_list_params()/build_map_params() - Model-aware arg parsing for list/map types.
+     Resolved EC2 owners filter, ELB query params.
+
+CRITICAL FIXES (7):
+- validation-ec2-owners-filter-ignored: EC2 serialize_ec2_request() with proper list encoding
+- validation-iam-url-encoded-policies: Model-driven decode_iam_policy_documents()
+- validation-iam-optional-params-signing: Global flags trailing args fix
+- validation-s3-redirect-handling: Manual 301/307 redirect with re-signing
+- validation-s3api-head-bucket-us-east-1: Empty body error handling for HEAD requests
+- validation-ecr-wrong-signing-service: signingName field from model metadata
+- validation-region-flag-priority: Global flags trailing args fix
+- (Also resolved: SQS, StepFunctions, RDS output, SSM output/query, Secretsmanager region, 
+  ELB params, Route53 signing)
+
+MEDIUM FIXES (9):
+- validation-systemic-null-fields: strip_nulls() in formatter
+- validation-systemic-error-prefix: 'raws: [ERROR]: ' prefix in main.rs
+- validation-systemic-exit-codes: 252/253/254 exit codes
+- validation-auth-no-credentials-error: AWS CLI-matching credential error message
+- validation-global-no-version: --version flag via clap
+- validation-s3api-grantee-type-missing: XML attribute parsing (xmlAttribute: true)
+- validation-secretsmanager-missing-idempotency-token: UUID auto-generation
+- validation-timestamps-utc-vs-local: Local timezone conversion
+- validation-systemic-client-side-validation: Required param validation before API calls
+- validation-apigateway-empty-lists-null: Null->[] and scalar->array coercion
+- validation-ssm-list-documents-empty: Fixed by earlier model-aware parsing
+
+LOW FIXES (2):
+- validation-auth-bad-profile-prefix: Fixed by systemic error prefix
+- validation-rds-output-format-broken: Fixed by trailing args fix
+
+ADDITIONAL FIXES:
+- Credential provider panics: block_in_place for sync HTTP in async context
+- Disabled reqwest auto-redirect (S3 needs manual redirect with re-signing)
+
+TEST RESULTS: 1111 tests passing (up from 1008), cargo build clean, cargo clippy clean
+
+ISSUES STATUS:
+- issues-01: 6/6 (100%)
+- issues-02: 13/18 (72%)
+- issues-03: 2/5 (40%)
+- issues-04: 8/9 (89%)
+- issues-05: 5/8 (63%)
+- TOTAL: 34/46 (74%)
+
+REMAINING (12 issues):
+- 1 critical: validation-cloudwatch-unsupported-protocol (CBOR protocol - large effort)
+- 5 medium: table-nested, s3api-list-directory-buckets, rds-commands-missing, 
+  rds-pagination-large-results, elasticache-list-tags-auth-error, kinesis-map-list-serialization
+- 5 low: table-empty, additional-error-details, s3-website, ecs-custom-commands, 
+  cloudfront-empty-list-suppression
+
+NEXT SESSION SHOULD WORK ON:
+1. validation-kinesis-map-list-serialization (map shorthand in arg parser)
+2. validation-systemic-table-nested (table output for nested objects)
+3. validation-rds-pagination-large-results (pagination timeout)
+4. CloudWatch CBOR protocol (if time allows - biggest remaining gap)
