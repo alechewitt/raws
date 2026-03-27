@@ -85,9 +85,9 @@
       { "run": "raws ec2 describe-images --owners self --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return only self-owned images (likely empty list), not all public images" },
       { "run": "raws ec2 describe-snapshots --owner-ids self --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return only self-owned snapshots, not all public snapshots" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Critical performance and correctness bug. AWS CLI correctly filters; raws returns unfiltered results."]
+    "passes": true,
+    "affected_files": ["src/core/protocol/query.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Critical performance and correctness bug. AWS CLI correctly filters; raws returns unfiltered results.", "Fixed: Added serialize_ec2_request() with EC2-specific list serialization (no .member. wrapper) and locationName capitalization. Also made parse_operation_args() model-aware for list/map type params."]
   },
   {
     "id": "validation-iam-url-encoded-policies",

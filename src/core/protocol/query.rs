@@ -25,12 +25,38 @@ pub fn serialize_query_request(
     shapes: &HashMap<String, Value>,
     input_shape_name: &str,
 ) -> Result<String> {
+    serialize_query_request_inner(operation_name, api_version, input, shapes, input_shape_name, false)
+}
+
+/// Serialize an EC2-protocol request body.
+///
+/// EC2 protocol is similar to query protocol, but with two differences:
+///   1. Lists always use `Prefix.N` format (no `.member.` wrapper)
+///   2. `locationName` values are capitalized (first letter uppercased)
+pub fn serialize_ec2_request(
+    operation_name: &str,
+    api_version: &str,
+    input: &Value,
+    shapes: &HashMap<String, Value>,
+    input_shape_name: &str,
+) -> Result<String> {
+    serialize_query_request_inner(operation_name, api_version, input, shapes, input_shape_name, true)
+}
+
+fn serialize_query_request_inner(
+    operation_name: &str,
+    api_version: &str,
+    input: &Value,
+    shapes: &HashMap<String, Value>,
+    input_shape_name: &str,
+    is_ec2: bool,
+) -> Result<String> {
     let mut params: Vec<(String, String)> = Vec::new();
     params.push(("Action".to_string(), operation_name.to_string()));
     params.push(("Version".to_string(), api_version.to_string()));
 
     if let Some(shape_def) = shapes.get(input_shape_name) {
-        serialize_value(&mut params, input, shape_def, shapes, "")?;
+        serialize_value(&mut params, input, shape_def, shapes, "", is_ec2)?;
     }
 
     // Sort params by key for deterministic output (matching AWS SDK behavior for signing)
@@ -67,6 +93,7 @@ fn serialize_value(
     shape_def: &Value,
     shapes: &HashMap<String, Value>,
     prefix: &str,
+    is_ec2: bool,
 ) -> Result<()> {
     let shape_type = shape_def
         .get("type")
@@ -74,9 +101,9 @@ fn serialize_value(
         .unwrap_or("string");
 
     match shape_type {
-        "structure" => serialize_structure(params, value, shape_def, shapes, prefix),
-        "list" => serialize_list(params, value, shape_def, shapes, prefix),
-        "map" => serialize_map(params, value, shape_def, shapes, prefix),
+        "structure" => serialize_structure(params, value, shape_def, shapes, prefix, is_ec2),
+        "list" => serialize_list(params, value, shape_def, shapes, prefix, is_ec2),
+        "map" => serialize_map(params, value, shape_def, shapes, prefix, is_ec2),
         "string" | "timestamp" | "blob" => {
             if let Some(s) = value.as_str() {
                 params.push((prefix.to_string(), s.to_string()));
@@ -124,6 +151,7 @@ fn serialize_structure(
     shape_def: &Value,
     shapes: &HashMap<String, Value>,
     prefix: &str,
+    is_ec2: bool,
 ) -> Result<()> {
     let members = match shape_def.get("members").and_then(|m| m.as_object()) {
         Some(m) => m,
@@ -143,7 +171,11 @@ fn serialize_structure(
         };
 
         // The serialized name may come from locationName or queryName, otherwise use the key
-        let serialized_name = get_serialized_name(member_def, key);
+        let serialized_name = if is_ec2 {
+            get_ec2_serialized_name(member_def, key)
+        } else {
+            get_serialized_name(member_def, key)
+        };
 
         let member_prefix = if prefix.is_empty() {
             serialized_name
@@ -158,7 +190,7 @@ fn serialize_structure(
             .unwrap_or("");
         let target_shape = shapes.get(target_shape_name).cloned().unwrap_or(Value::Null);
 
-        serialize_value(params, val, &target_shape, shapes, &member_prefix)?;
+        serialize_value(params, val, &target_shape, shapes, &member_prefix, is_ec2)?;
     }
 
     Ok(())
@@ -170,6 +202,7 @@ fn serialize_list(
     shape_def: &Value,
     shapes: &HashMap<String, Value>,
     prefix: &str,
+    is_ec2: bool,
 ) -> Result<()> {
     let arr = match value.as_array() {
         Some(a) => a,
@@ -189,40 +222,45 @@ fn serialize_list(
         .unwrap_or("");
     let member_shape = shapes.get(member_shape_name).cloned().unwrap_or(Value::Null);
 
-    let flattened = shape_def
-        .get("flattened")
-        .and_then(|f| f.as_bool())
-        .unwrap_or(false);
-
-    let list_prefix = if flattened {
-        // For flattened lists, check if the member has a serialization name
-        let member_name = member_ref
-            .get("locationName")
-            .and_then(|n| n.as_str());
-        match member_name {
-            Some(name) => {
-                // Replace the last component of prefix with member name
-                let parts: Vec<&str> = prefix.rsplitn(2, '.').collect();
-                if parts.len() == 2 {
-                    format!("{}.{}", parts[1], name)
-                } else {
-                    name.to_string()
-                }
-            }
-            None => prefix.to_string(),
-        }
+    // EC2 protocol always serializes lists as Prefix.N (no .member. wrapper)
+    let list_prefix = if is_ec2 {
+        prefix.to_string()
     } else {
-        // Non-flattened: append the member name (defaults to "member")
-        let member_name = member_ref
-            .get("locationName")
-            .and_then(|n| n.as_str())
-            .unwrap_or("member");
-        format!("{}.{}", prefix, member_name)
+        let flattened = shape_def
+            .get("flattened")
+            .and_then(|f| f.as_bool())
+            .unwrap_or(false);
+
+        if flattened {
+            // For flattened lists, check if the member has a serialization name
+            let member_name = member_ref
+                .get("locationName")
+                .and_then(|n| n.as_str());
+            match member_name {
+                Some(name) => {
+                    // Replace the last component of prefix with member name
+                    let parts: Vec<&str> = prefix.rsplitn(2, '.').collect();
+                    if parts.len() == 2 {
+                        format!("{}.{}", parts[1], name)
+                    } else {
+                        name.to_string()
+                    }
+                }
+                None => prefix.to_string(),
+            }
+        } else {
+            // Non-flattened: append the member name (defaults to "member")
+            let member_name = member_ref
+                .get("locationName")
+                .and_then(|n| n.as_str())
+                .unwrap_or("member");
+            format!("{}.{}", prefix, member_name)
+        }
     };
 
     for (i, element) in arr.iter().enumerate() {
         let element_prefix = format!("{}.{}", list_prefix, i + 1);
-        serialize_value(params, element, &member_shape, shapes, &element_prefix)?;
+        serialize_value(params, element, &member_shape, shapes, &element_prefix, is_ec2)?;
     }
 
     Ok(())
@@ -234,6 +272,7 @@ fn serialize_map(
     shape_def: &Value,
     shapes: &HashMap<String, Value>,
     prefix: &str,
+    is_ec2: bool,
 ) -> Result<()> {
     let obj = match value.as_object() {
         Some(o) => o,
@@ -279,8 +318,9 @@ fn serialize_map(
             &key_shape,
             shapes,
             &key_prefix,
+            is_ec2,
         )?;
-        serialize_value(params, v, &value_shape, shapes, &value_prefix)?;
+        serialize_value(params, v, &value_shape, shapes, &value_prefix, is_ec2)?;
     }
 
     Ok(())
@@ -297,6 +337,35 @@ fn get_serialized_name(member_ref: &Value, default_name: &str) -> String {
         return name.to_string();
     }
     default_name.to_string()
+}
+
+/// Get the serialized name for EC2 protocol.
+///
+/// EC2 protocol differs from standard query:
+///   - `queryName` takes highest precedence (same as query)
+///   - `locationName` is capitalized (first letter uppercased)
+///   - Falls back to the default name
+fn get_ec2_serialized_name(member_ref: &Value, default_name: &str) -> String {
+    if let Some(qn) = member_ref.get("queryName").and_then(|n| n.as_str()) {
+        return qn.to_string();
+    }
+    if let Some(name) = member_ref.get("locationName").and_then(|n| n.as_str()) {
+        // EC2 protocol capitalizes the first letter of locationName
+        return capitalize_first(name);
+    }
+    default_name.to_string()
+}
+
+/// Capitalize the first character of a string.
+fn capitalize_first(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(first) => {
+            let upper: String = first.to_uppercase().collect();
+            upper + chars.as_str()
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1574,5 +1643,271 @@ mod tests {
         let (code, message) = parse_ec2_error(xml).unwrap();
         assert_eq!(code, "");
         assert_eq!(message, "Something went wrong");
+    }
+
+    // ---------------------------------------------------------------
+    // Feature: EC2 protocol serializer
+    // ---------------------------------------------------------------
+
+    /// Build shapes that mirror the EC2 DescribeImages Owners parameter.
+    ///
+    /// DescribeImagesRequest.Owners (locationName "Owner") -> OwnerStringList (list, NOT flattened)
+    ///   -> member (String, locationName "Owner")
+    fn ec2_describe_images_shapes() -> HashMap<String, Value> {
+        let mut shapes = HashMap::new();
+        shapes.insert(
+            "DescribeImagesRequest".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "Owners": {
+                        "shape": "OwnerStringList",
+                        "locationName": "Owner"
+                    },
+                    "DryRun": {
+                        "shape": "Boolean",
+                        "locationName": "dryRun"
+                    },
+                    "Filters": {
+                        "shape": "FilterList",
+                        "locationName": "Filter"
+                    }
+                }
+            }),
+        );
+        shapes.insert(
+            "OwnerStringList".to_string(),
+            json!({
+                "type": "list",
+                "member": {
+                    "shape": "String",
+                    "locationName": "Owner"
+                }
+            }),
+        );
+        shapes.insert(
+            "FilterList".to_string(),
+            json!({
+                "type": "list",
+                "member": {
+                    "shape": "Filter",
+                    "locationName": "Filter"
+                }
+            }),
+        );
+        shapes.insert(
+            "Filter".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "Name": { "shape": "String" },
+                    "Values": {
+                        "shape": "ValueStringList",
+                        "locationName": "Value"
+                    }
+                }
+            }),
+        );
+        shapes.insert(
+            "ValueStringList".to_string(),
+            json!({
+                "type": "list",
+                "member": {
+                    "shape": "String",
+                    "locationName": "item"
+                }
+            }),
+        );
+        shapes.insert("String".to_string(), json!({"type": "string"}));
+        shapes.insert("Boolean".to_string(), json!({"type": "boolean"}));
+        shapes
+    }
+
+    #[test]
+    fn ec2_serialize_owners_self() {
+        // EC2 DescribeImages --owners self should produce Owner.1=self
+        let shapes = ec2_describe_images_shapes();
+        let input = json!({
+            "Owners": ["self"]
+        });
+
+        let result = serialize_ec2_request(
+            "DescribeImages",
+            "2016-11-15",
+            &input,
+            &shapes,
+            "DescribeImagesRequest",
+        )
+        .unwrap();
+
+        // EC2 protocol: no .member. wrapper, locationName capitalized
+        assert!(result.contains("Owner.1=self"), "Expected Owner.1=self in: {result}");
+        // Must NOT contain .member.
+        assert!(!result.contains(".member."), "Should not contain .member. in: {result}");
+    }
+
+    #[test]
+    fn ec2_serialize_owners_multiple() {
+        let shapes = ec2_describe_images_shapes();
+        let input = json!({
+            "Owners": ["self", "amazon"]
+        });
+
+        let result = serialize_ec2_request(
+            "DescribeImages",
+            "2016-11-15",
+            &input,
+            &shapes,
+            "DescribeImagesRequest",
+        )
+        .unwrap();
+
+        assert!(result.contains("Owner.1=self"), "Expected Owner.1=self in: {result}");
+        assert!(result.contains("Owner.2=amazon"), "Expected Owner.2=amazon in: {result}");
+        assert!(!result.contains(".member."), "Should not contain .member. in: {result}");
+    }
+
+    #[test]
+    fn ec2_serialize_location_name_capitalized() {
+        // EC2 capitalizes the first letter of locationName.
+        // DryRun has locationName "dryRun" which should become "DryRun" in EC2.
+        let shapes = ec2_describe_images_shapes();
+        let input = json!({
+            "DryRun": true
+        });
+
+        let result = serialize_ec2_request(
+            "DescribeImages",
+            "2016-11-15",
+            &input,
+            &shapes,
+            "DescribeImagesRequest",
+        )
+        .unwrap();
+
+        assert!(result.contains("DryRun=true"), "Expected DryRun=true in: {result}");
+        // Must not contain lowercase dryRun
+        assert!(!result.contains("dryRun=true"), "Should not contain dryRun=true in: {result}");
+    }
+
+    #[test]
+    fn ec2_serialize_filters() {
+        // EC2 DescribeImages with Filters
+        let shapes = ec2_describe_images_shapes();
+        let input = json!({
+            "Filters": [
+                {
+                    "Name": "is-public",
+                    "Values": ["false"]
+                }
+            ]
+        });
+
+        let result = serialize_ec2_request(
+            "DescribeImages",
+            "2016-11-15",
+            &input,
+            &shapes,
+            "DescribeImagesRequest",
+        )
+        .unwrap();
+
+        // EC2 protocol: lists always use Prefix.N (no .member.)
+        // Filter.1.Name=is-public and Filter.1.Value.1=false
+        assert!(result.contains("Filter.1.Name=is-public"), "Expected Filter.1.Name=is-public in: {result}");
+        assert!(result.contains("Filter.1.Value.1=false"), "Expected Filter.1.Value.1=false in: {result}");
+        assert!(!result.contains(".member."), "Should not contain .member. in: {result}");
+    }
+
+    #[test]
+    fn ec2_vs_query_list_serialization() {
+        // Verify that the same shapes produce different results for EC2 vs query protocol.
+        // EC2: Owner.1=self  (no .member. wrapper)
+        // Query: Owner.Owner.1=self  (non-flattened uses member locationName)
+        let shapes = ec2_describe_images_shapes();
+        let input = json!({
+            "Owners": ["self"]
+        });
+
+        let ec2_result = serialize_ec2_request(
+            "DescribeImages",
+            "2016-11-15",
+            &input,
+            &shapes,
+            "DescribeImagesRequest",
+        )
+        .unwrap();
+
+        let query_result = serialize_query_request(
+            "DescribeImages",
+            "2016-11-15",
+            &input,
+            &shapes,
+            "DescribeImagesRequest",
+        )
+        .unwrap();
+
+        // EC2 uses Owner.1=self
+        assert!(ec2_result.contains("Owner.1=self"), "EC2 should produce Owner.1=self: {ec2_result}");
+
+        // Standard query uses Owner.Owner.1=self (locationName "Owner" on member)
+        assert!(query_result.contains("Owner.Owner.1=self"), "Query should produce Owner.Owner.1=self: {query_result}");
+    }
+
+    #[test]
+    fn ec2_serialize_describe_instances_with_queryname() {
+        // Test that queryName takes precedence for EC2 serialization.
+        // EC2 DescribeInstances uses queryName for some members.
+        let mut shapes = HashMap::new();
+        shapes.insert(
+            "DescribeInstancesRequest".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "InstanceIds": {
+                        "shape": "InstanceIdStringList",
+                        "locationName": "InstanceId"
+                    }
+                }
+            }),
+        );
+        shapes.insert(
+            "InstanceIdStringList".to_string(),
+            json!({
+                "type": "list",
+                "member": {
+                    "shape": "String",
+                    "locationName": "InstanceId"
+                }
+            }),
+        );
+        shapes.insert("String".to_string(), json!({"type": "string"}));
+
+        let input = json!({
+            "InstanceIds": ["i-12345", "i-67890"]
+        });
+
+        let result = serialize_ec2_request(
+            "DescribeInstances",
+            "2016-11-15",
+            &input,
+            &shapes,
+            "DescribeInstancesRequest",
+        )
+        .unwrap();
+
+        // EC2: InstanceId.1=i-12345, InstanceId.2=i-67890 (no .member.)
+        assert!(result.contains("InstanceId.1=i-12345"), "Expected InstanceId.1=i-12345 in: {result}");
+        assert!(result.contains("InstanceId.2=i-67890"), "Expected InstanceId.2=i-67890 in: {result}");
+        assert!(!result.contains(".member."), "Should not contain .member. in: {result}");
+    }
+
+    #[test]
+    fn capitalize_first_basic() {
+        assert_eq!(capitalize_first("dryRun"), "DryRun");
+        assert_eq!(capitalize_first("Owner"), "Owner");
+        assert_eq!(capitalize_first("a"), "A");
+        assert_eq!(capitalize_first(""), "");
+        assert_eq!(capitalize_first("ABC"), "ABC");
     }
 }

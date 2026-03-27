@@ -205,8 +205,10 @@ pub async fn run() -> Result<()> {
         eprintln!("[debug] resolved operation: {operation_name}");
     }
 
-    // 4. Parse operation-specific arguments into JSON input
-    let mut input = parse_operation_args(&args.args)?;
+    // 4. Parse operation-specific arguments into JSON input (model-aware for list/map params)
+    let list_params = build_list_params(op.input_shape.as_deref(), &service_model.shapes);
+    let map_params = build_map_params(op.input_shape.as_deref(), &service_model.shapes);
+    let mut input = parse_operation_args(&args.args, &list_params, &map_params)?;
 
     // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
     apply_route53_customizations(model_service, &mut input);
@@ -507,8 +509,10 @@ async fn handle_wait_command(
     let protocol = service_model.metadata.protocol.as_str();
     let http_config = build_http_config(args);
 
-    // Parse operation-specific arguments
-    let mut input = parse_operation_args(&remaining_args)?;
+    // Parse operation-specific arguments (model-aware for list/map params)
+    let list_params = build_list_params(op.input_shape.as_deref(), &service_model.shapes);
+    let map_params_set = build_map_params(op.input_shape.as_deref(), &service_model.shapes);
+    let mut input = parse_operation_args(&remaining_args, &list_params, &map_params_set)?;
 
     // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
     apply_route53_customizations(model_service, &mut input);
@@ -834,7 +838,7 @@ async fn dispatch_ec2_protocol(
     no_sign_request: bool,
 ) -> DispatchOutcome {
     let input_shape_name = op.input_shape.as_deref().unwrap_or("");
-    let body_str = match query::serialize_query_request(
+    let body_str = match query::serialize_ec2_request(
         &op.name,
         &model.metadata.api_version,
         input,
@@ -1710,7 +1714,67 @@ fn generate_skeleton_inner(
     }
 }
 
-fn parse_operation_args(args: &[String]) -> Result<serde_json::Value> {
+/// Build a set of PascalCase parameter names that are list types for an operation's input shape.
+fn build_list_params(
+    input_shape: Option<&str>,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) -> std::collections::HashSet<String> {
+    let mut list_params = std::collections::HashSet::new();
+    let shape_name = match input_shape {
+        Some(s) => s,
+        None => return list_params,
+    };
+    let shape = match shapes.get(shape_name) {
+        Some(s) => s,
+        None => return list_params,
+    };
+    if let Some(members) = shape.get("members").and_then(|m| m.as_object()) {
+        for (member_name, member_def) in members {
+            if let Some(target_shape_name) = member_def.get("shape").and_then(|s| s.as_str()) {
+                if let Some(target_shape) = shapes.get(target_shape_name) {
+                    if target_shape.get("type").and_then(|t| t.as_str()) == Some("list") {
+                        list_params.insert(member_name.clone());
+                    }
+                }
+            }
+        }
+    }
+    list_params
+}
+
+/// Build a set of PascalCase parameter names that are map types for an operation's input shape.
+fn build_map_params(
+    input_shape: Option<&str>,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) -> std::collections::HashSet<String> {
+    let mut map_params = std::collections::HashSet::new();
+    let shape_name = match input_shape {
+        Some(s) => s,
+        None => return map_params,
+    };
+    let shape = match shapes.get(shape_name) {
+        Some(s) => s,
+        None => return map_params,
+    };
+    if let Some(members) = shape.get("members").and_then(|m| m.as_object()) {
+        for (member_name, member_def) in members {
+            if let Some(target_shape_name) = member_def.get("shape").and_then(|s| s.as_str()) {
+                if let Some(target_shape) = shapes.get(target_shape_name) {
+                    if target_shape.get("type").and_then(|t| t.as_str()) == Some("map") {
+                        map_params.insert(member_name.clone());
+                    }
+                }
+            }
+        }
+    }
+    map_params
+}
+
+fn parse_operation_args(
+    args: &[String],
+    list_params: &std::collections::HashSet<String>,
+    map_params: &std::collections::HashSet<String>,
+) -> Result<serde_json::Value> {
     // 1. Scan for --cli-input-json and extract its value, collecting remaining args
     let mut remaining_args: Vec<&String> = Vec::new();
     let mut cli_input_json_value: Option<&String> = None;
@@ -1755,7 +1819,52 @@ fn parse_operation_args(args: &[String]) -> Result<serde_json::Value> {
             // Convert kebab-case key to PascalCase for the API
             let pascal_key = model::kebab_to_pascal(key);
 
-            if j + 1 < remaining_args.len() && !remaining_args[j + 1].starts_with("--") {
+            let is_list = list_params.contains(&pascal_key);
+            let is_map = map_params.contains(&pascal_key);
+
+            if is_list {
+                // For list-type params, consume ALL following non-flag values into an array
+                let mut values = Vec::new();
+                j += 1;
+                while j < remaining_args.len() && !remaining_args[j].starts_with("--") {
+                    let v = remaining_args[j];
+                    let json_val = serde_json::from_str(v)
+                        .unwrap_or_else(|_| serde_json::Value::String(v.clone()));
+                    // If the user passed a JSON array (e.g., '["a","b"]'), flatten it
+                    if let serde_json::Value::Array(arr) = json_val {
+                        values.extend(arr);
+                    } else {
+                        values.push(json_val);
+                    }
+                    j += 1;
+                }
+                map.insert(pascal_key, serde_json::Value::Array(values));
+            } else if is_map {
+                // For map-type params, consume following non-flag values and parse shorthand
+                // Shorthand: Key1=Value1,Key2=Value2 OR Key1=Value1 Key2=Value2
+                let mut map_obj = serde_json::Map::new();
+                j += 1;
+                while j < remaining_args.len() && !remaining_args[j].starts_with("--") {
+                    let v = remaining_args[j];
+                    // Try JSON first
+                    if let Ok(serde_json::Value::Object(obj)) = serde_json::from_str::<serde_json::Value>(v) {
+                        map_obj.extend(obj);
+                        j += 1;
+                        continue;
+                    }
+                    // Try shorthand: Key1=Value1,Key2=Value2
+                    for part in v.split(',') {
+                        if let Some((k, val)) = part.split_once('=') {
+                            map_obj.insert(
+                                k.to_string(),
+                                serde_json::Value::String(val.to_string()),
+                            );
+                        }
+                    }
+                    j += 1;
+                }
+                map.insert(pascal_key, serde_json::Value::Object(map_obj));
+            } else if j + 1 < remaining_args.len() && !remaining_args[j + 1].starts_with("--") {
                 let value = remaining_args[j + 1];
                 // Try to parse as JSON first, otherwise use as string
                 let json_value = serde_json::from_str(value)
@@ -1779,9 +1888,13 @@ fn parse_operation_args(args: &[String]) -> Result<serde_json::Value> {
 mod tests {
     use super::*;
 
+    fn empty_set() -> std::collections::HashSet<String> {
+        std::collections::HashSet::new()
+    }
+
     #[test]
     fn test_parse_operation_args_empty() {
-        let result = parse_operation_args(&[]).unwrap();
+        let result = parse_operation_args(&[], &empty_set(), &empty_set()).unwrap();
         assert_eq!(result, serde_json::json!({}));
     }
 
@@ -1791,7 +1904,7 @@ mod tests {
             "--user-name".to_string(),
             "alice".to_string(),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
     }
 
@@ -1803,7 +1916,7 @@ mod tests {
             "--path".to_string(),
             "/admins/".to_string(),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
         assert_eq!(result["Path"].as_str(), Some("/admins/"));
     }
@@ -1813,7 +1926,7 @@ mod tests {
         let args = vec![
             "--dry-run".to_string(),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         assert_eq!(result["DryRun"].as_bool(), Some(true));
     }
 
@@ -1823,8 +1936,61 @@ mod tests {
             "--tags".to_string(),
             r#"[{"Key":"env","Value":"prod"}]"#.to_string(),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         assert!(result["Tags"].is_array());
+    }
+
+    #[test]
+    fn test_parse_operation_args_list_param_single_value() {
+        let mut list_params = std::collections::HashSet::new();
+        list_params.insert("Owners".to_string());
+        let args = vec![
+            "--owners".to_string(),
+            "self".to_string(),
+        ];
+        let result = parse_operation_args(&args, &list_params, &empty_set()).unwrap();
+        assert_eq!(result["Owners"], serde_json::json!(["self"]));
+    }
+
+    #[test]
+    fn test_parse_operation_args_list_param_multiple_values() {
+        let mut list_params = std::collections::HashSet::new();
+        list_params.insert("Owners".to_string());
+        let args = vec![
+            "--owners".to_string(),
+            "self".to_string(),
+            "amazon".to_string(),
+            "--dry-run".to_string(),
+        ];
+        let result = parse_operation_args(&args, &list_params, &empty_set()).unwrap();
+        assert_eq!(result["Owners"], serde_json::json!(["self", "amazon"]));
+        assert_eq!(result["DryRun"].as_bool(), Some(true));
+    }
+
+    #[test]
+    fn test_parse_operation_args_list_param_json_array() {
+        let mut list_params = std::collections::HashSet::new();
+        list_params.insert("InstanceIds".to_string());
+        let args = vec![
+            "--instance-ids".to_string(),
+            r#"["i-123","i-456"]"#.to_string(),
+        ];
+        let result = parse_operation_args(&args, &list_params, &empty_set()).unwrap();
+        assert_eq!(result["InstanceIds"], serde_json::json!(["i-123", "i-456"]));
+    }
+
+    #[test]
+    fn test_parse_operation_args_map_param_shorthand() {
+        let mut map_params = std::collections::HashSet::new();
+        map_params.insert("Tags".to_string());
+        let args = vec![
+            "--tags".to_string(),
+            "Key1=Value1,Key2=Value2".to_string(),
+        ];
+        let result = parse_operation_args(&args, &empty_set(), &map_params).unwrap();
+        let tags = result["Tags"].as_object().unwrap();
+        assert_eq!(tags["Key1"].as_str(), Some("Value1"));
+        assert_eq!(tags["Key2"].as_str(), Some("Value2"));
     }
 
     // ---------------------------------------------------------------
@@ -1837,7 +2003,7 @@ mod tests {
             "--cli-input-json".to_string(),
             r#"{"UserName":"alice","Path":"/admins/"}"#.to_string(),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
         assert_eq!(result["Path"].as_str(), Some("/admins/"));
     }
@@ -1852,7 +2018,7 @@ mod tests {
             "--cli-input-json".to_string(),
             format!("file://{}", file_path.display()),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("from-file"));
         assert_eq!(result["Path"].as_str(), Some("/"));
     }
@@ -1865,7 +2031,7 @@ mod tests {
             "--user-name".to_string(),
             "bob".to_string(),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         // Explicit --user-name bob should override the JSON value
         assert_eq!(result["UserName"].as_str(), Some("bob"));
         // Path from JSON should remain since it was not overridden
@@ -1879,7 +2045,7 @@ mod tests {
             "--user-name".to_string(),
             "alice".to_string(),
         ];
-        let result = parse_operation_args(&args).unwrap();
+        let result = parse_operation_args(&args, &empty_set(), &empty_set()).unwrap();
         assert_eq!(result["UserName"].as_str(), Some("alice"));
     }
 
