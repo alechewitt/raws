@@ -51,9 +51,9 @@
     "verify": [
       { "run": "raws elb describe-load-balancers --load-balancer-names raws-test --region us-east-1 2>&1", "expect": "Should filter to the named load balancer, not return empty or all" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Query protocol parameter serialization works for IAM/STS/AutoScaling but not for ELB. May be related to list parameter encoding."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Query protocol parameter serialization works for IAM/STS/AutoScaling but not for ELB. May be related to list parameter encoding.", "Fixed by model-aware arg parsing (build_list_params + build_member_name_map) and fixup_global_flags_in_trailing_args."]
   },
   {
     "id": "validation-elasticache-list-tags-auth-error",

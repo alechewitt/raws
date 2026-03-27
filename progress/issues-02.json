@@ -118,9 +118,9 @@
     "verify": [
       { "run": "raws s3 ls s3://<bucket>/ --region us-east-1 2>&1", "expect": "Should list objects, not return HTTP 301 redirect error" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. S3 requires following 301 redirects to the correct regional endpoint. raws may be using path-style URLs instead of virtual-hosted-style."]
+    "passes": true,
+    "affected_files": ["src/core/http/client.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. S3 requires following 301 redirects to the correct regional endpoint. raws may be using path-style URLs instead of virtual-hosted-style.", "Fixed: Disabled auto-redirect in reqwest, added S3 301/307 redirect handling with re-signing in dispatch_rest_xml_protocol."]
   },
   {
     "id": "validation-s3api-head-bucket-us-east-1",
@@ -129,9 +129,9 @@
     "verify": [
       { "run": "raws s3api head-bucket --bucket <us-east-1-bucket> --region us-east-1 2>&1", "expect": "Should succeed (no output) like AWS CLI" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent.", "Fixed: HEAD responses have no body. Added error_from_status_code() fallback for empty-body error responses instead of trying to parse nonexistent XML."]
   },
   {
     "id": "validation-s3api-list-directory-buckets",

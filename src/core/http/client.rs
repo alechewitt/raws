@@ -37,6 +37,7 @@ impl HttpClient {
             .use_rustls_tls()
             .connect_timeout(config.connect_timeout)
             .timeout(config.read_timeout)
+            .redirect(reqwest::redirect::Policy::none())
             .build()?;
         Ok(Self { client })
     }
@@ -179,5 +180,14 @@ mod tests {
         };
         let client = HttpClient::with_config(&config);
         assert!(client.is_ok());
+    }
+
+    #[test]
+    fn test_redirect_policy_disabled() {
+        // Client should be creatable with redirect policy disabled
+        // (needed for S3 redirect handling where we re-sign with new region)
+        let config = HttpClientConfig::default();
+        let client = HttpClient::with_config(&config);
+        assert!(client.is_ok(), "Client with redirect disabled should build successfully");
     }
 }

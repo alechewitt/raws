@@ -608,6 +608,8 @@ struct DispatchOutcome {
     error_code: Option<String>,
     /// Whether this was a network-level error (no response received).
     is_network_error: bool,
+    /// For S3 redirects: the correct region from x-amz-bucket-region header.
+    redirect_region: Option<String>,
 }
 
 /// Dispatch a request with retry logic.
@@ -717,6 +719,7 @@ async fn dispatch_request(
             status: 0,
             error_code: None,
             is_network_error: false,
+            redirect_region: None,
         },
     }
 }
@@ -744,7 +747,7 @@ async fn dispatch_query_protocol(
         input_shape_name,
     ) {
         Ok(b) => b,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     if debug {
@@ -754,11 +757,11 @@ async fn dispatch_query_protocol(
     // Build HTTP request
     let parsed_url = match url::Url::parse(endpoint_url) {
         Ok(u) => u,
-        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let host = match parsed_url.host_str() {
         Some(h) => h.to_string(),
-        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     let mut request = HttpRequest::new(&op.http_method, endpoint_url);
@@ -777,7 +780,7 @@ async fn dispatch_query_protocol(
         let uri_path = parsed_url.path();
         let query_string = parsed_url.query().unwrap_or("");
         if let Err(e) = sigv4::sign_request(&request.method, uri_path, query_string, &mut request.headers, &request.body, &signing_params) {
-            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None };
         }
     }
 
@@ -788,7 +791,7 @@ async fn dispatch_query_protocol(
     // Send HTTP request
     let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let response = match http_client.send(&request).await {
         Ok(r) => r,
@@ -797,6 +800,7 @@ async fn dispatch_query_protocol(
             status: 0,
             error_code: None,
             is_network_error: true,
+            redirect_region: None,
         },
     };
 
@@ -811,7 +815,7 @@ async fn dispatch_query_protocol(
     if response.status >= 200 && response.status < 300 {
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false, redirect_region: None };
         }
 
         let parsed = query::parse_query_response(
@@ -822,7 +826,7 @@ async fn dispatch_query_protocol(
         )
         .with_context(|| format!("Failed to parse response XML for {}", op.name));
 
-        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false, redirect_region: None }
     } else {
         let (error_code, result) = match query::parse_query_error(&response_body) {
             Ok((code, message)) => {
@@ -833,7 +837,7 @@ async fn dispatch_query_protocol(
                 (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
-        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false, redirect_region: None }
     }
 }
 
@@ -862,7 +866,7 @@ async fn dispatch_ec2_protocol(
         input_shape_name,
     ) {
         Ok(b) => b,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     if debug {
@@ -871,11 +875,11 @@ async fn dispatch_ec2_protocol(
 
     let parsed_url = match url::Url::parse(endpoint_url) {
         Ok(u) => u,
-        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let host = match parsed_url.host_str() {
         Some(h) => h.to_string(),
-        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     let mut request = HttpRequest::new(&op.http_method, endpoint_url);
@@ -893,7 +897,7 @@ async fn dispatch_ec2_protocol(
         let uri_path = parsed_url.path();
         let query_string = parsed_url.query().unwrap_or("");
         if let Err(e) = sigv4::sign_request(&request.method, uri_path, query_string, &mut request.headers, &request.body, &signing_params) {
-            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None };
         }
     }
 
@@ -903,13 +907,13 @@ async fn dispatch_ec2_protocol(
 
     let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let response = match http_client.send(&request).await {
         Ok(r) => r,
         Err(e) => return DispatchOutcome {
             result: Err(e.context("HTTP request failed")),
-            status: 0, error_code: None, is_network_error: true,
+            status: 0, error_code: None, is_network_error: true, redirect_region: None,
         },
     };
 
@@ -923,14 +927,14 @@ async fn dispatch_ec2_protocol(
     if response.status >= 200 && response.status < 300 {
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false, redirect_region: None };
         }
 
         let parsed = query::parse_query_response(
             &response_body, op.result_wrapper.as_deref(), output_shape_name, &model.shapes,
         ).with_context(|| format!("Failed to parse response XML for {}", op.name));
 
-        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false, redirect_region: None }
     } else {
         let (error_code, result) = match query::parse_ec2_error(&response_body) {
             Ok((code, message)) => {
@@ -941,7 +945,7 @@ async fn dispatch_ec2_protocol(
                 (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
-        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false, redirect_region: None }
     }
 }
 
@@ -967,7 +971,7 @@ async fn dispatch_json_protocol(
 
     let body_str = match json_protocol::serialize_json_request(input) {
         Ok(b) => b,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     if debug {
@@ -978,11 +982,11 @@ async fn dispatch_json_protocol(
 
     let parsed_url = match url::Url::parse(endpoint_url) {
         Ok(u) => u,
-        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let host = match parsed_url.host_str() {
         Some(h) => h.to_string(),
-        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     let mut request = HttpRequest::new("POST", endpoint_url);
@@ -998,7 +1002,7 @@ async fn dispatch_json_protocol(
         let uri_path = parsed_url.path();
         let query_string = parsed_url.query().unwrap_or("");
         if let Err(e) = sigv4::sign_request("POST", uri_path, query_string, &mut request.headers, &request.body, &signing_params) {
-            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None };
         }
     }
 
@@ -1008,13 +1012,13 @@ async fn dispatch_json_protocol(
 
     let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let response = match http_client.send(&request).await {
         Ok(r) => r,
         Err(e) => return DispatchOutcome {
             result: Err(e.context("HTTP request failed")),
-            status: 0, error_code: None, is_network_error: true,
+            status: 0, error_code: None, is_network_error: true, redirect_region: None,
         },
     };
 
@@ -1028,7 +1032,7 @@ async fn dispatch_json_protocol(
     if response.status >= 200 && response.status < 300 {
         let parsed = json_protocol::parse_json_response(&response_body)
             .with_context(|| format!("Failed to parse JSON response for {}", op.name));
-        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false, redirect_region: None }
     } else {
         let (error_code, result) = match json_protocol::parse_json_error(&response_body) {
             Ok((code, message)) => {
@@ -1039,7 +1043,7 @@ async fn dispatch_json_protocol(
                 (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
-        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false, redirect_region: None }
     }
 }
 
@@ -1067,17 +1071,17 @@ async fn dispatch_rest_json_protocol(
             &op.http_request_uri, input, input_shape_name, &model.shapes,
         ) {
             Ok(r) => r,
-            Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+            Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
         }
     };
 
     let parsed_base = match url::Url::parse(endpoint_url) {
         Ok(u) => u,
-        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let host = match parsed_base.host_str() {
         Some(h) => h.to_string(),
-        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     let mut full_url = format!(
@@ -1127,12 +1131,12 @@ async fn dispatch_rest_json_protocol(
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let signing_url = match url::Url::parse(&full_url) {
             Ok(u) => u,
-            Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+            Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
         };
         let signing_uri_path = signing_url.path();
         let signing_query_string = signing_url.query().unwrap_or("");
         if let Err(e) = sigv4::sign_request(&request.method, signing_uri_path, signing_query_string, &mut request.headers, &request.body, &signing_params) {
-            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None };
         }
     }
 
@@ -1142,13 +1146,13 @@ async fn dispatch_rest_json_protocol(
 
     let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let response = match http_client.send(&request).await {
         Ok(r) => r,
         Err(e) => return DispatchOutcome {
             result: Err(e.context("HTTP request failed")),
-            status: 0, error_code: None, is_network_error: true,
+            status: 0, error_code: None, is_network_error: true, redirect_region: None,
         },
     };
 
@@ -1162,14 +1166,14 @@ async fn dispatch_rest_json_protocol(
     if response.status >= 200 && response.status < 300 {
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false, redirect_region: None };
         }
 
         let parsed = rest_json::parse_rest_json_response(
             &response_body, response.status, &response.headers, output_shape_name, &model.shapes,
         ).with_context(|| format!("Failed to parse REST-JSON response for {}", op.name));
 
-        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false, redirect_region: None }
     } else {
         let (error_code, result) = match rest_json::parse_rest_json_error(&response_body) {
             Ok((code, message)) => {
@@ -1180,7 +1184,7 @@ async fn dispatch_rest_json_protocol(
                 (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
-        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false, redirect_region: None }
     }
 }
 
@@ -1189,6 +1193,98 @@ async fn dispatch_rest_json_protocol(
 /// Used by services like S3, Route53, CloudFront.
 #[allow(clippy::too_many_arguments)]
 async fn dispatch_rest_xml_protocol(
+    endpoint_url: &str,
+    model: &model::ServiceModel,
+    op: &model::Operation,
+    input: &serde_json::Value,
+    creds: &crate::core::credentials::Credentials,
+    region: &str,
+    debug: bool,
+    http_config: &HttpClientConfig,
+    no_sign_request: bool,
+) -> DispatchOutcome {
+    let outcome = send_rest_xml_request(
+        endpoint_url, model, op, input, creds, region, debug, http_config, no_sign_request,
+    ).await;
+
+    // S3 redirect handling: if we get a 301 with x-amz-bucket-region header,
+    // retry the request with the correct region (re-signed, new endpoint).
+    if outcome.status == 301 && model.metadata.endpoint_prefix == "s3" {
+        if let Some(ref redirect_region) = outcome.redirect_region {
+            if debug {
+                eprintln!("[debug] S3 redirect: bucket is in region '{}', retrying", redirect_region);
+            }
+            // Resolve new endpoint for the correct region
+            let new_endpoint = match resolver::resolve_endpoint(
+                &model.metadata.endpoint_prefix,
+                redirect_region,
+                model.metadata.global_endpoint.as_deref(),
+            ) {
+                Ok(ep) => ep,
+                Err(e) => return DispatchOutcome {
+                    result: Err(e), status: 0, error_code: None,
+                    is_network_error: false, redirect_region: None,
+                },
+            };
+
+            // Apply S3 virtual-hosted style if appropriate
+            let final_endpoint = if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
+                if resolver::is_bucket_dns_compatible(bucket) {
+                    resolver::apply_s3_virtual_hosted_style(&new_endpoint, bucket)
+                } else {
+                    new_endpoint
+                }
+            } else {
+                new_endpoint
+            };
+
+            return send_rest_xml_request(
+                &final_endpoint, model, op, input, creds, redirect_region, debug, http_config, no_sign_request,
+            ).await;
+        }
+    }
+
+    // S3 redirect handling for 307 (TemporaryRedirect) with x-amz-bucket-region
+    if outcome.status == 307 && model.metadata.endpoint_prefix == "s3" {
+        if let Some(ref redirect_region) = outcome.redirect_region {
+            if debug {
+                eprintln!("[debug] S3 temporary redirect: bucket is in region '{}', retrying", redirect_region);
+            }
+            let new_endpoint = match resolver::resolve_endpoint(
+                &model.metadata.endpoint_prefix,
+                redirect_region,
+                model.metadata.global_endpoint.as_deref(),
+            ) {
+                Ok(ep) => ep,
+                Err(e) => return DispatchOutcome {
+                    result: Err(e), status: 0, error_code: None,
+                    is_network_error: false, redirect_region: None,
+                },
+            };
+
+            let final_endpoint = if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
+                if resolver::is_bucket_dns_compatible(bucket) {
+                    resolver::apply_s3_virtual_hosted_style(&new_endpoint, bucket)
+                } else {
+                    new_endpoint
+                }
+            } else {
+                new_endpoint
+            };
+
+            return send_rest_xml_request(
+                &final_endpoint, model, op, input, creds, redirect_region, debug, http_config, no_sign_request,
+            ).await;
+        }
+    }
+
+    outcome
+}
+
+/// Send a single REST-XML request and parse the response. Used by dispatch_rest_xml_protocol
+/// and its redirect retry logic.
+#[allow(clippy::too_many_arguments)]
+async fn send_rest_xml_request(
     endpoint_url: &str,
     model: &model::ServiceModel,
     op: &model::Operation,
@@ -1208,17 +1304,17 @@ async fn dispatch_rest_xml_protocol(
             &op.http_request_uri, input, input_shape_name, &model.shapes,
         ) {
             Ok(r) => r,
-            Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+            Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
         }
     };
 
     let parsed_base = match url::Url::parse(endpoint_url) {
         Ok(u) => u,
-        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid endpoint URL: {endpoint_url}: {e}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let host = match parsed_base.host_str() {
         Some(h) => h.to_string(),
-        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false },
+        None => return DispatchOutcome { result: Err(anyhow::anyhow!("No host in endpoint URL: {endpoint_url}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
 
     let effective_uri = if model.metadata.endpoint_prefix == "s3" {
@@ -1270,12 +1366,12 @@ async fn dispatch_rest_xml_protocol(
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let signing_url = match url::Url::parse(&full_url) {
             Ok(u) => u,
-            Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false },
+            Err(e) => return DispatchOutcome { result: Err(anyhow::anyhow!("Invalid full URL: {full_url}: {e}")), status: 0, error_code: None, is_network_error: false, redirect_region: None },
         };
         let signing_uri_path = signing_url.path();
         let signing_query_string = signing_url.query().unwrap_or("");
         if let Err(e) = sigv4::sign_request(&request.method, signing_uri_path, signing_query_string, &mut request.headers, &request.body, &signing_params) {
-            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None };
         }
     }
 
@@ -1285,13 +1381,13 @@ async fn dispatch_rest_xml_protocol(
 
     let http_client = match HttpClient::with_config(http_config) {
         Ok(c) => c,
-        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false },
+        Err(e) => return DispatchOutcome { result: Err(e), status: 0, error_code: None, is_network_error: false, redirect_region: None },
     };
     let response = match http_client.send(&request).await {
         Ok(r) => r,
         Err(e) => return DispatchOutcome {
             result: Err(e.context("HTTP request failed")),
-            status: 0, error_code: None, is_network_error: true,
+            status: 0, error_code: None, is_network_error: true, redirect_region: None,
         },
     };
 
@@ -1299,21 +1395,60 @@ async fn dispatch_rest_xml_protocol(
 
     if debug {
         eprintln!("[debug] response status: {}", response.status);
-        eprintln!("[debug] response body: {response_body}");
+        if !response_body.is_empty() {
+            eprintln!("[debug] response body: {response_body}");
+        }
+        for (k, v) in &response.headers {
+            if k.starts_with("x-amz-bucket-region") {
+                eprintln!("[debug] response header: {k}: {v}");
+            }
+        }
     }
+
+    // Extract x-amz-bucket-region for potential S3 redirect handling
+    let bucket_region = response.headers.iter()
+        .find(|(k, _)| k.eq_ignore_ascii_case("x-amz-bucket-region"))
+        .map(|(_, v)| v.clone());
 
     if response.status >= 200 && response.status < 300 {
         let output_shape_name = op.output_shape.as_deref().unwrap_or("");
         if output_shape_name.is_empty() {
-            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false };
+            return DispatchOutcome { result: Ok(serde_json::json!({})), status: response.status, error_code: None, is_network_error: false, redirect_region: None };
         }
 
         let parsed = rest_xml::parse_rest_xml_response(
             &response_body, response.status, &response.headers, output_shape_name, &model.shapes,
         ).with_context(|| format!("Failed to parse REST-XML response for {}", op.name));
 
-        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false }
+        DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false, redirect_region: None }
     } else {
+        // For redirect responses (301/307), propagate the bucket region so the caller can retry
+        if (response.status == 301 || response.status == 307) && bucket_region.is_some() {
+            let code = if response.status == 301 { "PermanentRedirect" } else { "TemporaryRedirect" };
+            return DispatchOutcome {
+                result: Err(anyhow::anyhow!(
+                    "An error occurred ({}) when calling the {} operation: The bucket is in region '{}', not '{}'",
+                    code, op.name, bucket_region.as_deref().unwrap_or("unknown"), region
+                )),
+                status: response.status,
+                error_code: Some(code.to_string()),
+                is_network_error: false,
+                redirect_region: bucket_region,
+            };
+        }
+
+        // For HEAD requests with empty body, derive error from HTTP status code
+        if response_body.trim().is_empty() {
+            let (error_code_str, message) = error_from_status_code(response.status, &op.name);
+            return DispatchOutcome {
+                result: Err(anyhow::anyhow!("An error occurred ({}) when calling the {} operation: {}", error_code_str, op.name, message)),
+                status: response.status,
+                error_code: Some(error_code_str),
+                is_network_error: false,
+                redirect_region: None,
+            };
+        }
+
         let (error_code, result) = match rest_xml::parse_rest_xml_error(&response_body) {
             Ok((code, message)) => {
                 let ec = code.clone();
@@ -1323,7 +1458,25 @@ async fn dispatch_rest_xml_protocol(
                 (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))
             }
         };
-        DispatchOutcome { result, status: response.status, error_code, is_network_error: false }
+        DispatchOutcome { result, status: response.status, error_code, is_network_error: false, redirect_region: None }
+    }
+}
+
+/// Map HTTP status codes to AWS error codes for responses with no body (e.g., HEAD requests).
+fn error_from_status_code(status: u16, _operation: &str) -> (String, String) {
+    match status {
+        301 => ("PermanentRedirect".to_string(), "Moved Permanently".to_string()),
+        307 => ("TemporaryRedirect".to_string(), "Temporary Redirect".to_string()),
+        400 => ("BadRequest".to_string(), "Bad Request".to_string()),
+        403 => ("Forbidden".to_string(), "Forbidden".to_string()),
+        404 => ("NotFound".to_string(), "Not Found".to_string()),
+        405 => ("MethodNotAllowed".to_string(), "Method Not Allowed".to_string()),
+        409 => ("Conflict".to_string(), "Conflict".to_string()),
+        412 => ("PreconditionFailed".to_string(), "Precondition Failed".to_string()),
+        416 => ("InvalidRange".to_string(), "The requested range is not satisfiable".to_string()),
+        500 => ("InternalError".to_string(), "Internal Server Error".to_string()),
+        503 => ("ServiceUnavailable".to_string(), "Service Unavailable".to_string()),
+        _ => (format!("{status}"), format!("HTTP {status}")),
     }
 }
 
@@ -3592,5 +3745,98 @@ mod tests {
         assert_eq!(tag_keys.len(), 2);
         assert_eq!(tag_keys[0], "key1");
         assert_eq!(tag_keys[1], "key2");
+    }
+
+    // ---------------------------------------------------------------
+    // S3 redirect handling tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_error_from_status_code_301() {
+        let (code, msg) = error_from_status_code(301, "HeadBucket");
+        assert_eq!(code, "PermanentRedirect");
+        assert_eq!(msg, "Moved Permanently");
+    }
+
+    #[test]
+    fn test_error_from_status_code_307() {
+        let (code, msg) = error_from_status_code(307, "PutObject");
+        assert_eq!(code, "TemporaryRedirect");
+        assert_eq!(msg, "Temporary Redirect");
+    }
+
+    #[test]
+    fn test_error_from_status_code_400() {
+        let (code, msg) = error_from_status_code(400, "HeadBucket");
+        assert_eq!(code, "BadRequest");
+        assert_eq!(msg, "Bad Request");
+    }
+
+    #[test]
+    fn test_error_from_status_code_403() {
+        let (code, msg) = error_from_status_code(403, "HeadBucket");
+        assert_eq!(code, "Forbidden");
+        assert_eq!(msg, "Forbidden");
+    }
+
+    #[test]
+    fn test_error_from_status_code_404() {
+        let (code, msg) = error_from_status_code(404, "HeadBucket");
+        assert_eq!(code, "NotFound");
+        assert_eq!(msg, "Not Found");
+    }
+
+    #[test]
+    fn test_error_from_status_code_500() {
+        let (code, msg) = error_from_status_code(500, "ListBuckets");
+        assert_eq!(code, "InternalError");
+        assert_eq!(msg, "Internal Server Error");
+    }
+
+    #[test]
+    fn test_error_from_status_code_503() {
+        let (code, msg) = error_from_status_code(503, "GetObject");
+        assert_eq!(code, "ServiceUnavailable");
+        assert_eq!(msg, "Service Unavailable");
+    }
+
+    #[test]
+    fn test_error_from_status_code_unknown() {
+        let (code, msg) = error_from_status_code(418, "PutObject");
+        assert_eq!(code, "418");
+        assert_eq!(msg, "HTTP 418");
+    }
+
+    #[test]
+    fn test_error_from_status_code_405() {
+        let (code, msg) = error_from_status_code(405, "HeadBucket");
+        assert_eq!(code, "MethodNotAllowed");
+        assert_eq!(msg, "Method Not Allowed");
+    }
+
+    #[test]
+    fn test_dispatch_outcome_has_redirect_region_field() {
+        // Verify that DispatchOutcome can carry redirect_region for S3 redirect handling
+        let outcome = DispatchOutcome {
+            result: Err(anyhow::anyhow!("redirect")),
+            status: 301,
+            error_code: Some("PermanentRedirect".to_string()),
+            is_network_error: false,
+            redirect_region: Some("eu-west-1".to_string()),
+        };
+        assert_eq!(outcome.status, 301);
+        assert_eq!(outcome.redirect_region.as_deref(), Some("eu-west-1"));
+    }
+
+    #[test]
+    fn test_dispatch_outcome_redirect_region_none_for_non_redirect() {
+        let outcome = DispatchOutcome {
+            result: Ok(serde_json::json!({})),
+            status: 200,
+            error_code: None,
+            is_network_error: false,
+            redirect_region: None,
+        };
+        assert!(outcome.redirect_region.is_none());
     }
 }

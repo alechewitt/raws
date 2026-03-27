@@ -2244,4 +2244,114 @@ mod tests {
         assert_eq!(tag_set[1]["Key"].as_str().unwrap(), "team");
         assert_eq!(tag_set[1]["Value"].as_str().unwrap(), "backend");
     }
+
+    // ---------------------------------------------------------------
+    // HEAD response / empty body tests (for HeadBucket etc.)
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn rest_xml_parse_head_bucket_success_empty_body() {
+        // HeadBucket returns 200 with headers only, no body.
+        // The output shape has all header-located members.
+        let mut shapes = HashMap::new();
+        shapes.insert(
+            "HeadBucketOutput".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "BucketRegion": {
+                        "shape": "String",
+                        "location": "header",
+                        "locationName": "x-amz-bucket-region"
+                    },
+                    "AccessPointAlias": {
+                        "shape": "Boolean",
+                        "location": "header",
+                        "locationName": "x-amz-access-point-alias"
+                    }
+                }
+            }),
+        );
+        shapes.insert("String".to_string(), json!({"type": "string"}));
+        shapes.insert("Boolean".to_string(), json!({"type": "boolean"}));
+
+        let mut headers = HashMap::new();
+        headers.insert("x-amz-bucket-region".to_string(), "us-east-1".to_string());
+        headers.insert("x-amz-access-point-alias".to_string(), "false".to_string());
+
+        let result = parse_rest_xml_response(
+            "",
+            200,
+            &headers,
+            "HeadBucketOutput",
+            &shapes,
+        )
+        .unwrap();
+
+        assert_eq!(result["BucketRegion"].as_str().unwrap(), "us-east-1");
+        assert_eq!(result["AccessPointAlias"].as_bool().unwrap(), false);
+    }
+
+    #[test]
+    fn rest_xml_parse_head_object_success_no_body() {
+        // HeadObject returns 200 with content-length, content-type, etag headers, no body
+        let mut shapes = HashMap::new();
+        shapes.insert(
+            "HeadObjectOutput".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "ContentLength": {
+                        "shape": "Long",
+                        "location": "header",
+                        "locationName": "Content-Length"
+                    },
+                    "ContentType": {
+                        "shape": "String",
+                        "location": "header",
+                        "locationName": "Content-Type"
+                    },
+                    "ETag": {
+                        "shape": "String",
+                        "location": "header",
+                        "locationName": "ETag"
+                    }
+                }
+            }),
+        );
+        shapes.insert("Long".to_string(), json!({"type": "long"}));
+        shapes.insert("String".to_string(), json!({"type": "string"}));
+
+        let mut headers = HashMap::new();
+        headers.insert("Content-Length".to_string(), "12345".to_string());
+        headers.insert("Content-Type".to_string(), "text/plain".to_string());
+        headers.insert("ETag".to_string(), "\"abcdef\"".to_string());
+
+        let result = parse_rest_xml_response(
+            "",
+            200,
+            &headers,
+            "HeadObjectOutput",
+            &shapes,
+        )
+        .unwrap();
+
+        assert_eq!(result["ContentLength"].as_i64().unwrap(), 12345);
+        assert_eq!(result["ContentType"].as_str().unwrap(), "text/plain");
+        assert_eq!(result["ETag"].as_str().unwrap(), "\"abcdef\"");
+    }
+
+    #[test]
+    fn rest_xml_parse_error_empty_body() {
+        // parse_rest_xml_error should fail gracefully on empty body
+        // (the caller in driver.rs handles this case by using error_from_status_code)
+        let result = parse_rest_xml_error("");
+        assert!(result.is_err(), "Parsing empty body as XML error should fail");
+    }
+
+    #[test]
+    fn rest_xml_parse_error_whitespace_only_body() {
+        let result = parse_rest_xml_error("   \n  ");
+        assert!(result.is_err(), "Parsing whitespace body as XML error should fail");
+    }
 }
