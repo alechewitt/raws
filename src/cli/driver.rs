@@ -772,7 +772,7 @@ async fn dispatch_query_protocol(
     // Sign the request with SigV4 (skip if --no-sign-request)
     if !no_sign_request {
         let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_service = model.metadata.signing_service();
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let uri_path = parsed_url.path();
         let query_string = parsed_url.query().unwrap_or("");
@@ -888,7 +888,7 @@ async fn dispatch_ec2_protocol(
 
     if !no_sign_request {
         let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_service = model.metadata.signing_service();
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let uri_path = parsed_url.path();
         let query_string = parsed_url.query().unwrap_or("");
@@ -993,7 +993,7 @@ async fn dispatch_json_protocol(
 
     if !no_sign_request {
         let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_service = model.metadata.signing_service();
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let uri_path = parsed_url.path();
         let query_string = parsed_url.query().unwrap_or("");
@@ -1123,7 +1123,7 @@ async fn dispatch_rest_json_protocol(
 
     if !no_sign_request {
         let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_service = model.metadata.signing_service();
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let signing_url = match url::Url::parse(&full_url) {
             Ok(u) => u,
@@ -1266,7 +1266,7 @@ async fn dispatch_rest_xml_protocol(
 
     if !no_sign_request {
         let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-        let signing_service = &model.metadata.endpoint_prefix;
+        let signing_service = model.metadata.signing_service();
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let signing_url = match url::Url::parse(&full_url) {
             Ok(u) => u,

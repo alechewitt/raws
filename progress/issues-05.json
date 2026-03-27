@@ -6,9 +6,9 @@
     "verify": [
       { "run": "raws ecr describe-repositories --region us-east-1 2>&1", "expect": "Should return repositories list, not InvalidSignatureException" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. The signingName in the botocore model may differ from the endpoint prefix. raws needs to use the model's signingName for SigV4."]
+    "passes": true,
+    "affected_files": ["src/core/model/mod.rs", "src/core/model/loader.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. The signingName in the botocore model may differ from the endpoint prefix. raws needs to use the model's signingName for SigV4.", "Fixed: Added signing_name field to ServiceMetadata, parse signingName from model, use signing_service() for SigV4."]
   },
   {
     "id": "validation-region-flag-priority",

@@ -28,6 +28,18 @@ pub struct ServiceMetadata {
     pub target_prefix: Option<String>,
     pub json_version: Option<String>,
     pub global_endpoint: Option<String>,
+    pub signing_name: Option<String>,
+}
+
+impl ServiceMetadata {
+    /// Returns the service name to use for SigV4 signing.
+    ///
+    /// Uses `signingName` from the model metadata when present, falling back
+    /// to `endpointPrefix`.  This matters for services like ECR where the
+    /// endpoint prefix is "api.ecr" but the signing service must be "ecr".
+    pub fn signing_service(&self) -> &str {
+        self.signing_name.as_deref().unwrap_or(&self.endpoint_prefix)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -177,5 +189,40 @@ mod tests {
             find_operation_by_cli_name(&ops, "nonexistent-op"),
             None
         );
+    }
+
+    fn make_metadata(endpoint_prefix: &str, signing_name: Option<&str>) -> ServiceMetadata {
+        ServiceMetadata {
+            api_version: "2023-01-01".to_string(),
+            endpoint_prefix: endpoint_prefix.to_string(),
+            protocol: "json".to_string(),
+            service_id: "Test".to_string(),
+            signature_version: "v4".to_string(),
+            target_prefix: None,
+            json_version: None,
+            global_endpoint: None,
+            signing_name: signing_name.map(|s| s.to_string()),
+        }
+    }
+
+    #[test]
+    fn test_signing_service_uses_signing_name_when_present() {
+        // ECR: endpointPrefix is "api.ecr" but signingName is "ecr"
+        let meta = make_metadata("api.ecr", Some("ecr"));
+        assert_eq!(meta.signing_service(), "ecr");
+    }
+
+    #[test]
+    fn test_signing_service_falls_back_to_endpoint_prefix() {
+        // STS: no signingName, so signing service should be the endpointPrefix
+        let meta = make_metadata("sts", None);
+        assert_eq!(meta.signing_service(), "sts");
+    }
+
+    #[test]
+    fn test_signing_service_same_values() {
+        // When signingName equals endpointPrefix, either is fine
+        let meta = make_metadata("dynamodb", Some("dynamodb"));
+        assert_eq!(meta.signing_service(), "dynamodb");
     }
 }

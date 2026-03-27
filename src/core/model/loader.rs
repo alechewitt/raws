@@ -54,6 +54,10 @@ fn parse_metadata(raw: &Value) -> Result<ServiceMetadata> {
             .get("globalEndpoint")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
+        signing_name: meta
+            .get("signingName")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
     })
 }
 
@@ -719,6 +723,7 @@ mod tests {
         assert!(model.metadata.target_prefix.is_none());
         assert!(model.metadata.json_version.is_none());
         assert!(model.metadata.global_endpoint.is_none());
+        assert!(model.metadata.signing_name.is_none());
     }
 
     #[test]
@@ -909,5 +914,65 @@ mod tests {
         let shape = &model.shapes["PutObjectRequest"];
         let body = &shape["members"]["Body"];
         assert_eq!(body.get("streaming").and_then(|v| v.as_bool()), Some(true));
+    }
+
+    // ---------------------------------------------------------------
+    // Feature 5: signing_name — verify signingName is parsed from metadata
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_signing_name_parsed_when_present() {
+        let json = r#"{
+            "version": "2.0",
+            "metadata": {
+                "apiVersion": "2015-09-21",
+                "endpointPrefix": "api.ecr",
+                "protocol": "json",
+                "serviceId": "ECR",
+                "signatureVersion": "v4",
+                "signingName": "ecr",
+                "targetPrefix": "AmazonEC2ContainerRegistry_V20150921",
+                "jsonVersion": "1.1"
+            },
+            "operations": {},
+            "shapes": {}
+        }"#;
+        let model = parse_service_model(json).unwrap();
+        assert_eq!(model.metadata.endpoint_prefix, "api.ecr");
+        assert_eq!(model.metadata.signing_name.as_deref(), Some("ecr"));
+        assert_eq!(model.metadata.signing_service(), "ecr");
+    }
+
+    #[test]
+    fn test_signing_name_none_when_absent() {
+        let json = r#"{
+            "version": "2.0",
+            "metadata": {
+                "apiVersion": "2011-06-15",
+                "endpointPrefix": "sts",
+                "protocol": "query",
+                "serviceId": "STS",
+                "signatureVersion": "v4"
+            },
+            "operations": {},
+            "shapes": {}
+        }"#;
+        let model = parse_service_model(json).unwrap();
+        assert_eq!(model.metadata.endpoint_prefix, "sts");
+        assert!(model.metadata.signing_name.is_none());
+        assert_eq!(model.metadata.signing_service(), "sts");
+    }
+
+    #[test]
+    fn test_signing_name_real_ecr_model() {
+        let path = Path::new("models/ecr/2015-09-21/service-2.json");
+        if !path.exists() {
+            eprintln!("Skipping: ECR model not copied yet");
+            return;
+        }
+        let model = load_service_model(path).unwrap();
+        assert_eq!(model.metadata.endpoint_prefix, "api.ecr");
+        assert_eq!(model.metadata.signing_name.as_deref(), Some("ecr"));
+        assert_eq!(model.metadata.signing_service(), "ecr");
     }
 }
