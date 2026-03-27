@@ -219,6 +219,9 @@ pub async fn run() -> Result<()> {
     let map_params = build_map_params(op.input_shape.as_deref(), &service_model.shapes);
     let mut input = parse_operation_args(&args.args, &list_params, &map_params, &member_name_map)?;
 
+    // Auto-generate idempotency tokens for fields the user did not provide
+    fill_idempotency_tokens(&mut input, op.input_shape.as_deref(), &service_model.shapes)?;
+
     // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
     apply_route53_customizations(model_service, &mut input);
 
@@ -528,6 +531,9 @@ async fn handle_wait_command(
     let list_params = build_list_params(op.input_shape.as_deref(), &service_model.shapes);
     let map_params_set = build_map_params(op.input_shape.as_deref(), &service_model.shapes);
     let mut input = parse_operation_args(&remaining_args, &list_params, &map_params_set, &member_name_map)?;
+
+    // Auto-generate idempotency tokens for fields the user did not provide
+    fill_idempotency_tokens(&mut input, op.input_shape.as_deref(), &service_model.shapes)?;
 
     // Apply Route53 input parameter customizations (strip /hostedzone/ etc. prefixes)
     apply_route53_customizations(model_service, &mut input);
@@ -1974,6 +1980,63 @@ fn build_map_params(
         }
     }
     map_params
+}
+
+/// Generate a random UUID v4 string using `ring`'s cryptographic RNG.
+fn generate_uuid_v4() -> Result<String> {
+    let rng = ring::rand::SystemRandom::new();
+    let mut bytes = [0u8; 16];
+    ring::rand::SecureRandom::fill(&rng, &mut bytes)
+        .map_err(|_| anyhow::anyhow!("failed to generate random bytes for idempotency token"))?;
+    // Set version (4) and variant (RFC 4122) bits
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    Ok(format!(
+        "{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
+        u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]),
+        u16::from_be_bytes([bytes[4], bytes[5]]),
+        u16::from_be_bytes([bytes[6], bytes[7]]),
+        u16::from_be_bytes([bytes[8], bytes[9]]),
+        // 6-byte value stored as u64 (only low 48 bits used)
+        u64::from_be_bytes([0, 0, bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]]),
+    ))
+}
+
+/// Auto-populate idempotency token fields that the user did not provide.
+///
+/// The botocore model marks certain input members with `"idempotencyToken": true`.
+/// The AWS CLI (and SDKs) auto-generate a UUID v4 for these fields when the caller
+/// omits them, ensuring idempotent retries work correctly.
+fn fill_idempotency_tokens(
+    input: &mut serde_json::Value,
+    input_shape: Option<&str>,
+    shapes: &std::collections::HashMap<String, serde_json::Value>,
+) -> Result<()> {
+    let shape_name = match input_shape {
+        Some(s) => s,
+        None => return Ok(()),
+    };
+    let shape = match shapes.get(shape_name) {
+        Some(s) => s,
+        None => return Ok(()),
+    };
+    let members = match shape.get("members").and_then(|m| m.as_object()) {
+        Some(m) => m,
+        None => return Ok(()),
+    };
+    let input_obj = match input.as_object_mut() {
+        Some(o) => o,
+        None => return Ok(()),
+    };
+    for (member_name, member_def) in members {
+        if member_def.get("idempotencyToken").and_then(|v| v.as_bool()) == Some(true)
+            && !input_obj.contains_key(member_name)
+        {
+            let token = generate_uuid_v4()?;
+            input_obj.insert(member_name.clone(), serde_json::Value::String(token));
+        }
+    }
+    Ok(())
 }
 
 /// Global flags that take a value argument. When these leak into operation args
@@ -3837,5 +3900,86 @@ mod tests {
             redirect_region: None,
         };
         assert!(outcome.redirect_region.is_none());
+    }
+
+    #[test]
+    fn test_generate_uuid_v4_format() {
+        let uuid = generate_uuid_v4().unwrap();
+        // UUID v4 format: 8-4-4-4-12 hex chars
+        let parts: Vec<&str> = uuid.split('-').collect();
+        assert_eq!(parts.len(), 5, "UUID should have 5 dash-separated parts: {uuid}");
+        assert_eq!(parts[0].len(), 8);
+        assert_eq!(parts[1].len(), 4);
+        assert_eq!(parts[2].len(), 4);
+        assert_eq!(parts[3].len(), 4);
+        assert_eq!(parts[4].len(), 12);
+        // Version nibble must be 4
+        assert!(parts[2].starts_with('4'), "version nibble should be 4: {uuid}");
+        // Variant nibble must be 8, 9, a, or b
+        let variant = parts[3].chars().next().unwrap();
+        assert!(
+            matches!(variant, '8' | '9' | 'a' | 'b'),
+            "variant nibble should be 8/9/a/b: {uuid}"
+        );
+    }
+
+    #[test]
+    fn test_generate_uuid_v4_uniqueness() {
+        let a = generate_uuid_v4().unwrap();
+        let b = generate_uuid_v4().unwrap();
+        assert_ne!(a, b, "two generated UUIDs should differ");
+    }
+
+    #[test]
+    fn test_fill_idempotency_tokens_adds_missing() {
+        let mut shapes = std::collections::HashMap::new();
+        shapes.insert("CreateReq".to_string(), serde_json::json!({
+            "type": "structure",
+            "members": {
+                "Name": { "shape": "StringType" },
+                "ClientRequestToken": { "shape": "TokenType", "idempotencyToken": true }
+            }
+        }));
+        let mut input = serde_json::json!({ "Name": "test-secret" });
+        fill_idempotency_tokens(&mut input, Some("CreateReq"), &shapes).unwrap();
+        assert!(input.get("ClientRequestToken").is_some(), "should auto-populate token");
+        let token = input["ClientRequestToken"].as_str().unwrap();
+        assert_eq!(token.len(), 36, "UUID should be 36 chars: {token}");
+    }
+
+    #[test]
+    fn test_fill_idempotency_tokens_preserves_user_value() {
+        let mut shapes = std::collections::HashMap::new();
+        shapes.insert("CreateReq".to_string(), serde_json::json!({
+            "type": "structure",
+            "members": {
+                "ClientRequestToken": { "shape": "TokenType", "idempotencyToken": true }
+            }
+        }));
+        let mut input = serde_json::json!({ "ClientRequestToken": "my-custom-token" });
+        fill_idempotency_tokens(&mut input, Some("CreateReq"), &shapes).unwrap();
+        assert_eq!(input["ClientRequestToken"], "my-custom-token");
+    }
+
+    #[test]
+    fn test_fill_idempotency_tokens_no_op_without_annotation() {
+        let mut shapes = std::collections::HashMap::new();
+        shapes.insert("DescribeReq".to_string(), serde_json::json!({
+            "type": "structure",
+            "members": {
+                "SecretId": { "shape": "StringType" }
+            }
+        }));
+        let mut input = serde_json::json!({ "SecretId": "my-secret" });
+        fill_idempotency_tokens(&mut input, Some("DescribeReq"), &shapes).unwrap();
+        assert!(input.get("ClientRequestToken").is_none());
+    }
+
+    #[test]
+    fn test_fill_idempotency_tokens_no_input_shape() {
+        let shapes = std::collections::HashMap::new();
+        let mut input = serde_json::json!({});
+        fill_idempotency_tokens(&mut input, None, &shapes).unwrap();
+        assert_eq!(input, serde_json::json!({}));
     }
 }

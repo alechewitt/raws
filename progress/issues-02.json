@@ -73,9 +73,9 @@
     "verify": [
       { "run": "raws --version", "expect": "Should output a version string like 'raws/0.1.0 ...'" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent."]
+    "passes": true,
+    "affected_files": ["src/cli/args.rs", "build.rs"],
+    "notes": ["Found by validation agent.", "Fixed: Added VERSION constant and version attribute to clap."]
   },
   {
     "id": "validation-ec2-owners-filter-ignored",

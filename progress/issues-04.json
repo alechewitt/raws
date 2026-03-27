@@ -40,9 +40,9 @@
     "verify": [
       { "run": "raws secretsmanager create-secret --name test --secret-string test --region us-east-1 2>&1", "expect": "Should auto-generate ClientRequestToken and succeed" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. AWS CLI generates a UUID for idempotencyToken-annotated fields automatically."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. AWS CLI generates a UUID for idempotencyToken-annotated fields automatically.", "Fixed: Added fill_idempotency_tokens() that auto-generates UUID v4 for fields annotated with idempotencyToken: true."]
   },
   {
     "id": "validation-ssm-rds-output-format-ignored",

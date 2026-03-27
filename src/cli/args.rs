@@ -1,7 +1,16 @@
 use clap::Parser;
 
+/// Version string displayed by `raws --version`.
+/// Format: `raws/0.1.0 Rust/1.93.1`
+const VERSION: &str = concat!(
+    "raws/",
+    env!("CARGO_PKG_VERSION"),
+    " Rust/",
+    env!("RAWS_RUSTC_VERSION"),
+);
+
 #[derive(Parser, Debug)]
-#[command(name = "raws", about = "AWS CLI reimplementation in Rust")]
+#[command(name = "raws", about = "AWS CLI reimplementation in Rust", version = VERSION)]
 pub struct GlobalArgs {
     /// AWS region to use
     #[arg(long, global = true)]
@@ -272,5 +281,21 @@ mod tests {
     fn test_global_args_no_sign_request_after_service() {
         let args = GlobalArgs::try_parse_from(["raws", "s3api", "list-objects-v2", "--no-sign-request", "--bucket", "pub"]).unwrap();
         assert!(args.no_sign_request);
+    }
+
+    #[test]
+    fn test_version_flag_produces_version_string() {
+        // --version should cause a DisplayVersion error (clap exits with version info)
+        let result = GlobalArgs::try_parse_from(["raws", "--version"]);
+        match result {
+            Err(e) => assert_eq!(e.kind(), clap::error::ErrorKind::DisplayVersion),
+            Ok(_) => panic!("expected --version to trigger DisplayVersion error"),
+        }
+    }
+
+    #[test]
+    fn test_version_string_format() {
+        assert!(VERSION.starts_with("raws/"));
+        assert!(VERSION.contains("Rust/"));
     }
 }

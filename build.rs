@@ -2,6 +2,16 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 fn main() {
+    // Expose the Rust compiler version so the binary can print it at runtime.
+    if let Ok(output) = std::process::Command::new("rustc").arg("--version").output() {
+        if let Ok(version_str) = String::from_utf8(output.stdout) {
+            // Format: "rustc 1.93.1 (01f6ddf75 2026-02-11)"  ->  extract "1.93.1"
+            if let Some(ver) = version_str.split_whitespace().nth(1) {
+                println!("cargo:rustc-env=RAWS_RUSTC_VERSION={ver}");
+            }
+        }
+    }
+
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let dest = PathBuf::from(&out_dir).join("embedded_models");
 
