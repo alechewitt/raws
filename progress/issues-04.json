@@ -29,9 +29,9 @@
     "verify": [
       { "run": "raws secretsmanager describe-secret --secret-id test-secret --region us-east-1 2>&1", "expect": "Should query us-east-1, not us-west-2" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. This may affect other services too - needs investigation."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. This may affect other services too - needs investigation.", "Fixed by fixup_global_flags_in_trailing_args() - --region after operation args was captured as trailing var arg."]
   },
   {
     "id": "validation-secretsmanager-missing-idempotency-token",
@@ -52,9 +52,9 @@
       { "run": "raws ssm describe-instance-information --output text --region us-east-1 2>&1 | head -5", "expect": "Should output text format, not JSON" },
       { "run": "raws rds describe-db-instances --output table --region us-east-1 2>&1 | head -5", "expect": "Should output table format, not JSON" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Affects JSON protocol services (SSM) and query protocol services (RDS). Query protocol services that use global endpoints (STS, IAM) work correctly."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Affects JSON protocol services (SSM) and query protocol services (RDS). Query protocol services that use global endpoints (STS, IAM) work correctly.", "Fixed by fixup_global_flags_in_trailing_args() - --output after operation args was captured as trailing var arg."]
   },
   {
     "id": "validation-ssm-query-flag-ignored",
@@ -63,9 +63,9 @@
     "verify": [
       { "run": "raws ssm describe-instance-information --query 'InstanceInformationList[0].InstanceId' --region us-east-1 2>&1", "expect": "Should return just the instance ID string, not the full JSON" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. May affect other JSON protocol services."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. May affect other JSON protocol services.", "Fixed by fixup_global_flags_in_trailing_args() - --query after operation args was captured as trailing var arg."]
   },
   {
     "id": "validation-timestamps-utc-vs-local",
@@ -85,9 +85,9 @@
     "verify": [
       { "run": "raws route53 get-account-limit --type MAX_HOSTED_ZONES_BY_OWNER --region us-east-1 2>&1", "expect": "Should return account limit data, not SignatureDoesNotMatch" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Route53 is a global service like IAM; may need similar signing region fixes."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Route53 is a global service like IAM; may need similar signing region fixes.", "Fixed by fixup_global_flags_in_trailing_args() - --region after operation args was captured as trailing var arg."]
   },
   {
     "id": "validation-ssm-list-documents-empty",

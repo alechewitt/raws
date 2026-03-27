@@ -17,9 +17,9 @@
     "verify": [
       { "run": "AWS_REGION=us-west-2 raws sts get-caller-identity --region us-east-1 --output json 2>&1", "expect": "Should hit us-east-1 (from --region flag), not us-west-2 (from env var)" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. AWS CLI region precedence: --region > AWS_REGION > AWS_DEFAULT_REGION > config file."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. AWS CLI region precedence: --region > AWS_REGION > AWS_DEFAULT_REGION > config file.", "Fixed by fixup_global_flags_in_trailing_args() - the real issue was --region after operation args being captured as trailing var args."]
   },
   {
     "id": "validation-apigateway-empty-lists-null",

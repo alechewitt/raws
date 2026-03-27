@@ -19,9 +19,9 @@
       { "run": "raws rds describe-db-instances --output text --region us-east-1 2>&1", "expect": "Should output text format, not JSON" },
       { "run": "raws rds describe-db-instances --output table --region us-east-1 2>&1", "expect": "Should output table format, not JSON" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. RDS JSON output is correct, but text/table format selection is broken."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. RDS JSON output is correct, but text/table format selection is broken.", "Fixed by fixup_global_flags_in_trailing_args() - --output after operation args was captured as trailing var arg."]
   },
   {
     "id": "validation-rds-commands-missing",
