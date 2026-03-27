@@ -777,14 +777,16 @@ struct XmlNode {
     tag: String,
     text: Option<String>,
     children: Vec<XmlNode>,
+    attributes: HashMap<String, String>,
 }
 
 impl XmlNode {
-    fn new(tag: &str) -> Self {
+    fn new_with_attributes(tag: &str, attrs: HashMap<String, String>) -> Self {
         XmlNode {
             tag: tag.to_string(),
             text: None,
             children: Vec::new(),
+            attributes: attrs,
         }
     }
 }
@@ -802,7 +804,8 @@ fn parse_xml_to_tree(xml_str: &str) -> Result<XmlNode> {
                     std::str::from_utf8(e.name().as_ref())
                         .context("Invalid UTF-8 in XML tag")?,
                 );
-                stack.push(XmlNode::new(&tag));
+                let attrs = extract_attributes(e.attributes())?;
+                stack.push(XmlNode::new_with_attributes(&tag, attrs));
             }
             Ok(Event::End(_)) => {
                 let node = stack
@@ -819,7 +822,8 @@ fn parse_xml_to_tree(xml_str: &str) -> Result<XmlNode> {
                     std::str::from_utf8(e.name().as_ref())
                         .context("Invalid UTF-8 in XML tag")?,
                 );
-                let node = XmlNode::new(&tag);
+                let attrs = extract_attributes(e.attributes())?;
+                let node = XmlNode::new_with_attributes(&tag, attrs);
                 if let Some(parent) = stack.last_mut() {
                     parent.children.push(node);
                 } else {
@@ -844,6 +848,27 @@ fn parse_xml_to_tree(xml_str: &str) -> Result<XmlNode> {
     }
 
     root.ok_or_else(|| anyhow::anyhow!("Empty or invalid XML document"))
+}
+
+/// Extract XML attributes from an element into a HashMap.
+/// Attribute names have their namespace prefix stripped (e.g., "xsi:type" -> "xsi:type" is kept,
+/// but only the local name is used for matching via the model's locationName).
+fn extract_attributes(
+    attrs: quick_xml::events::attributes::Attributes<'_>,
+) -> Result<HashMap<String, String>> {
+    let mut map = HashMap::new();
+    for attr in attrs {
+        let attr = attr.context("Failed to parse XML attribute")?;
+        let key = std::str::from_utf8(attr.key.as_ref())
+            .context("Invalid UTF-8 in XML attribute name")?
+            .to_string();
+        let val = attr
+            .unescape_value()
+            .context("Failed to unescape XML attribute value")?
+            .to_string();
+        map.insert(key, val);
+    }
+    Ok(map)
 }
 
 /// Strip XML namespace prefix (e.g., "{https://...}Tag" -> "Tag" or "ns:Tag" -> "Tag")
@@ -938,6 +963,23 @@ fn parse_structure_from_xml(
     for (member_name, member_def) in members {
         // Skip members with a location (they're handled separately for headers/status)
         if member_def.get("location").is_some() {
+            continue;
+        }
+
+        // Handle xmlAttribute members: read from the node's XML attributes
+        let is_xml_attribute = member_def
+            .get("xmlAttribute")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
+        if is_xml_attribute {
+            let attr_name = member_def
+                .get("locationName")
+                .and_then(|n| n.as_str())
+                .unwrap_or(member_name.as_str());
+            if let Some(attr_value) = node.attributes.get(attr_name) {
+                result.insert(member_name.clone(), Value::String(attr_value.clone()));
+            }
             continue;
         }
 
@@ -1800,10 +1842,10 @@ mod tests {
         let buckets = result["Buckets"].as_array().unwrap();
         assert_eq!(buckets.len(), 2);
         assert_eq!(buckets[0]["Name"].as_str().unwrap(), "quotes");
-        assert_eq!(
-            buckets[0]["CreationDate"].as_str().unwrap(),
-            "2006-02-03T16:45:09+00:00"
-        );
+        // Timestamp is converted to local timezone; verify it parses as the correct UTC instant
+        let ts = buckets[0]["CreationDate"].as_str().unwrap();
+        let parsed: chrono::DateTime<chrono::Utc> = ts.parse().unwrap();
+        assert_eq!(parsed, "2006-02-03T16:45:09Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap());
         assert_eq!(buckets[1]["Name"].as_str().unwrap(), "samples");
     }
 
@@ -2353,5 +2395,205 @@ mod tests {
     fn rest_xml_parse_error_whitespace_only_body() {
         let result = parse_rest_xml_error("   \n  ");
         assert!(result.is_err(), "Parsing whitespace body as XML error should fail");
+    }
+
+    // ---------------------------------------------------------------
+    // XML attribute parsing (e.g., S3 Grantee xsi:type)
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn rest_xml_parse_xml_attribute_grantee_type() {
+        // S3 get-bucket-acl returns Grantee with xsi:type as an XML attribute
+        let mut shapes = HashMap::new();
+        shapes.insert(
+            "GetBucketAclOutput".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "Owner": { "shape": "Owner" },
+                    "Grants": {
+                        "shape": "Grants",
+                        "locationName": "AccessControlList"
+                    }
+                }
+            }),
+        );
+        shapes.insert(
+            "Grants".to_string(),
+            json!({
+                "type": "list",
+                "member": {
+                    "shape": "Grant",
+                    "locationName": "Grant"
+                }
+            }),
+        );
+        shapes.insert(
+            "Grant".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "Grantee": { "shape": "Grantee" },
+                    "Permission": { "shape": "Permission" }
+                }
+            }),
+        );
+        shapes.insert(
+            "Grantee".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "DisplayName": { "shape": "DisplayName" },
+                    "ID": { "shape": "ID" },
+                    "Type": {
+                        "shape": "Type",
+                        "locationName": "xsi:type",
+                        "xmlAttribute": true
+                    },
+                    "URI": { "shape": "URI" }
+                },
+                "xmlNamespace": {
+                    "prefix": "xsi",
+                    "uri": "http://www.w3.org/2001/XMLSchema-instance"
+                }
+            }),
+        );
+        shapes.insert("DisplayName".to_string(), json!({"type": "string"}));
+        shapes.insert("ID".to_string(), json!({"type": "string"}));
+        shapes.insert("Type".to_string(), json!({"type": "string"}));
+        shapes.insert("URI".to_string(), json!({"type": "string"}));
+        shapes.insert("Permission".to_string(), json!({"type": "string"}));
+        shapes.insert(
+            "Owner".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "DisplayName": { "shape": "DisplayName" },
+                    "ID": { "shape": "ID" }
+                }
+            }),
+        );
+
+        let xml = r#"<AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <Owner>
+    <DisplayName>webfile</DisplayName>
+    <ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID>
+  </Owner>
+  <AccessControlList>
+    <Grant>
+      <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="CanonicalUser">
+        <DisplayName>webfile</DisplayName>
+        <ID>75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a</ID>
+      </Grantee>
+      <Permission>FULL_CONTROL</Permission>
+    </Grant>
+  </AccessControlList>
+</AccessControlPolicy>"#;
+
+        let result = parse_rest_xml_response(
+            xml,
+            200,
+            &HashMap::new(),
+            "GetBucketAclOutput",
+            &shapes,
+        )
+        .unwrap();
+
+        // Verify the Type field was extracted from the xsi:type XML attribute
+        let grants = result["Grants"].as_array().unwrap();
+        assert_eq!(grants.len(), 1);
+        let grantee = &grants[0]["Grantee"];
+        assert_eq!(grantee["Type"].as_str().unwrap(), "CanonicalUser");
+        assert_eq!(grantee["DisplayName"].as_str().unwrap(), "webfile");
+        assert_eq!(
+            grantee["ID"].as_str().unwrap(),
+            "75aa57f09aa0c8caeab4f8c24e99d10f8e7faeebf76c078efc7c6caea54ba06a"
+        );
+
+        // Verify the Owner was also parsed
+        assert_eq!(result["Owner"]["DisplayName"].as_str().unwrap(), "webfile");
+
+        // Verify the Permission
+        assert_eq!(grants[0]["Permission"].as_str().unwrap(), "FULL_CONTROL");
+    }
+
+    #[test]
+    fn rest_xml_parse_xml_attribute_with_uri_grantee() {
+        // Test parsing a group grantee with URI and xsi:type="Group"
+        let mut shapes = HashMap::new();
+        shapes.insert(
+            "TestOutput".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "Grantee": { "shape": "Grantee" }
+                }
+            }),
+        );
+        shapes.insert(
+            "Grantee".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "Type": {
+                        "shape": "String",
+                        "locationName": "xsi:type",
+                        "xmlAttribute": true
+                    },
+                    "URI": { "shape": "String" }
+                }
+            }),
+        );
+        shapes.insert("String".to_string(), json!({"type": "string"}));
+
+        let xml = r#"<TestResult>
+  <Grantee xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="Group">
+    <URI>http://acs.amazonaws.com/groups/global/AllUsers</URI>
+  </Grantee>
+</TestResult>"#;
+
+        let result = parse_rest_xml_response(
+            xml,
+            200,
+            &HashMap::new(),
+            "TestOutput",
+            &shapes,
+        )
+        .unwrap();
+
+        assert_eq!(result["Grantee"]["Type"].as_str().unwrap(), "Group");
+        assert_eq!(
+            result["Grantee"]["URI"].as_str().unwrap(),
+            "http://acs.amazonaws.com/groups/global/AllUsers"
+        );
+    }
+
+    #[test]
+    fn rest_xml_parse_empty_element_no_attributes() {
+        // Verify elements without attributes still parse correctly
+        let mut shapes = HashMap::new();
+        shapes.insert(
+            "TestOutput".to_string(),
+            json!({
+                "type": "structure",
+                "members": {
+                    "Name": { "shape": "String" }
+                }
+            }),
+        );
+        shapes.insert("String".to_string(), json!({"type": "string"}));
+
+        let xml = r#"<TestResult><Name>hello</Name></TestResult>"#;
+
+        let result = parse_rest_xml_response(
+            xml,
+            200,
+            &HashMap::new(),
+            "TestOutput",
+            &shapes,
+        )
+        .unwrap();
+
+        assert_eq!(result["Name"].as_str().unwrap(), "hello");
     }
 }

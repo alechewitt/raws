@@ -3,27 +3,37 @@ pub mod query;
 pub mod rest_json;
 pub mod rest_xml;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
+
+/// Format a DateTime<Local> in AWS CLI ISO 8601 format with local timezone offset.
+///
+/// AWS CLI outputs timestamps in the local timezone (e.g., -07:00, +05:30),
+/// with 6-digit microsecond precision when sub-second component is non-zero.
+fn format_local_datetime(local_dt: DateTime<Local>) -> String {
+    let nanos = local_dt.timestamp_subsec_nanos();
+    if nanos == 0 {
+        local_dt.format("%Y-%m-%dT%H:%M:%S%:z").to_string()
+    } else {
+        // Python's isoformat uses 6-digit microseconds
+        let micros = nanos / 1000;
+        local_dt.format("%Y-%m-%dT%H:%M:%S").to_string()
+            + &format!(".{micros:06}")
+            + &local_dt.format("%:z").to_string()
+    }
+}
 
 /// Normalize a timestamp string to the format used by the AWS CLI.
-/// AWS CLI outputs timestamps as ISO 8601 with +00:00 offset (no Z suffix),
+/// AWS CLI outputs timestamps as ISO 8601 in the local timezone,
 /// and omits sub-second precision when it's zero.
 ///
-/// Examples:
-///   "2023-01-01T00:00:00.000Z" -> "2023-01-01T00:00:00+00:00"
-///   "2023-01-01T00:00:00Z" -> "2023-01-01T00:00:00+00:00"
-///   "2023-01-01T00:00:00.123Z" -> "2023-01-01T00:00:00.123000+00:00"
+/// Examples (in UTC-7 timezone):
+///   "2023-01-01T07:00:00.000Z" -> "2023-01-01T00:00:00-07:00"
+///   "2023-01-01T07:00:00Z" -> "2023-01-01T00:00:00-07:00"
+///   "2023-01-01T07:00:00.123Z" -> "2023-01-01T00:00:00.123000-07:00"
 pub fn normalize_timestamp(s: &str) -> String {
     if let Ok(dt) = s.parse::<DateTime<Utc>>() {
-        let nanos = dt.timestamp_subsec_nanos();
-        if nanos == 0 {
-            dt.format("%Y-%m-%dT%H:%M:%S+00:00").to_string()
-        } else {
-            // Python's isoformat uses 6-digit microseconds
-            let micros = nanos / 1000;
-            dt.format("%Y-%m-%dT%H:%M:%S").to_string()
-                + &format!(".{micros:06}+00:00")
-        }
+        let local_dt: DateTime<Local> = dt.into();
+        format_local_datetime(local_dt)
     } else {
         // Can't parse; return as-is
         s.to_string()
@@ -31,7 +41,7 @@ pub fn normalize_timestamp(s: &str) -> String {
 }
 
 /// Convert an epoch timestamp (seconds, possibly with fractional part) to
-/// the AWS CLI ISO 8601 format.
+/// the AWS CLI ISO 8601 format in the local timezone.
 pub fn epoch_to_iso(epoch: f64) -> String {
     let secs = epoch as i64;
     // Round to nearest microsecond to avoid floating-point precision issues
@@ -39,12 +49,8 @@ pub fn epoch_to_iso(epoch: f64) -> String {
     let micros = (frac * 1_000_000.0).round() as u32;
     let nanos = micros * 1000;
     if let Some(dt) = DateTime::from_timestamp(secs, nanos) {
-        if micros == 0 {
-            dt.format("%Y-%m-%dT%H:%M:%S+00:00").to_string()
-        } else {
-            dt.format("%Y-%m-%dT%H:%M:%S").to_string()
-                + &format!(".{micros:06}+00:00")
-        }
+        let local_dt: DateTime<Local> = dt.into();
+        format_local_datetime(local_dt)
     } else {
         format!("{epoch}")
     }
@@ -87,6 +93,19 @@ pub fn normalize_response_value(
                                 .get("shape")
                                 .and_then(|s| s.as_str())
                                 .unwrap_or("");
+
+                            // Convert null to empty array when model says the field is a list
+                            if member_value.is_null() {
+                                let member_shape_type = shapes
+                                    .get(member_shape)
+                                    .and_then(|s| s.get("type"))
+                                    .and_then(|t| t.as_str())
+                                    .unwrap_or("");
+                                if member_shape_type == "list" {
+                                    member_value = Value::Array(Vec::new());
+                                }
+                            }
+
                             normalize_response_value(&mut member_value, member_shape, shapes);
                             ordered.insert(member_name.clone(), member_value);
                         }
@@ -103,6 +122,14 @@ pub fn normalize_response_value(
                 .and_then(|m| m.get("shape"))
                 .and_then(|s| s.as_str())
                 .unwrap_or("");
+
+            // If a single scalar value is provided where a list is expected,
+            // wrap it in an array (some services return a bare string for single-element lists)
+            if !value.is_array() && !value.is_null() {
+                let single = std::mem::replace(value, Value::Null);
+                *value = Value::Array(vec![single]);
+            }
+
             if let Value::Array(arr) = value {
                 for item in arr.iter_mut() {
                     normalize_response_value(item, member_shape, shapes);
@@ -171,37 +198,42 @@ pub fn fill_missing_top_level_members(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::TimeZone;
+
+    /// Helper: compute the expected local-timezone representation of a UTC datetime.
+    /// This makes tests work regardless of the machine's timezone.
+    fn expected_local(utc_str: &str) -> String {
+        let utc_dt: DateTime<Utc> = utc_str.parse().unwrap();
+        let local_dt: DateTime<Local> = utc_dt.into();
+        format_local_datetime(local_dt)
+    }
 
     #[test]
     fn test_normalize_timestamp_z_suffix() {
-        assert_eq!(
-            normalize_timestamp("2023-01-01T00:00:00Z"),
-            "2023-01-01T00:00:00+00:00"
-        );
+        let result = normalize_timestamp("2023-01-01T00:00:00Z");
+        assert_eq!(result, expected_local("2023-01-01T00:00:00Z"));
+        // Verify it uses local timezone offset (not necessarily +00:00)
+        assert!(result.contains('T'));
+        assert!(result.contains(':'));
     }
 
     #[test]
     fn test_normalize_timestamp_z_with_millis() {
-        assert_eq!(
-            normalize_timestamp("2026-03-17T21:03:46.000Z"),
-            "2026-03-17T21:03:46+00:00"
-        );
+        let result = normalize_timestamp("2026-03-17T21:03:46.000Z");
+        // .000Z means no sub-second, so no microseconds in output
+        assert_eq!(result, expected_local("2026-03-17T21:03:46Z"));
     }
 
     #[test]
     fn test_normalize_timestamp_nonzero_millis() {
-        assert_eq!(
-            normalize_timestamp("2023-01-01T00:00:00.123Z"),
-            "2023-01-01T00:00:00.123000+00:00"
-        );
+        let result = normalize_timestamp("2023-01-01T00:00:00.123Z");
+        assert!(result.contains(".123000"), "Expected microsecond precision, got: {result}");
     }
 
     #[test]
     fn test_normalize_timestamp_already_offset() {
-        assert_eq!(
-            normalize_timestamp("2023-01-01T00:00:00+00:00"),
-            "2023-01-01T00:00:00+00:00"
-        );
+        let result = normalize_timestamp("2023-01-01T00:00:00+00:00");
+        assert_eq!(result, expected_local("2023-01-01T00:00:00Z"));
     }
 
     #[test]
@@ -210,19 +242,28 @@ mod tests {
     }
 
     #[test]
-    fn test_epoch_to_iso() {
-        assert_eq!(
-            epoch_to_iso(1672531200.0),
-            "2023-01-01T00:00:00+00:00"
+    fn test_normalize_timestamp_uses_local_timezone() {
+        // Verify the output timezone matches chrono::Local
+        let result = normalize_timestamp("2023-06-15T12:00:00Z");
+        let utc_dt = Utc.with_ymd_and_hms(2023, 6, 15, 12, 0, 0).unwrap();
+        let local_dt: DateTime<Local> = utc_dt.into();
+        let expected_offset = local_dt.format("%:z").to_string();
+        assert!(
+            result.ends_with(&expected_offset),
+            "Expected offset {expected_offset}, got: {result}"
         );
     }
 
     #[test]
+    fn test_epoch_to_iso() {
+        let result = epoch_to_iso(1672531200.0);
+        assert_eq!(result, expected_local("2023-01-01T00:00:00Z"));
+    }
+
+    #[test]
     fn test_epoch_to_iso_with_fraction() {
-        assert_eq!(
-            epoch_to_iso(1672531200.123),
-            "2023-01-01T00:00:00.123000+00:00"
-        );
+        let result = epoch_to_iso(1672531200.123);
+        assert!(result.contains(".123000"), "Expected microsecond precision, got: {result}");
     }
 
     #[test]
@@ -244,7 +285,7 @@ mod tests {
             "CreatedAt": 1672531200.0
         });
         normalize_response_value(&mut value, "Output", &shapes);
-        assert_eq!(value["CreatedAt"], "2023-01-01T00:00:00+00:00");
+        assert_eq!(value["CreatedAt"], expected_local("2023-01-01T00:00:00Z"));
         assert_eq!(value["Name"], "test");
     }
 
@@ -277,8 +318,8 @@ mod tests {
             ]
         });
         normalize_response_value(&mut value, "Output", &shapes);
-        assert_eq!(value["Items"][0]["CreatedAt"], "2023-01-01T00:00:00+00:00");
-        assert_eq!(value["Items"][1]["CreatedAt"], "2023-01-02T00:00:00+00:00");
+        assert_eq!(value["Items"][0]["CreatedAt"], expected_local("2023-01-01T00:00:00Z"));
+        assert_eq!(value["Items"][1]["CreatedAt"], expected_local("2023-01-02T00:00:00Z"));
     }
 
     #[test]
@@ -295,7 +336,7 @@ mod tests {
 
         let mut value = json!({"ModifiedAt": "2023-01-01T00:00:00.000Z"});
         normalize_response_value(&mut value, "Output", &shapes);
-        assert_eq!(value["ModifiedAt"], "2023-01-01T00:00:00+00:00");
+        assert_eq!(value["ModifiedAt"], expected_local("2023-01-01T00:00:00Z"));
     }
 
     #[test]
@@ -363,6 +404,122 @@ mod tests {
         let item = &value["Items"][0];
         let keys: Vec<&String> = item.as_object().unwrap().keys().collect();
         assert_eq!(keys, vec!["Name", "CreatedAt", "Id"]);
-        assert_eq!(item["CreatedAt"], "2023-01-01T00:00:00+00:00");
+        assert_eq!(item["CreatedAt"], expected_local("2023-01-01T00:00:00Z"));
+    }
+
+    #[test]
+    fn test_normalize_null_list_to_empty_array() {
+        use serde_json::json;
+        let mut shapes = HashMap::new();
+        shapes.insert("Output".to_string(), json!({
+            "type": "structure",
+            "members": {
+                "Items": {"shape": "ItemList"},
+                "Name": {"shape": "StringType"}
+            }
+        }));
+        shapes.insert("ItemList".to_string(), json!({
+            "type": "list",
+            "member": {"shape": "StringType"}
+        }));
+        shapes.insert("StringType".to_string(), json!({"type": "string"}));
+
+        let mut value = json!({
+            "Items": null,
+            "Name": "test"
+        });
+        normalize_response_value(&mut value, "Output", &shapes);
+        assert_eq!(value["Items"], json!([]));
+        assert_eq!(value["Name"], "test");
+    }
+
+    #[test]
+    fn test_normalize_null_string_stays_null() {
+        use serde_json::json;
+        let mut shapes = HashMap::new();
+        shapes.insert("Output".to_string(), json!({
+            "type": "structure",
+            "members": {
+                "Name": {"shape": "StringType"}
+            }
+        }));
+        shapes.insert("StringType".to_string(), json!({"type": "string"}));
+
+        let mut value = json!({"Name": null});
+        normalize_response_value(&mut value, "Output", &shapes);
+        // Non-list null values should remain null (stripped later by strip_nulls)
+        assert!(value["Name"].is_null());
+    }
+
+    #[test]
+    fn test_normalize_scalar_to_list_wrapping() {
+        // Some services return a bare string where a list is expected (e.g., API Gateway features)
+        use serde_json::json;
+        let mut shapes = HashMap::new();
+        shapes.insert("Output".to_string(), json!({
+            "type": "structure",
+            "members": {
+                "features": {"shape": "ListOfString"}
+            }
+        }));
+        shapes.insert("ListOfString".to_string(), json!({
+            "type": "list",
+            "member": {"shape": "StringType"}
+        }));
+        shapes.insert("StringType".to_string(), json!({"type": "string"}));
+
+        let mut value = json!({"features": "UsagePlans"});
+        normalize_response_value(&mut value, "Output", &shapes);
+        assert_eq!(value["features"], json!(["UsagePlans"]));
+    }
+
+    #[test]
+    fn test_normalize_null_list_nested_in_structure() {
+        // Ensure null-to-empty-array conversion works in nested structures
+        use serde_json::json;
+        let mut shapes = HashMap::new();
+        shapes.insert("Output".to_string(), json!({
+            "type": "structure",
+            "members": {
+                "Config": {"shape": "ConfigType"}
+            }
+        }));
+        shapes.insert("ConfigType".to_string(), json!({
+            "type": "structure",
+            "members": {
+                "Tags": {"shape": "TagList"}
+            }
+        }));
+        shapes.insert("TagList".to_string(), json!({
+            "type": "list",
+            "member": {"shape": "StringType"}
+        }));
+        shapes.insert("StringType".to_string(), json!({"type": "string"}));
+
+        let mut value = json!({"Config": {"Tags": null}});
+        normalize_response_value(&mut value, "Output", &shapes);
+        assert_eq!(value["Config"]["Tags"], json!([]));
+    }
+
+    #[test]
+    fn test_normalize_existing_array_unchanged() {
+        // Verify that a normal array is not altered
+        use serde_json::json;
+        let mut shapes = HashMap::new();
+        shapes.insert("Output".to_string(), json!({
+            "type": "structure",
+            "members": {
+                "Items": {"shape": "ItemList"}
+            }
+        }));
+        shapes.insert("ItemList".to_string(), json!({
+            "type": "list",
+            "member": {"shape": "StringType"}
+        }));
+        shapes.insert("StringType".to_string(), json!({"type": "string"}));
+
+        let mut value = json!({"Items": ["a", "b", "c"]});
+        normalize_response_value(&mut value, "Output", &shapes);
+        assert_eq!(value["Items"], json!(["a", "b", "c"]));
     }
 }

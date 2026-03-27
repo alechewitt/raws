@@ -29,9 +29,9 @@
       { "run": "raws apigateway get-rest-apis --region us-east-1 --output json 2>&1", "expect": "items should be [] not null" },
       { "run": "raws apigateway get-account --region us-east-1 --output json 2>&1", "expect": "features should be [\"UsagePlans\"] not \"UsagePlans\"" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. May affect other rest-json services too. The features string-vs-array issue suggests a list member deserialization bug."]
+    "passes": true,
+    "affected_files": ["src/core/protocol/mod.rs"],
+    "notes": ["Found by validation agent. May affect other rest-json services too. The features string-vs-array issue suggests a list member deserialization bug.", "Fixed: normalize_response_value() now converts null list fields to [] and wraps bare scalars in arrays."]
   },
   {
     "id": "validation-cloudfront-empty-list-suppression",

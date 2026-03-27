@@ -151,9 +151,9 @@
     "verify": [
       { "run": "raws s3api get-bucket-acl --bucket <bucket> --region us-east-1 --output json 2>&1", "expect": "Grantee objects should include 'Type': 'CanonicalUser'" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. The Type field may be an XML attribute that raws is not parsing."]
+    "passes": true,
+    "affected_files": ["src/core/protocol/rest_xml.rs"],
+    "notes": ["Found by validation agent. The Type field may be an XML attribute that raws is not parsing.", "Fixed: Added XML attribute parsing (xmlAttribute: true) support in parse_structure_from_xml()."]
   },
   {
     "id": "validation-systemic-additional-error-details",

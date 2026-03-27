@@ -74,9 +74,9 @@
     "verify": [
       { "run": "raws ssm describe-instance-information --region us-east-1 --output json 2>&1 | grep -o '\"LastPingDateTime\":[^,]*'", "expect": "Timestamp should be in local timezone to match AWS CLI" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. AWS CLI converts timestamps to local timezone; raws keeps them in UTC."]
+    "passes": true,
+    "affected_files": ["src/core/protocol/mod.rs"],
+    "notes": ["Found by validation agent. AWS CLI converts timestamps to local timezone; raws keeps them in UTC.", "Fixed: normalize_timestamp() and epoch_to_iso() now convert to local timezone."]
   },
   {
     "id": "validation-route53-get-account-limit-signing",
