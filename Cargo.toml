@@ -2,6 +2,10 @@
 name = "raws"
 version = "0.1.0"
 edition = "2021"
+description = "A Rust reimplementation of the AWS CLI"
+license = "MIT"
+repository = "https://github.com/alechewitt/raws"
+homepage = "https://github.com/alechewitt/raws"
 
 [[bin]]
 name = "raws"
@@ -29,3 +33,8 @@ url = "2"
 
 [dev-dependencies]
 tempfile = "3"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
