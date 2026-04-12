@@ -14,7 +14,7 @@ use crate::core::credentials::CredentialProvider;
 use crate::core::endpoint::resolver;
 
 /// Recognized CloudFormation high-level subcommands.
-const CFN_SUBCOMMANDS: &[&str] = &["deploy"];
+const CFN_SUBCOMMANDS: &[&str] = &["deploy", "package"];
 
 /// Entry point for CloudFormation high-level commands.
 ///
@@ -25,13 +25,20 @@ pub async fn handle_cloudformation_command(
     operation: &str,
 ) -> Result<()> {
     if operation == "help" || !CFN_SUBCOMMANDS.contains(&operation) {
-        // We only handle "deploy" right now; return None-like to signal
-        // the driver should fall through to normal dispatch.
+        // Return a sentinel to signal the driver should fall through
+        // to normal dispatch for non-custom operations.
         bail!("__cfn_passthrough__");
     }
 
     match operation {
         "deploy" => handle_deploy(args).await,
+        "package" => {
+            bail!(
+                "The 'cloudformation package' command is not yet implemented in raws.\n\
+                 This is a custom AWS CLI command that packages local artifacts for CloudFormation deployment.\n\
+                 Use 'aws cloudformation package' from the AWS CLI as a workaround."
+            );
+        }
         _ => bail!("Unknown cloudformation subcommand: {}", operation),
     }
 }
@@ -114,6 +121,7 @@ mod tests {
     #[test]
     fn test_is_custom_command_deploy() {
         assert!(is_custom_command("deploy"));
+        assert!(is_custom_command("package"));
     }
 
     #[test]

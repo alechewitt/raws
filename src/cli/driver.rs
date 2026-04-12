@@ -123,6 +123,18 @@ pub async fn run() -> Result<()> {
         return cfn_commands::handle_cloudformation_command(&args, operation).await;
     }
 
+    // Handle "raws ecs deploy": custom command that uses CodeDeploy to
+    // deploy an ECS service. Not yet implemented.
+    if service == "ecs" && (operation == "deploy" || operation == "monitor-express-gateway-service") {
+        bail!(
+            "The 'ecs {}' command is not yet implemented in raws.\n\
+             This is a custom AWS CLI command not available in the botocore service model.\n\
+             Use 'aws ecs {}' from the AWS CLI as a workaround.",
+            operation,
+            operation,
+        );
+    }
+
     // Handle "raws rds generate-db-auth-token": client-side command that
     // produces a presigned IAM auth token for RDS database connections.
     if service == "rds" && rds_commands::is_custom_command(operation) {

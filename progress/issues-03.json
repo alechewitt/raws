@@ -52,8 +52,8 @@
     "verify": [
       { "run": "raws ecs deploy 2>&1", "expect": "Custom CLI command - may not be implementable from botocore models" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. These are AWS CLI-specific commands that don't correspond to API operations. Low priority since they require custom implementation outside the botocore model."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs", "src/cli/customizations/cloudformation/mod.rs"],
+    "notes": ["Found by validation agent. These are AWS CLI-specific commands that don't correspond to API operations. Low priority since they require custom implementation outside the botocore model.", "Fixed: Added recognition with helpful 'not yet implemented' messages for ecs deploy, ecs monitor-express-gateway-service, and cloudformation package. Users see clear guidance to use 'aws' CLI as workaround instead of confusing 'Unknown operation' errors."]
   }
 ]
