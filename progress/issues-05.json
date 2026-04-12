@@ -62,9 +62,9 @@
     "verify": [
       { "run": "raws elasticache list-tags-for-resource --resource-name <valid-arn> --region us-east-1 2>&1", "expect": "Should return tag list, not authorization error" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent.", "Fixed by earlier session 9 fixes: model-aware arg parsing and fixup_global_flags_in_trailing_args. Verified: ARN parameter is now properly serialized, getting correct CacheClusterNotFound for nonexistent resources instead of auth errors."]
   },
   {
     "id": "validation-kinesis-map-list-serialization",
@@ -73,9 +73,9 @@
     "verify": [
       { "run": "raws kinesis add-tags-to-stream --stream-name test --tags Key1=Value1 --region us-east-1 2>&1", "expect": "Should not get SerializationException for map shorthand" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Shorthand syntax for maps and lists of structures needs work."]
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Shorthand syntax for maps and lists of structures needs work.", "Fixed by earlier session 9 fixes: build_member_name_map() and model-aware arg parsing. Verified: map shorthand (Key=Value, Key1=Value1,Key2=Value2) and JSON list-of-structures all produce proper API requests (ResourceNotFoundException for nonexistent stream, not SerializationException)."]
   },
   {
     "id": "validation-stepfunctions-json-params-null",

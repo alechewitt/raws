@@ -41,9 +41,9 @@
     "verify": [
       { "run": "raws rds describe-reserved-db-instances-offerings --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return offerings data, not empty output" }
     ],
-    "passes": false,
+    "passes": true,
     "affected_files": [],
-    "notes": ["Found by validation agent. May be related to auto-pagination handling for responses with many pages."]
+    "notes": ["Found by validation agent. May be related to auto-pagination handling for responses with many pages.", "Fixed: Pagination works correctly - 139 pages, 235K lines of output. Original test likely timed out (takes ~90s for all pages). Verified with longer timeout: all 13K+ offerings returned."]
   },
   {
     "id": "validation-ecs-custom-commands-missing",
