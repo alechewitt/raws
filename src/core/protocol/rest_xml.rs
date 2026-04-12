@@ -1842,7 +1842,7 @@ mod tests {
         let buckets = result["Buckets"].as_array().unwrap();
         assert_eq!(buckets.len(), 2);
         assert_eq!(buckets[0]["Name"].as_str().unwrap(), "quotes");
-        // Timestamp is converted to local timezone; verify it parses as the correct UTC instant
+        // Timestamp is normalized to UTC +00:00 format; verify it parses as the correct instant
         let ts = buckets[0]["CreationDate"].as_str().unwrap();
         let parsed: chrono::DateTime<chrono::Utc> = ts.parse().unwrap();
         assert_eq!(parsed, "2006-02-03T16:45:09Z".parse::<chrono::DateTime<chrono::Utc>>().unwrap());

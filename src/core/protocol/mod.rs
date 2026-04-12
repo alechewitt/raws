@@ -3,37 +3,35 @@ pub mod query;
 pub mod rest_json;
 pub mod rest_xml;
 
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 
-/// Format a DateTime<Local> in AWS CLI ISO 8601 format with local timezone offset.
+/// Format a DateTime<Utc> in AWS CLI ISO 8601 format with UTC offset (+00:00).
 ///
-/// AWS CLI outputs timestamps in the local timezone (e.g., -07:00, +05:30),
+/// AWS CLI v2 outputs timestamps in UTC with +00:00 offset,
 /// with 6-digit microsecond precision when sub-second component is non-zero.
-fn format_local_datetime(local_dt: DateTime<Local>) -> String {
-    let nanos = local_dt.timestamp_subsec_nanos();
+fn format_utc_datetime(dt: DateTime<Utc>) -> String {
+    let nanos = dt.timestamp_subsec_nanos();
     if nanos == 0 {
-        local_dt.format("%Y-%m-%dT%H:%M:%S%:z").to_string()
+        dt.format("%Y-%m-%dT%H:%M:%S+00:00").to_string()
     } else {
         // Python's isoformat uses 6-digit microseconds
         let micros = nanos / 1000;
-        local_dt.format("%Y-%m-%dT%H:%M:%S").to_string()
-            + &format!(".{micros:06}")
-            + &local_dt.format("%:z").to_string()
+        dt.format("%Y-%m-%dT%H:%M:%S").to_string()
+            + &format!(".{micros:06}+00:00")
     }
 }
 
 /// Normalize a timestamp string to the format used by the AWS CLI.
-/// AWS CLI outputs timestamps as ISO 8601 in the local timezone,
+/// AWS CLI v2 outputs timestamps as ISO 8601 in UTC (+00:00),
 /// and omits sub-second precision when it's zero.
 ///
-/// Examples (in UTC-7 timezone):
-///   "2023-01-01T07:00:00.000Z" -> "2023-01-01T00:00:00-07:00"
-///   "2023-01-01T07:00:00Z" -> "2023-01-01T00:00:00-07:00"
-///   "2023-01-01T07:00:00.123Z" -> "2023-01-01T00:00:00.123000-07:00"
+/// Examples:
+///   "2023-01-01T00:00:00.000Z" -> "2023-01-01T00:00:00+00:00"
+///   "2023-01-01T00:00:00Z" -> "2023-01-01T00:00:00+00:00"
+///   "2023-01-01T00:00:00.123Z" -> "2023-01-01T00:00:00.123000+00:00"
 pub fn normalize_timestamp(s: &str) -> String {
     if let Ok(dt) = s.parse::<DateTime<Utc>>() {
-        let local_dt: DateTime<Local> = dt.into();
-        format_local_datetime(local_dt)
+        format_utc_datetime(dt)
     } else {
         // Can't parse; return as-is
         s.to_string()
@@ -41,7 +39,7 @@ pub fn normalize_timestamp(s: &str) -> String {
 }
 
 /// Convert an epoch timestamp (seconds, possibly with fractional part) to
-/// the AWS CLI ISO 8601 format in the local timezone.
+/// the AWS CLI ISO 8601 format in UTC.
 pub fn epoch_to_iso(epoch: f64) -> String {
     let secs = epoch as i64;
     // Round to nearest microsecond to avoid floating-point precision issues
@@ -49,8 +47,7 @@ pub fn epoch_to_iso(epoch: f64) -> String {
     let micros = (frac * 1_000_000.0).round() as u32;
     let nanos = micros * 1000;
     if let Some(dt) = DateTime::from_timestamp(secs, nanos) {
-        let local_dt: DateTime<Local> = dt.into();
-        format_local_datetime(local_dt)
+        format_utc_datetime(dt)
     } else {
         format!("{epoch}")
     }
@@ -198,42 +195,30 @@ pub fn fill_missing_top_level_members(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::TimeZone;
-
-    /// Helper: compute the expected local-timezone representation of a UTC datetime.
-    /// This makes tests work regardless of the machine's timezone.
-    fn expected_local(utc_str: &str) -> String {
-        let utc_dt: DateTime<Utc> = utc_str.parse().unwrap();
-        let local_dt: DateTime<Local> = utc_dt.into();
-        format_local_datetime(local_dt)
-    }
 
     #[test]
     fn test_normalize_timestamp_z_suffix() {
         let result = normalize_timestamp("2023-01-01T00:00:00Z");
-        assert_eq!(result, expected_local("2023-01-01T00:00:00Z"));
-        // Verify it uses local timezone offset (not necessarily +00:00)
-        assert!(result.contains('T'));
-        assert!(result.contains(':'));
+        assert_eq!(result, "2023-01-01T00:00:00+00:00");
     }
 
     #[test]
     fn test_normalize_timestamp_z_with_millis() {
         let result = normalize_timestamp("2026-03-17T21:03:46.000Z");
         // .000Z means no sub-second, so no microseconds in output
-        assert_eq!(result, expected_local("2026-03-17T21:03:46Z"));
+        assert_eq!(result, "2026-03-17T21:03:46+00:00");
     }
 
     #[test]
     fn test_normalize_timestamp_nonzero_millis() {
         let result = normalize_timestamp("2023-01-01T00:00:00.123Z");
-        assert!(result.contains(".123000"), "Expected microsecond precision, got: {result}");
+        assert_eq!(result, "2023-01-01T00:00:00.123000+00:00");
     }
 
     #[test]
     fn test_normalize_timestamp_already_offset() {
         let result = normalize_timestamp("2023-01-01T00:00:00+00:00");
-        assert_eq!(result, expected_local("2023-01-01T00:00:00Z"));
+        assert_eq!(result, "2023-01-01T00:00:00+00:00");
     }
 
     #[test]
@@ -242,28 +227,26 @@ mod tests {
     }
 
     #[test]
-    fn test_normalize_timestamp_uses_local_timezone() {
-        // Verify the output timezone matches chrono::Local
+    fn test_normalize_timestamp_uses_utc() {
+        // Verify the output always uses UTC +00:00
         let result = normalize_timestamp("2023-06-15T12:00:00Z");
-        let utc_dt = Utc.with_ymd_and_hms(2023, 6, 15, 12, 0, 0).unwrap();
-        let local_dt: DateTime<Local> = utc_dt.into();
-        let expected_offset = local_dt.format("%:z").to_string();
         assert!(
-            result.ends_with(&expected_offset),
-            "Expected offset {expected_offset}, got: {result}"
+            result.ends_with("+00:00"),
+            "Expected +00:00 offset, got: {result}"
         );
+        assert_eq!(result, "2023-06-15T12:00:00+00:00");
     }
 
     #[test]
     fn test_epoch_to_iso() {
         let result = epoch_to_iso(1672531200.0);
-        assert_eq!(result, expected_local("2023-01-01T00:00:00Z"));
+        assert_eq!(result, "2023-01-01T00:00:00+00:00");
     }
 
     #[test]
     fn test_epoch_to_iso_with_fraction() {
         let result = epoch_to_iso(1672531200.123);
-        assert!(result.contains(".123000"), "Expected microsecond precision, got: {result}");
+        assert_eq!(result, "2023-01-01T00:00:00.123000+00:00");
     }
 
     #[test]
@@ -285,7 +268,7 @@ mod tests {
             "CreatedAt": 1672531200.0
         });
         normalize_response_value(&mut value, "Output", &shapes);
-        assert_eq!(value["CreatedAt"], expected_local("2023-01-01T00:00:00Z"));
+        assert_eq!(value["CreatedAt"], "2023-01-01T00:00:00+00:00");
         assert_eq!(value["Name"], "test");
     }
 
@@ -318,8 +301,8 @@ mod tests {
             ]
         });
         normalize_response_value(&mut value, "Output", &shapes);
-        assert_eq!(value["Items"][0]["CreatedAt"], expected_local("2023-01-01T00:00:00Z"));
-        assert_eq!(value["Items"][1]["CreatedAt"], expected_local("2023-01-02T00:00:00Z"));
+        assert_eq!(value["Items"][0]["CreatedAt"], "2023-01-01T00:00:00+00:00");
+        assert_eq!(value["Items"][1]["CreatedAt"], "2023-01-02T00:00:00+00:00");
     }
 
     #[test]
@@ -336,7 +319,7 @@ mod tests {
 
         let mut value = json!({"ModifiedAt": "2023-01-01T00:00:00.000Z"});
         normalize_response_value(&mut value, "Output", &shapes);
-        assert_eq!(value["ModifiedAt"], expected_local("2023-01-01T00:00:00Z"));
+        assert_eq!(value["ModifiedAt"], "2023-01-01T00:00:00+00:00");
     }
 
     #[test]
@@ -404,7 +387,7 @@ mod tests {
         let item = &value["Items"][0];
         let keys: Vec<&String> = item.as_object().unwrap().keys().collect();
         assert_eq!(keys, vec!["Name", "CreatedAt", "Id"]);
-        assert_eq!(item["CreatedAt"], expected_local("2023-01-01T00:00:00Z"));
+        assert_eq!(item["CreatedAt"], "2023-01-01T00:00:00+00:00");
     }
 
     #[test]

@@ -10,5 +10,16 @@
     "passes": true,
     "affected_files": ["src/core/endpoint/resolver.rs", "src/cli/driver.rs"],
     "notes": ["Found during Session 11 parity testing. Root cause: driver used user's config region for SigV4 signing of global services. Fix: Added resolve_signing_region() that reads credentialScope.region from endpoints.json for non-regionalized services. Applied to both main execute path and handle_wait_command. 8 unit tests."]
+  },
+  {
+    "id": "timestamp-local-timezone",
+    "description": "raws outputs timestamps in local timezone (e.g., 2023-01-01T00:00:00-07:00) while AWS CLI v2 outputs in UTC (2023-01-01T07:00:00+00:00). Affects all services with timestamp fields in JSON output.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws iam list-policies --scope Local --output json 2>&1 | grep Date | head -2", "expect": "Timestamps should end with +00:00 (UTC), not local timezone offset" }
+    ],
+    "passes": true,
+    "affected_files": ["src/core/protocol/mod.rs"],
+    "notes": ["Found during Session 11 parity testing. Root cause: normalize_timestamp() converted to chrono::Local. AWS CLI v2 uses UTC for JSON API output. Fix: Changed to keep timestamps in UTC (+00:00). Note: s3 ls correctly uses local time for display (different from JSON API output)."]
   }
 ]
