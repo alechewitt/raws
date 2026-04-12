@@ -420,6 +420,13 @@ pub fn parse_query_response(
 ///
 /// Returns (code, message).
 pub fn parse_query_error(xml_body: &str) -> Result<(String, String)> {
+    let (code, message, _) = parse_query_error_with_details(xml_body)?;
+    Ok((code, message))
+}
+
+/// Parse a query-protocol XML error response, including any additional fields
+/// beyond Code and Message (e.g. Type: Sender).
+pub fn parse_query_error_with_details(xml_body: &str) -> Result<(String, String, Vec<(String, String)>)> {
     let root = parse_xml_to_tree(xml_body)?;
 
     // Navigate to <Error> child
@@ -431,7 +438,15 @@ pub fn parse_query_error(xml_body: &str) -> Result<(String, String)> {
     let message = find_child_text(&error_node, "Message")
         .unwrap_or_default();
 
-    Ok((code, message))
+    // Collect additional fields beyond Code and Message
+    let details: Vec<(String, String)> = error_node
+        .children
+        .iter()
+        .filter(|c| c.tag != "Code" && c.tag != "Message")
+        .filter_map(|c| c.text.as_ref().map(|t| (c.tag.clone(), t.clone())))
+        .collect();
+
+    Ok((code, message, details))
 }
 
 /// Parse an EC2 query protocol XML error response.

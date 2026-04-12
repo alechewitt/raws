@@ -51,7 +51,7 @@ fn indent_lines(content: &str, depth: usize) -> String {
 /// depth 0 (e.g., "DescribeVpcs") with each top-level key's content at depth 1.
 /// Scalar-only objects become a vertical key-value table with the title.
 fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&str>) -> String {
-    if map.is_empty() {
+    if map.is_empty() && title.is_none() {
         return String::new();
     }
 
@@ -93,6 +93,7 @@ fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&
     };
 
     let mut out = String::new();
+    let title_len = out.len();
 
     // Render the operation name title at depth 0
     if let Some(t) = title {
@@ -101,6 +102,7 @@ fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&
         out.push_str(&title_line(t, total_width));
         out.push('\n');
     }
+    let after_title_len = out.len();
 
     // Render scalar pairs
     if !scalar_keys.is_empty() {
@@ -136,6 +138,11 @@ fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&
             }
             out.push_str(&section);
         }
+    }
+
+    // If we rendered a title but no content below it, close with a +---+ border
+    if title.is_some() && out.len() == after_title_len && title_len < after_title_len {
+        out.push_str(&plus_line(total_width));
     }
 
     out
@@ -618,6 +625,11 @@ fn calculate_widths(max_content_widths: &[usize], title: Option<&str>) -> (usize
 /// Render a full-width dash line: `---...---` of exactly total_width characters.
 fn dash_line(total_width: usize) -> String {
     "-".repeat(total_width)
+}
+
+/// Render a `+----...----+` closing border line for title-only tables.
+fn plus_line(total_width: usize) -> String {
+    format!("+{}+", "-".repeat(total_width.saturating_sub(2)))
 }
 
 /// Render a `+---+---+` separator line.

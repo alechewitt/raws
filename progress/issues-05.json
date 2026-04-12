@@ -40,9 +40,9 @@
     "verify": [
       { "run": "raws cloudfront list-distributions --region us-east-1 --output json 2>&1", "expect": "Should return empty output (zero bytes) when no distributions exist, not the wrapper JSON" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. AWS CLI has special handling to suppress empty wrapper objects for some CloudFront responses."]
+    "passes": true,
+    "affected_files": ["src/core/paginate.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. AWS CLI has special handling to suppress empty wrapper objects for some CloudFront responses.", "Fixed: Added dotted path support in paginator (get_path/set_path/remove_path). For dotted result_keys, rebuild output with only result_key values. Suppress empty object output after null stripping."]
   },
   {
     "id": "validation-elb-query-param-serialization",

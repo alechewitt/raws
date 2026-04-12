@@ -62,9 +62,9 @@
     "verify": [
       { "run": "raws ec2 describe-instances --output table --region us-east-1", "expect": "Should show table header even if no instances exist" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Affects dynamodb list-tables, ec2 describe-instances, lambda list-functions when results are empty."]
+    "passes": true,
+    "affected_files": ["src/cli/formatter/table.rs"],
+    "notes": ["Found by validation agent. Affects dynamodb list-tables, ec2 describe-instances, lambda list-functions when results are empty.", "Fixed: Added closing +---+ border when title is rendered but all content sections are empty. Also handle empty map with title case."]
   },
   {
     "id": "validation-global-no-version",
@@ -162,9 +162,9 @@
     "verify": [
       { "run": "raws sts get-session-token --region us-east-1 2>&1", "expect": "Error message should include 'Additional error details' section" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Affects STS and S3 error responses that include extra context fields."]
+    "passes": true,
+    "affected_files": ["src/core/protocol/query.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Affects STS and S3 error responses that include extra context fields.", "Fixed: Added parse_query_error_with_details() that extracts additional fields from <Error> XML beyond Code/Message. Appended as 'Additional error details:' section in error output."]
   },
   {
     "id": "validation-auth-no-credentials-error",

@@ -470,6 +470,13 @@ pub async fn run() -> Result<()> {
     };
 
     // 10. Format and print output
+    // Suppress output for empty objects (matches AWS CLI behavior, e.g., empty paginated results).
+    // An object is "effectively empty" if all its values are null (strip_nulls would remove them).
+    if final_value.as_object().map_or(false, |m| {
+        m.is_empty() || m.values().all(|v| v.is_null())
+    }) {
+        return Ok(());
+    }
     let formatted = formatter::format_output_with_title(&final_value, output_format, Some(&op.name))?;
     println!("{formatted}");
 
@@ -876,10 +883,17 @@ async fn dispatch_query_protocol(
 
         DispatchOutcome { result: parsed, status: response.status, error_code: None, is_network_error: false, redirect_region: None }
     } else {
-        let (error_code, result) = match query::parse_query_error(&response_body) {
-            Ok((code, message)) => {
+        let (error_code, result) = match query::parse_query_error_with_details(&response_body) {
+            Ok((code, message, details)) => {
                 let ec = code.clone();
-                (Some(ec), Err(anyhow::anyhow!("An error occurred ({}) when calling the {} operation: {}", code, op.name, message)))
+                let mut msg = format!("An error occurred ({}) when calling the {} operation: {}", code, op.name, message);
+                if !details.is_empty() {
+                    msg.push_str("\n\nAdditional error details:\n");
+                    for (k, v) in &details {
+                        msg.push_str(&format!("{k}: {v}\n"));
+                    }
+                }
+                (Some(ec), Err(anyhow::anyhow!("{}", msg)))
             }
             Err(_) => {
                 (None, Err(anyhow::anyhow!("An error occurred (Unknown) when calling the {} operation: {}", op.name, response_body)))

@@ -3,6 +3,61 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;
 
+/// Resolve a potentially dotted path (e.g., "DistributionList.Items") on a JSON value.
+fn get_path<'a>(value: &'a Value, path: &str) -> Option<&'a Value> {
+    let mut current = value;
+    for segment in path.split('.') {
+        current = current.get(segment)?;
+    }
+    Some(current)
+}
+
+/// Remove a value at a potentially dotted path (e.g., "DistributionList.NextMarker").
+fn remove_path(value: &mut Value, path: &str) {
+    let parts: Vec<&str> = path.split('.').collect();
+    if parts.len() == 1 {
+        if let Some(obj) = value.as_object_mut() {
+            obj.remove(parts[0]);
+        }
+        return;
+    }
+    // Navigate to the parent of the leaf
+    let mut current = value;
+    for segment in &parts[..parts.len() - 1] {
+        match current.get_mut(*segment) {
+            Some(v) => current = v,
+            None => return,
+        }
+    }
+    if let Some(obj) = current.as_object_mut() {
+        obj.remove(parts[parts.len() - 1]);
+    }
+}
+
+/// Set a value at a potentially dotted path, creating intermediate objects as needed.
+fn set_path(value: &mut Value, path: &str, new_val: Value) {
+    let parts: Vec<&str> = path.split('.').collect();
+    if parts.len() == 1 {
+        if let Some(obj) = value.as_object_mut() {
+            obj.insert(parts[0].to_string(), new_val);
+        }
+        return;
+    }
+    // Navigate/create intermediate objects
+    let mut current = value;
+    for segment in &parts[..parts.len() - 1] {
+        if current.get(segment).is_none() {
+            if let Some(obj) = current.as_object_mut() {
+                obj.insert((*segment).to_string(), Value::Object(serde_json::Map::new()));
+            }
+        }
+        current = current.get_mut(segment).unwrap();
+    }
+    if let Some(obj) = current.as_object_mut() {
+        obj.insert(parts[parts.len() - 1].to_string(), new_val);
+    }
+}
+
 /// Configuration for paginating a single operation, loaded from paginators-1.json.
 #[derive(Debug, Clone)]
 pub struct PaginatorConfig {
@@ -124,74 +179,88 @@ pub fn merge_pages(
     if pages.is_empty() {
         return Value::Object(serde_json::Map::new());
     }
-    if pages.len() == 1 {
-        // Single page: still need to strip pagination fields for parity with AWS CLI
+
+    // Check if any result_key uses a dotted path (nested). When result_keys are
+    // dotted, we need to rebuild the output structure containing only those paths,
+    // matching botocore's build_full_result() behavior.
+    let has_dotted_keys = config.result_key.iter().any(|k| k.contains('.'));
+
+    if pages.len() == 1 && !has_dotted_keys {
+        // Single page with simple keys: strip pagination fields from the response
         let mut result = pages[0].clone();
-        if let Some(obj) = result.as_object_mut() {
-            for token in &config.output_token {
-                obj.remove(token);
-            }
-            if let Some(ref mr) = config.more_results {
-                obj.remove(mr);
-            }
+        for token in &config.output_token {
+            remove_path(&mut result, token);
+        }
+        if let Some(ref mr) = config.more_results {
+            remove_path(&mut result, mr);
         }
         return result;
     }
 
-    // Start with the last page as the base (non-aggregate keys come from the last page)
-    let mut merged = match pages.last() {
-        Some(v) => v.clone(),
-        None => return Value::Object(serde_json::Map::new()),
-    };
+    // Aggregate result_key values across all pages, then build a clean result
+    // containing only the aggregated result_keys and non_aggregate_keys.
+    let mut result = Value::Object(serde_json::Map::new());
 
-    let merged_obj = match merged.as_object_mut() {
-        Some(obj) => obj,
-        None => return merged,
-    };
-
-    // For result_key fields, aggregate across all pages
     for key in &config.result_key {
-        let first_page_value = pages[0].get(key);
+        let first_page_value = get_path(&pages[0], key);
 
-        // Determine if the value is an array or an integer
         match first_page_value {
             Some(Value::Array(_)) => {
-                // Concatenate all arrays
                 let mut combined = Vec::new();
                 for page in pages {
-                    if let Some(Value::Array(arr)) = page.get(key) {
+                    if let Some(Value::Array(arr)) = get_path(page, key) {
                         combined.extend(arr.iter().cloned());
                     }
                 }
-                merged_obj.insert(key.clone(), Value::Array(combined));
+                set_path(&mut result, key, Value::Array(combined));
             }
             Some(Value::Number(_)) => {
-                // Sum all numbers (for things like Count, ScannedCount)
                 let mut sum: i64 = 0;
                 for page in pages {
-                    if let Some(Value::Number(n)) = page.get(key) {
+                    if let Some(Value::Number(n)) = get_path(page, key) {
                         sum += n.as_i64().unwrap_or(0);
                     }
                 }
-                merged_obj.insert(key.clone(), Value::Number(serde_json::Number::from(sum)));
+                set_path(&mut result, key, Value::Number(serde_json::Number::from(sum)));
             }
             _ => {
-                // For other types (including missing), just keep last page value
+                // Missing or other types: keep last page value at this path if it exists
+                if let Some(last) = pages.last() {
+                    if let Some(val) = get_path(last, key) {
+                        set_path(&mut result, key, val.clone());
+                    }
+                }
             }
         }
     }
 
-    // Remove output_token fields from the final merged result
-    for token in &config.output_token {
-        merged_obj.remove(token);
+    // Include non_aggregate_keys from the last page
+    if let Some(last) = pages.last() {
+        for key in &config.non_aggregate_keys {
+            if let Some(val) = get_path(last, key) {
+                set_path(&mut result, key, val.clone());
+            }
+        }
     }
 
-    // Also remove more_results field if present
-    if let Some(ref mr) = config.more_results {
-        merged_obj.remove(mr);
+    // For non-dotted keys, also preserve other top-level keys from the last page
+    // that aren't pagination tokens (matching AWS CLI behavior for simple schemas)
+    if !has_dotted_keys {
+        if let Some(last_obj) = pages.last().and_then(|v| v.as_object()) {
+            if let Some(result_obj) = result.as_object_mut() {
+                for (k, v) in last_obj {
+                    if !result_obj.contains_key(k)
+                        && !config.output_token.contains(k)
+                        && config.more_results.as_ref() != Some(k)
+                    {
+                        result_obj.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+        }
     }
 
-    merged
+    result
 }
 
 /// Check if the response indicates there are more pages to fetch.
@@ -203,7 +272,7 @@ pub fn extract_next_tokens(
 ) -> Option<Vec<(String, String)>> {
     // Check more_results field first (e.g., IsTruncated for IAM/S3)
     if let Some(ref mr_key) = config.more_results {
-        match response.get(mr_key) {
+        match get_path(response, mr_key) {
             Some(Value::Bool(false)) => return None,
             Some(Value::String(s)) if s == "false" => return None,
             _ => {}
@@ -213,7 +282,7 @@ pub fn extract_next_tokens(
     let mut tokens = Vec::new();
 
     for (input_tok, output_tok) in config.input_token.iter().zip(config.output_token.iter()) {
-        match response.get(output_tok) {
+        match get_path(response, output_tok) {
             Some(Value::String(s)) if !s.is_empty() => {
                 tokens.push((input_tok.clone(), s.clone()));
             }
