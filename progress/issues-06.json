@@ -1,0 +1,14 @@
+[
+  {
+    "id": "global-service-signing-region",
+    "description": "Global services (IAM, Route53, CloudFront) fail with SignatureDoesNotMatch when user's profile has a non-us-east-1 default region and no explicit --region is specified. Signing region must come from endpoints.json credentialScope, not user's config region.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws iam list-users --profile <profile-with-us-west-2> --output json 2>&1 | head -3", "expect": "Should return Users list, not SignatureDoesNotMatch error" },
+      { "run": "raws route53 list-hosted-zones --profile <profile-with-us-west-2> --output json 2>&1 | head -3", "expect": "Should return HostedZones list, not SignatureDoesNotMatch error" }
+    ],
+    "passes": true,
+    "affected_files": ["src/core/endpoint/resolver.rs", "src/cli/driver.rs"],
+    "notes": ["Found during Session 11 parity testing. Root cause: driver used user's config region for SigV4 signing of global services. Fix: Added resolve_signing_region() that reads credentialScope.region from endpoints.json for non-regionalized services. Applied to both main execute path and handle_wait_command. 8 unit tests."]
+  }
+]

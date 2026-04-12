@@ -509,6 +509,57 @@ pub fn is_bucket_dns_compatible(bucket: &str) -> bool {
     true
 }
 
+/// Resolve the signing region for a service.
+///
+/// For most services, the signing region is the same as the user-configured region.
+/// For global services like IAM, Route53, and CloudFront, the endpoints.json data
+/// specifies a `credentialScope.region` (typically `us-east-1`) that must be used
+/// for signing instead of the user's configured region.
+///
+/// Returns the signing region (which may differ from `region` for global services).
+pub fn resolve_signing_region(service: &str, region: &str) -> String {
+    if let Ok(endpoints) = get_endpoints_data() {
+        if let Some(partitions) = endpoints.get("partitions").and_then(|p| p.as_array()) {
+            let partition = find_partition(partitions, region);
+            let partition = partition.or(partitions.first());
+            if let Some(p) = partition {
+                if let Some(svc) = p.get("services").and_then(|s| s.get(service)) {
+                    let is_regionalized = svc.get("isRegionalized").and_then(|v| v.as_bool());
+                    let partition_endpoint = svc.get("partitionEndpoint").and_then(|v| v.as_str());
+
+                    // For non-regionalized services with a partition endpoint,
+                    // look up the credentialScope from the partition endpoint entry.
+                    if is_regionalized == Some(false) {
+                        if let Some(pe) = partition_endpoint {
+                            if let Some(ep_data) = svc.get("endpoints").and_then(|e| e.get(pe)) {
+                                if let Some(scope_region) = ep_data
+                                    .get("credentialScope")
+                                    .and_then(|cs| cs.get("region"))
+                                    .and_then(|r| r.as_str())
+                                {
+                                    return scope_region.to_string();
+                                }
+                            }
+                        }
+                    }
+
+                    // Also check if the specific region endpoint has a credentialScope.
+                    if let Some(ep_data) = svc.get("endpoints").and_then(|e| e.get(region)) {
+                        if let Some(scope_region) = ep_data
+                            .get("credentialScope")
+                            .and_then(|cs| cs.get("region"))
+                            .and_then(|r| r.as_str())
+                        {
+                            return scope_region.to_string();
+                        }
+                    }
+                }
+            }
+        }
+    }
+    region.to_string()
+}
+
 /// Simple fallback when endpoints.json is unavailable.
 fn fallback_resolve(service: &str, region: &str, global_endpoint: Option<&str>) -> Result<String> {
     if let Some(global) = global_endpoint {
@@ -1466,5 +1517,61 @@ mod tests {
         assert!(hostname.contains("fips"));
         let dns = result.unwrap().get("dnsSuffix").unwrap().as_str().unwrap();
         assert_eq!(dns, "api.aws");
+    }
+
+    // ---------------------------------------------------------------
+    // resolve_signing_region tests
+    // ---------------------------------------------------------------
+
+    #[test]
+    fn test_signing_region_iam_is_us_east_1() {
+        // IAM is a global service; signing region should be us-east-1
+        // regardless of the user's configured region.
+        let region = resolve_signing_region("iam", "us-west-2");
+        assert_eq!(region, "us-east-1");
+    }
+
+    #[test]
+    fn test_signing_region_iam_from_eu_west_1() {
+        let region = resolve_signing_region("iam", "eu-west-1");
+        assert_eq!(region, "us-east-1");
+    }
+
+    #[test]
+    fn test_signing_region_route53_is_us_east_1() {
+        let region = resolve_signing_region("route53", "ap-southeast-1");
+        assert_eq!(region, "us-east-1");
+    }
+
+    #[test]
+    fn test_signing_region_cloudfront_is_us_east_1() {
+        let region = resolve_signing_region("cloudfront", "eu-west-1");
+        assert_eq!(region, "us-east-1");
+    }
+
+    #[test]
+    fn test_signing_region_ec2_is_same_as_input() {
+        // EC2 is regionalized; signing region should be the same as input.
+        let region = resolve_signing_region("ec2", "us-west-2");
+        assert_eq!(region, "us-west-2");
+    }
+
+    #[test]
+    fn test_signing_region_sts_is_same_as_input() {
+        // STS is regionalized (uses regional endpoints now); signing region = input.
+        let region = resolve_signing_region("sts", "eu-west-1");
+        assert_eq!(region, "eu-west-1");
+    }
+
+    #[test]
+    fn test_signing_region_s3_is_same_as_input() {
+        let region = resolve_signing_region("s3", "us-east-1");
+        assert_eq!(region, "us-east-1");
+    }
+
+    #[test]
+    fn test_signing_region_unknown_service() {
+        let region = resolve_signing_region("nonexistent-service", "us-west-2");
+        assert_eq!(region, "us-west-2");
     }
 }

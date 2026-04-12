@@ -328,8 +328,24 @@ pub async fn run() -> Result<()> {
         }
     }
 
+    // Resolve the signing region (may differ from config region for global services).
+    // For example, IAM uses iam.amazonaws.com but must be signed with us-east-1.
+    let signing_region = if args.endpoint_url.is_some() {
+        // Custom endpoint: use the user's configured region for signing.
+        region.to_string()
+    } else {
+        resolver::resolve_signing_region(
+            &service_model.metadata.endpoint_prefix,
+            region,
+        )
+    };
+    let region = &signing_region;
+
     if args.debug {
         eprintln!("[debug] endpoint: {endpoint_url}");
+        if signing_region != config.region.as_deref().unwrap_or("") {
+            eprintln!("[debug] signing_region: {signing_region} (overridden from config region for global service)");
+        }
     }
 
     // 7. Load paginator config for possible auto-pagination
@@ -584,6 +600,17 @@ async fn handle_wait_command(
             &variant_tags,
         )?,
     };
+
+    // Resolve signing region for global services (same as main execute path)
+    let signing_region = if args.endpoint_url.is_some() {
+        region.to_string()
+    } else {
+        resolver::resolve_signing_region(
+            &service_model.metadata.endpoint_prefix,
+            region,
+        )
+    };
+    let region = &signing_region;
 
     let protocol = service_model.metadata.effective_protocol();
     let http_config = build_http_config(args);
