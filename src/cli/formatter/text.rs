@@ -95,14 +95,21 @@ fn format_array(arr: &[Value], identifier: Option<&str>, output: &mut String) {
     let all_scalars = arr.iter().all(is_scalar);
 
     if all_scalars {
-        // Each scalar in a list gets its own line with the identifier prefix
-        for item in arr {
-            if let Some(id) = identifier {
-                output.push_str(id);
-                output.push('\t');
-            }
-            output.push_str(&scalar_to_string(item));
+        if identifier.is_none() {
+            // Top-level scalar array (e.g. from --query): tab-separated on one line
+            let vals: Vec<String> = arr.iter().map(scalar_to_string).collect();
+            output.push_str(&vals.join("\t"));
             output.push('\n');
+        } else {
+            // Nested scalar array: each on its own line with identifier prefix
+            for item in arr {
+                if let Some(id) = identifier {
+                    output.push_str(id);
+                    output.push('\t');
+                }
+                output.push_str(&scalar_to_string(item));
+                output.push('\n');
+            }
         }
     } else {
         // Non-scalar items: recurse into each element
@@ -284,7 +291,7 @@ mod tests {
         // A bare array at top level (no identifier)
         let value = json!(["alpha", "beta", "gamma"]);
         let result = format_text(&value).unwrap();
-        assert_eq!(result, "alpha\nbeta\ngamma");
+        assert_eq!(result, "alpha\tbeta\tgamma");
     }
 
     #[test]

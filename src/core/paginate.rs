@@ -194,6 +194,9 @@ pub fn merge_pages(
         if let Some(ref mr) = config.more_results {
             remove_path(&mut result, mr);
         }
+        if let Some(ref lk) = config.limit_key {
+            remove_path(&mut result, lk);
+        }
         return result;
     }
 
@@ -252,6 +255,7 @@ pub fn merge_pages(
                     if !result_obj.contains_key(k)
                         && !config.output_token.contains(k)
                         && config.more_results.as_ref() != Some(k)
+                        && config.limit_key.as_ref() != Some(k)
                     {
                         result_obj.insert(k.clone(), v.clone());
                     }
@@ -523,6 +527,27 @@ mod tests {
 
         let merged = merge_pages(&[page.clone()], &config);
         assert_eq!(merged, page);
+    }
+
+    #[test]
+    fn test_auto_paginate_merge_single_page_strips_limit_key() {
+        let config = PaginatorConfig {
+            input_token: vec!["Marker".to_string()],
+            output_token: vec!["NextMarker".to_string()],
+            result_key: vec!["HostedZones".to_string()],
+            limit_key: Some("MaxItems".to_string()),
+            more_results: Some("IsTruncated".to_string()),
+            non_aggregate_keys: vec![],
+        };
+        let page = json!({
+            "HostedZones": [{"Id": "/hostedzone/Z1"}],
+            "MaxItems": "100",
+            "IsTruncated": false,
+        });
+        let merged = merge_pages(&[page], &config);
+        assert!(merged.get("MaxItems").is_none(), "limit_key should be stripped");
+        assert!(merged.get("IsTruncated").is_none(), "more_results should be stripped");
+        assert_eq!(merged["HostedZones"].as_array().unwrap().len(), 1);
     }
 
     #[test]

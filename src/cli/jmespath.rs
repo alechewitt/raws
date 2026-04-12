@@ -5,6 +5,7 @@
 //! - Nested field access: `a.b.c`
 //! - Array index: `[0]`, `[-1]`
 //! - Flatten projection: `[]`
+//! - List wildcard: `[*]` (projects without flattening)
 //! - Multi-select list: `[Account, Arn]`
 //! - Wildcard: `*`
 //! - Filter: `[?Key=='Name']` (equality and inequality)
@@ -38,8 +39,10 @@ enum Token {
     Dot,
     /// `[<index>]` array index access
     Index(i64),
-    /// `[]` flatten / array projection
+    /// `[]` flatten / array projection (flattens nested arrays)
     Flatten,
+    /// `[*]` list wildcard projection (projects without flattening)
+    ListWildcard,
     /// `[?lhs==rhs]` or `[?lhs!=rhs]` filter expression
     Filter(FilterExpr),
     /// `[expr1, expr2, ...]` multi-select list
@@ -154,6 +157,10 @@ fn tokenize(input: &str) -> Result<Vec<Token>> {
                     let (filter, new_i) = parse_filter(&chars, i)?;
                     tokens.push(Token::Filter(filter));
                     i = new_i;
+                } else if i + 1 < chars.len() && chars[i] == '*' && chars[i + 1] == ']' {
+                    // List wildcard: [*] — projects over elements without flattening
+                    tokens.push(Token::ListWildcard);
+                    i += 2; // skip '*]'
                 } else if i < chars.len() && (chars[i].is_ascii_digit() || chars[i] == '-') {
                     // Array index: [0], [-1]
                     let start = i;
@@ -392,6 +399,18 @@ fn eval_tokens(tokens: &[Token], value: &Value) -> Result<Value> {
                     return project_array_flatten(&flattened, rest);
                 }
                 current = flattened;
+            }
+            Token::ListWildcard => {
+                // [*] projects over array elements without flattening
+                i += 1;
+                if matches!(tokens.get(i), Some(Token::Dot)) {
+                    i += 1;
+                }
+                let rest = &tokens[i..];
+                if !rest.is_empty() {
+                    return project_array(&current, rest);
+                }
+                // Identity: just return the array as-is
             }
             Token::Wildcard => {
                 let values = wildcard_values(&current);
@@ -706,6 +725,37 @@ mod tests {
         ]});
         let result = evaluate("tags[?Key=='Name'].Value", &data).unwrap();
         assert_eq!(result, json!(["my-instance"]));
+    }
+
+    #[test]
+    fn test_jmespath_list_wildcard_projection() {
+        // [*] projects over elements, extracting a field from each
+        let data = json!({
+            "Buckets": [
+                {"Name": "bucket-a", "CreationDate": "2024-01-01"},
+                {"Name": "bucket-b", "CreationDate": "2024-02-01"}
+            ]
+        });
+        let result = evaluate("Buckets[*].Name", &data).unwrap();
+        assert_eq!(result, json!(["bucket-a", "bucket-b"]));
+    }
+
+    #[test]
+    fn test_jmespath_list_wildcard_no_flatten() {
+        // [*] should NOT flatten nested arrays (unlike [])
+        let data = json!({"a": [[1, 2], [3, 4]]});
+        let result_wildcard = evaluate("a[*]", &data).unwrap();
+        assert_eq!(result_wildcard, json!([[1, 2], [3, 4]])); // preserved
+        let result_flatten = evaluate("a[]", &data).unwrap();
+        assert_eq!(result_flatten, json!([1, 2, 3, 4])); // flattened
+    }
+
+    #[test]
+    fn test_jmespath_list_wildcard_empty_array() {
+        // [*] on empty array should return empty array, not null
+        let data = json!({"Users": []});
+        let result = evaluate("Users[*].UserName", &data).unwrap();
+        assert_eq!(result, json!([]));
     }
 
     #[test]

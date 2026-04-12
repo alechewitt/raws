@@ -501,7 +501,9 @@ pub async fn run() -> Result<()> {
         return Ok(());
     }
     let formatted = formatter::format_output_with_title(&final_value, output_format, Some(&op.name))?;
-    println!("{formatted}");
+    if !formatted.is_empty() {
+        println!("{formatted}");
+    }
 
     Ok(())
 }
