@@ -53,7 +53,7 @@ REMAINING (12 issues):
 
 NEXT SESSION: kinesis-map-list, table-nested, rds-pagination, CloudWatch CBOR
 
-=== Session 10: S3 Express + RDS Auth Token (2026-04-12) ===
+=== Session 10: S3 Express + RDS Auth + Low-Priority Fixes (2026-04-12) ===
 
 ACCOMPLISHED:
 - Fixed CloudWatch smithy-rpc-v2-cbor protocol: Added protocol fallback via effective_protocol()
@@ -65,21 +65,25 @@ ACCOMPLISHED:
   route to s3express-control.{region}.amazonaws.com with s3express signing service
 - Implemented rds generate-db-auth-token: Client-side SigV4 presigned URL command
   with rds-db signing service, 900s expiry, scheme-stripped output
+- Fixed empty table borders: +---+ closing line when title-only table
+- Fixed additional error details: Extract Type/etc from XML errors (e.g., "Type: Sender")
+- Fixed CloudFront empty list suppression: Dotted path support in paginator,
+  rebuild output to only contain result_keys for nested paginators
 
 KEY CHANGES:
 - src/core/model/mod.rs: effective_protocol(), static_context_params, uses_s3_express_control_endpoint()
 - src/core/model/loader.rs: Parse protocols array and staticContextParams from model
-- src/cli/driver.rs: S3 Express endpoint override + signing service, RDS custom command dispatch
+- src/cli/driver.rs: S3 Express endpoint, RDS custom command, empty object suppression
 - src/cli/customizations/rds.rs: New module for generate-db-auth-token
-- src/cli/formatter/table.rs: Two-pass depth-aware nested sub-table rendering
+- src/cli/formatter/table.rs: Two-pass depth-aware nested sub-table rendering + empty border
+- src/core/paginate.rs: Dotted path helpers (get_path/set_path/remove_path),
+  rebuild-from-result-keys for nested paginator configs
+- src/core/protocol/query.rs: parse_query_error_with_details() for additional error fields
 
 TEST RESULTS: 1150 tests passing (up from 1111)
-ISSUES STATUS: 41/46 passing (89%)
-  issues-01: 6/6, issues-02: 15/18, issues-03: 4/5, issues-04: 9/9, issues-05: 7/8
+ISSUES STATUS: 44/46 passing (96%)
+  issues-01: 6/6, issues-02: 17/18, issues-03: 4/5, issues-04: 9/9, issues-05: 8/8
 
-REMAINING (5 issues, all low priority):
-- validation-systemic-table-empty: Empty table results show no output
-- validation-systemic-additional-error-details: Missing "Additional error details" section
-- validation-s3-website-not-implemented: s3 website subcommand not implemented
-- validation-ecs-custom-commands-missing: ecs deploy, cloudformation package
-- validation-cloudfront-empty-list-suppression: Empty CloudFront lists not suppressed
+REMAINING (2 issues, all low priority custom commands):
+- validation-s3-website-not-implemented: s3 website subcommand (wraps put-bucket-website)
+- validation-ecs-custom-commands-missing: ecs deploy, cloudformation package (AWS CLI-specific)
