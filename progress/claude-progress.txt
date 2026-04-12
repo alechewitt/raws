@@ -543,3 +543,53 @@ NEXT SESSION SHOULD WORK ON:
 2. validation-systemic-table-nested (table output for nested objects)
 3. validation-rds-pagination-large-results (pagination timeout)
 4. CloudWatch CBOR protocol (if time allows - biggest remaining gap)
+
+=== Session 10 (continued): S3 Express + RDS Auth + Low-Priority Fixes (2026-04-12) ===
+
+See claude-progress-recent.txt for details.
+
+=== Session 11: Global Service Signing + UTC Timestamps (2026-04-11) ===
+
+ACCOMPLISHED:
+- Fixed clippy warnings: map_or → is_some_and in driver.rs, complex return type alias in query.rs
+- Implemented s3 website subcommand: Full PutBucketWebsite API integration with XML building,
+  arg parsing (--index-document, --error-document), XML escaping. 17 unit tests.
+- Implemented ecs deploy / cloudformation package as "not implemented" custom commands with workaround messages
+- Fixed global service signing region: IAM/Route53/CloudFront failed with SignatureDoesNotMatch when
+  user's profile had non-us-east-1 region. Added resolve_signing_region() using credentialScope from
+  endpoints.json. Applied to both execute() and handle_wait_command(). 8 unit tests.
+- Fixed UTC timestamps: Changed normalize_timestamp()/epoch_to_iso() from chrono::Local to chrono::Utc
+  to match AWS CLI v2 UTC (+00:00) output format.
+
+KEY FILES CHANGED:
+- src/cli/driver.rs: Clippy fix, ECS/CFN custom commands, signing region resolution
+- src/cli/customizations/s3/website.rs: NEW - Full s3 website implementation
+- src/cli/customizations/s3/mod.rs: Added website dispatch
+- src/cli/customizations/cloudformation/mod.rs: Added package command stub
+- src/core/endpoint/resolver.rs: resolve_signing_region() function (8 tests)
+- src/core/protocol/mod.rs: UTC timestamp formatting
+- src/core/protocol/query.rs: QueryErrorDetails type alias
+
+TEST RESULTS: 1175 tests passing (up from 1150)
+ISSUES STATUS: ALL 46/46 passing (100%) + 2 new issues found and fixed = 48/48
+  issues-01: 6/6, issues-02: 18/18, issues-03: 5/5, issues-04: 9/9, issues-05: 8/8, issues-06: 2/2
+
+=== Session 12: S3 Express Endpoint Routing Fix (2026-04-11) ===
+
+ACCOMPLISHED:
+- Fixed S3 Express endpoint routing for regular buckets: The botocore model sets
+  UseS3ExpressControlEndpoint on nearly all S3 bucket operations, but this should only
+  route to s3express-control for directory buckets (--x-s3 suffix) or bucket-less ops
+  like ListDirectoryBuckets. Added bucket name check to endpoint selection.
+- Fixed S3 Express signing service: Changed from checking model flag to checking actual
+  endpoint URL contains "s3express-control" for signing service determination.
+- Extracted triplicated S3 endpoint routing logic into resolve_s3_endpoint_style() helper.
+- Added S3_DIRECTORY_BUCKET_SUFFIX constant for the "--x-s3" suffix.
+
+KEY FILES CHANGED:
+- src/cli/driver.rs: resolve_s3_endpoint_style() helper, S3_DIRECTORY_BUCKET_SUFFIX constant,
+  simplified main endpoint selection and both S3 redirect handlers
+
+TEST RESULTS: 1175 tests passing, cargo clippy clean
+ISSUES STATUS: 49/49 passing (100%)
+  issues-06: 3/3 (added s3-express-endpoint-routing-regular-buckets)

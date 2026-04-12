@@ -21,5 +21,17 @@
     "passes": true,
     "affected_files": ["src/core/protocol/mod.rs"],
     "notes": ["Found during Session 11 parity testing. Root cause: normalize_timestamp() converted to chrono::Local. AWS CLI v2 uses UTC for JSON API output. Fix: Changed to keep timestamps in UTC (+00:00). Note: s3 ls correctly uses local time for display (different from JSON API output)."]
+  },
+  {
+    "id": "s3-express-endpoint-routing-regular-buckets",
+    "description": "S3 bucket-level operations (get-bucket-acl, get-bucket-policy, etc.) incorrectly routed to s3express-control endpoint. The botocore model sets UseS3ExpressControlEndpoint on nearly all S3 bucket operations, but this should only route to Express endpoint for directory buckets (--x-s3 suffix) or bucket-less operations like ListDirectoryBuckets.",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws s3api get-bucket-acl --bucket <any-regular-bucket> --region us-east-1 --output json 2>&1 | head -5", "expect": "Should return Owner/Grants ACL response, not InvalidEndpoint or routing error" },
+      { "run": "raws s3api list-directory-buckets --region us-east-1 --output json 2>&1 | head -3", "expect": "Should still return Buckets list (regression check)" }
+    ],
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs"],
+    "notes": ["Found during Session 12 parity testing. Root cause: op.uses_s3_express_control_endpoint() returned true for all bucket-level S3 ops, routing them all to s3express-control. Fix: Added bucket name check - only route to Express when bucket is absent or ends with --x-s3. Also fixed signing service to check endpoint URL instead of model flag. Extracted triplicated endpoint routing logic into resolve_s3_endpoint_style() helper. Added S3_DIRECTORY_BUCKET_SUFFIX constant."]
   }
 ]

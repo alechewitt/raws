@@ -1,6 +1,9 @@
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 
+/// S3 Express One Zone directory bucket names end with this suffix.
+const S3_DIRECTORY_BUCKET_SUFFIX: &str = "--x-s3";
+
 use crate::cli::args::GlobalArgs;
 use crate::cli::commands::configure;
 use crate::cli::customizations::cloudformation as cfn_commands;
@@ -317,15 +320,7 @@ pub async fn run() -> Result<()> {
 
     // Apply S3 virtual-hosted style addressing for bucket operations
     if model_service == "s3" && args.endpoint_url.is_none() {
-        if op.uses_s3_express_control_endpoint() {
-            // S3 Express control operations (e.g. ListDirectoryBuckets) use a
-            // dedicated endpoint and signing service.
-            endpoint_url = format!("https://s3express-control.{region}.amazonaws.com");
-        } else if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
-            if resolver::is_bucket_dns_compatible(bucket) {
-                endpoint_url = resolver::apply_s3_virtual_hosted_style(&endpoint_url, bucket);
-            }
-        }
+        endpoint_url = resolve_s3_endpoint_style(&endpoint_url, op, &input, region);
     }
 
     // Resolve the signing region (may differ from config region for global services).
@@ -1292,6 +1287,29 @@ async fn dispatch_rest_json_protocol(
 /// Dispatch a request using the REST-XML protocol.
 ///
 /// Used by services like S3, Route53, CloudFront.
+/// Resolve the S3 endpoint URL based on whether the operation targets a directory
+/// bucket (S3 Express), a regular bucket (virtual-hosted style), or no bucket.
+fn resolve_s3_endpoint_style(
+    base_endpoint: &str,
+    op: &model::Operation,
+    input: &serde_json::Value,
+    region: &str,
+) -> String {
+    let bucket_name = input.get("Bucket").and_then(|b| b.as_str());
+    let is_express = bucket_name.is_some_and(|b| b.ends_with(S3_DIRECTORY_BUCKET_SUFFIX));
+    if op.uses_s3_express_control_endpoint() && (bucket_name.is_none() || is_express) {
+        format!("https://s3express-control.{region}.amazonaws.com")
+    } else if let Some(bucket) = bucket_name {
+        if resolver::is_bucket_dns_compatible(bucket) {
+            resolver::apply_s3_virtual_hosted_style(base_endpoint, bucket)
+        } else {
+            base_endpoint.to_string()
+        }
+    } else {
+        base_endpoint.to_string()
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 async fn dispatch_rest_xml_protocol(
     endpoint_url: &str,
@@ -1328,18 +1346,7 @@ async fn dispatch_rest_xml_protocol(
                 },
             };
 
-            // Apply S3 Express control or virtual-hosted style as appropriate
-            let final_endpoint = if op.uses_s3_express_control_endpoint() {
-                format!("https://s3express-control.{redirect_region}.amazonaws.com")
-            } else if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
-                if resolver::is_bucket_dns_compatible(bucket) {
-                    resolver::apply_s3_virtual_hosted_style(&new_endpoint, bucket)
-                } else {
-                    new_endpoint
-                }
-            } else {
-                new_endpoint
-            };
+            let final_endpoint = resolve_s3_endpoint_style(&new_endpoint, op, input, redirect_region);
 
             return send_rest_xml_request(
                 &final_endpoint, model, op, input, creds, redirect_region, debug, http_config, no_sign_request,
@@ -1365,17 +1372,7 @@ async fn dispatch_rest_xml_protocol(
                 },
             };
 
-            let final_endpoint = if op.uses_s3_express_control_endpoint() {
-                format!("https://s3express-control.{redirect_region}.amazonaws.com")
-            } else if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
-                if resolver::is_bucket_dns_compatible(bucket) {
-                    resolver::apply_s3_virtual_hosted_style(&new_endpoint, bucket)
-                } else {
-                    new_endpoint
-                }
-            } else {
-                new_endpoint
-            };
+            let final_endpoint = resolve_s3_endpoint_style(&new_endpoint, op, input, redirect_region);
 
             return send_rest_xml_request(
                 &final_endpoint, model, op, input, creds, redirect_region, debug, http_config, no_sign_request,
@@ -1467,8 +1464,9 @@ async fn send_rest_xml_request(
 
     if !no_sign_request {
         let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-        // S3 Express control operations use "s3express" signing service
-        let signing_service = if op.uses_s3_express_control_endpoint() {
+        // S3 Express control operations use "s3express" signing service, but only
+        // when actually routed to the S3 Express endpoint (directory buckets).
+        let signing_service = if endpoint_url.contains("s3express-control") {
             "s3express"
         } else {
             model.metadata.signing_service()
