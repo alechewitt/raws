@@ -6,6 +6,7 @@ use crate::cli::commands::configure;
 use crate::cli::customizations::cloudformation as cfn_commands;
 use crate::cli::customizations::iam::decode_iam_policy_documents;
 use crate::cli::customizations::logs as logs_commands;
+use crate::cli::customizations::rds as rds_commands;
 use crate::cli::customizations::route53::apply_route53_customizations;
 use crate::cli::customizations::s3 as s3_commands;
 use crate::cli::formatter;
@@ -120,6 +121,40 @@ pub async fn run() -> Result<()> {
     // orchestrates changeset creation, polling, and execution.
     if service == "cloudformation" && cfn_commands::is_custom_command(operation) {
         return cfn_commands::handle_cloudformation_command(&args, operation).await;
+    }
+
+    // Handle "raws rds generate-db-auth-token": client-side command that
+    // produces a presigned IAM auth token for RDS database connections.
+    if service == "rds" && rds_commands::is_custom_command(operation) {
+        let (hostname, port, username) =
+            rds_commands::parse_generate_db_auth_token_args(&args.args)?;
+
+        let config = ConfigProvider::new(
+            args.region.as_deref(),
+            args.output.as_deref(),
+            args.profile.as_deref(),
+        )?;
+        if args.profile.is_some() {
+            ConfigProvider::validate_profile_exists(&config.profile)?;
+        }
+        let region = config
+            .region
+            .as_deref()
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "No region specified. Use --region, AWS_REGION, or configure a default region."
+                )
+            })?;
+
+        let explicit_profile = args.profile.is_some();
+        let chain = build_credential_chain(&config.profile, explicit_profile, config.region.as_deref());
+        let credentials = chain.resolve()?;
+
+        let token = rds_commands::generate_db_auth_token(
+            &hostname, port, &username, region, &credentials,
+        )?;
+        println!("{token}");
+        return Ok(());
     }
 
     // Handle "raws logs tail": custom command that tails CloudWatch Logs
@@ -270,7 +305,11 @@ pub async fn run() -> Result<()> {
 
     // Apply S3 virtual-hosted style addressing for bucket operations
     if model_service == "s3" && args.endpoint_url.is_none() {
-        if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
+        if op.uses_s3_express_control_endpoint() {
+            // S3 Express control operations (e.g. ListDirectoryBuckets) use a
+            // dedicated endpoint and signing service.
+            endpoint_url = format!("https://s3express-control.{region}.amazonaws.com");
+        } else if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
             if resolver::is_bucket_dns_compatible(bucket) {
                 endpoint_url = resolver::apply_s3_virtual_hosted_style(&endpoint_url, bucket);
             }
@@ -1236,8 +1275,10 @@ async fn dispatch_rest_xml_protocol(
                 },
             };
 
-            // Apply S3 virtual-hosted style if appropriate
-            let final_endpoint = if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
+            // Apply S3 Express control or virtual-hosted style as appropriate
+            let final_endpoint = if op.uses_s3_express_control_endpoint() {
+                format!("https://s3express-control.{redirect_region}.amazonaws.com")
+            } else if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
                 if resolver::is_bucket_dns_compatible(bucket) {
                     resolver::apply_s3_virtual_hosted_style(&new_endpoint, bucket)
                 } else {
@@ -1271,7 +1312,9 @@ async fn dispatch_rest_xml_protocol(
                 },
             };
 
-            let final_endpoint = if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
+            let final_endpoint = if op.uses_s3_express_control_endpoint() {
+                format!("https://s3express-control.{redirect_region}.amazonaws.com")
+            } else if let Some(bucket) = input.get("Bucket").and_then(|b| b.as_str()) {
                 if resolver::is_bucket_dns_compatible(bucket) {
                     resolver::apply_s3_virtual_hosted_style(&new_endpoint, bucket)
                 } else {
@@ -1371,7 +1414,12 @@ async fn send_rest_xml_request(
 
     if !no_sign_request {
         let datetime = chrono::Utc::now().format("%Y%m%dT%H%M%SZ").to_string();
-        let signing_service = model.metadata.signing_service();
+        // S3 Express control operations use "s3express" signing service
+        let signing_service = if op.uses_s3_express_control_endpoint() {
+            "s3express"
+        } else {
+            model.metadata.signing_service()
+        };
         let signing_params = SigningParams::from_credentials(creds, region, signing_service, &datetime);
         let signing_url = match url::Url::parse(&full_url) {
             Ok(u) => u,
@@ -2831,6 +2879,7 @@ mod tests {
                 result_wrapper: None,
                 errors: vec![],
                 documentation: None,
+                static_context_params: None,
             },
         );
 

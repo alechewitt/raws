@@ -30,9 +30,9 @@
     "verify": [
       { "run": "raws rds generate-db-auth-token --region us-east-1 2>&1", "expect": "Should be recognized as a valid command" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. generate-db-auth-token is a commonly used command for IAM database authentication."]
+    "passes": true,
+    "affected_files": ["src/cli/customizations/rds.rs", "src/cli/customizations/mod.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. generate-db-auth-token is a commonly used command for IAM database authentication.", "Fixed: Implemented as client-side custom command. Generates SigV4 presigned URL with Action=connect, DBUser, rds-db signing service, 900s expiry. Strips https:// scheme from output."]
   },
   {
     "id": "validation-rds-pagination-large-results",

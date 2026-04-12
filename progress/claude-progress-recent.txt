@@ -52,3 +52,34 @@ REMAINING (12 issues):
   cloudfront-empty-list-suppression
 
 NEXT SESSION: kinesis-map-list, table-nested, rds-pagination, CloudWatch CBOR
+
+=== Session 10: S3 Express + RDS Auth Token (2026-04-12) ===
+
+ACCOMPLISHED:
+- Fixed CloudWatch smithy-rpc-v2-cbor protocol: Added protocol fallback via effective_protocol()
+- Fixed kinesis-map-list-serialization: Already fixed by session 9 systemic fixes (verified)
+- Fixed elasticache-list-tags-auth-error: Already fixed by session 9 systemic fixes (verified)
+- Fixed rds-pagination-large-results: Works correctly, original test timed out (verified)
+- Fixed table-nested rendering: Major rewrite with depth-aware sub-table rendering
+- Fixed s3api-list-directory-buckets: Parse staticContextParams from botocore model,
+  route to s3express-control.{region}.amazonaws.com with s3express signing service
+- Implemented rds generate-db-auth-token: Client-side SigV4 presigned URL command
+  with rds-db signing service, 900s expiry, scheme-stripped output
+
+KEY CHANGES:
+- src/core/model/mod.rs: effective_protocol(), static_context_params, uses_s3_express_control_endpoint()
+- src/core/model/loader.rs: Parse protocols array and staticContextParams from model
+- src/cli/driver.rs: S3 Express endpoint override + signing service, RDS custom command dispatch
+- src/cli/customizations/rds.rs: New module for generate-db-auth-token
+- src/cli/formatter/table.rs: Two-pass depth-aware nested sub-table rendering
+
+TEST RESULTS: 1150 tests passing (up from 1111)
+ISSUES STATUS: 41/46 passing (89%)
+  issues-01: 6/6, issues-02: 15/18, issues-03: 4/5, issues-04: 9/9, issues-05: 7/8
+
+REMAINING (5 issues, all low priority):
+- validation-systemic-table-empty: Empty table results show no output
+- validation-systemic-additional-error-details: Missing "Additional error details" section
+- validation-s3-website-not-implemented: s3 website subcommand not implemented
+- validation-ecs-custom-commands-missing: ecs deploy, cloudformation package
+- validation-cloudfront-empty-list-suppression: Empty CloudFront lists not suppressed

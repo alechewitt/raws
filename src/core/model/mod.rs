@@ -76,6 +76,20 @@ pub struct Operation {
     #[allow(dead_code)]
     pub errors: Vec<String>,
     pub documentation: Option<String>,
+    pub static_context_params: Option<Value>,
+}
+
+impl Operation {
+    /// Returns true when the operation's `staticContextParams` include
+    /// `UseS3ExpressControlEndpoint: { value: true }`.
+    pub fn uses_s3_express_control_endpoint(&self) -> bool {
+        self.static_context_params
+            .as_ref()
+            .and_then(|p| p.get("UseS3ExpressControlEndpoint"))
+            .and_then(|v| v.get("value"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +202,7 @@ mod tests {
             result_wrapper: None,
             errors: vec![],
             documentation: None,
+            static_context_params: None,
         });
         ops.insert("AssumeRole".to_string(), Operation {
             name: "AssumeRole".to_string(),
@@ -198,6 +213,7 @@ mod tests {
             result_wrapper: None,
             errors: vec![],
             documentation: None,
+            static_context_params: None,
         });
 
         assert_eq!(
@@ -325,5 +341,53 @@ mod tests {
             vec!["rest-xml", "query"],
         );
         assert_eq!(meta.effective_protocol(), "json");
+    }
+
+    // ---------------------------------------------------------------
+    // uses_s3_express_control_endpoint
+    // ---------------------------------------------------------------
+
+    fn make_op(static_ctx: Option<Value>) -> Operation {
+        Operation {
+            name: "TestOp".to_string(),
+            http_method: "GET".to_string(),
+            http_request_uri: "/".to_string(),
+            input_shape: None,
+            output_shape: None,
+            result_wrapper: None,
+            errors: vec![],
+            documentation: None,
+            static_context_params: static_ctx,
+        }
+    }
+
+    #[test]
+    fn test_s3_express_control_endpoint_true() {
+        let op = make_op(Some(serde_json::json!({
+            "UseS3ExpressControlEndpoint": { "value": true }
+        })));
+        assert!(op.uses_s3_express_control_endpoint());
+    }
+
+    #[test]
+    fn test_s3_express_control_endpoint_false() {
+        let op = make_op(Some(serde_json::json!({
+            "UseS3ExpressControlEndpoint": { "value": false }
+        })));
+        assert!(!op.uses_s3_express_control_endpoint());
+    }
+
+    #[test]
+    fn test_s3_express_control_endpoint_missing() {
+        let op = make_op(None);
+        assert!(!op.uses_s3_express_control_endpoint());
+    }
+
+    #[test]
+    fn test_s3_express_control_endpoint_other_params() {
+        let op = make_op(Some(serde_json::json!({
+            "SomethingElse": { "value": true }
+        })));
+        assert!(!op.uses_s3_express_control_endpoint());
     }
 }

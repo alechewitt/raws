@@ -140,9 +140,9 @@
     "verify": [
       { "run": "raws s3api list-directory-buckets --region us-east-1 --output json 2>&1", "expect": "Should return empty Buckets list (no directory buckets), not all regular buckets" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. raws appears to route this to the same endpoint as list-buckets."]
+    "passes": true,
+    "affected_files": ["src/core/model/mod.rs", "src/core/model/loader.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. raws appears to route this to the same endpoint as list-buckets.", "Fixed: Parse staticContextParams from botocore model into Operation struct. When UseS3ExpressControlEndpoint is true, route to s3express-control.{region}.amazonaws.com and sign with s3express service."]
   },
   {
     "id": "validation-s3api-grantee-type-missing",

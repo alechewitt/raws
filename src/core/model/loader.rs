@@ -115,6 +115,8 @@ fn parse_operations(raw: &Value) -> Result<HashMap<String, Operation>> {
             .and_then(|d| d.as_str())
             .map(|s| s.to_string());
 
+        let static_context_params = op.get("staticContextParams").cloned();
+
         operations.insert(
             name.clone(),
             Operation {
@@ -134,6 +136,7 @@ fn parse_operations(raw: &Value) -> Result<HashMap<String, Operation>> {
                 result_wrapper,
                 errors,
                 documentation,
+                static_context_params,
             },
         );
     }
@@ -299,6 +302,12 @@ mod tests {
         assert!(model.operations.contains_key("ListBuckets"));
         assert!(model.operations.contains_key("PutObject"));
         assert!(model.shapes.len() > 100);
+
+        // Verify staticContextParams are parsed from the model
+        let list_dir = &model.operations["ListDirectoryBuckets"];
+        assert!(list_dir.uses_s3_express_control_endpoint());
+        let list_buckets = &model.operations["ListBuckets"];
+        assert!(!list_buckets.uses_s3_express_control_endpoint());
     }
 
     #[test]
