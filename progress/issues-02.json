@@ -51,9 +51,9 @@
     "verify": [
       { "run": "raws ec2 describe-vpcs --output table --region us-east-1", "expect": "Nested objects like CidrBlockAssociationSet should render as sub-tables, not inline JSON" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Affects ec2 describe-vpcs, iam list-users, kms list-keys, and any response with nested structures."]
+    "passes": true,
+    "affected_files": ["src/cli/formatter/table.rs"],
+    "notes": ["Found by validation agent. Affects ec2 describe-vpcs, iam list-users, kms list-keys, and any response with nested structures.", "Fixed: Rewrote table formatter with depth-aware rendering. Operation name shown at depth 0, content at depth 1+. Nested objects/arrays render as sub-tables with increasing ||, |||, |||| pipe borders. Two-pass architecture: bottom-up width computation then top-down constrained rendering. 11 new tests."]
   },
   {
     "id": "validation-systemic-table-empty",

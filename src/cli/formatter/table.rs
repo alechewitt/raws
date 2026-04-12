@@ -28,8 +28,28 @@ pub fn format_table_with_title(value: &Value, title: Option<&str>) -> Result<Str
     Ok(output)
 }
 
-/// Format a top-level object. The AWS CLI renders each top-level key as a
-/// separate section. Scalar-only objects become a vertical key-value table.
+// ---------------------------------------------------------------------------
+// Depth-aware indentation helper
+// ---------------------------------------------------------------------------
+
+/// Wrap each line of `content` with `depth` pipe characters on each side.
+/// At depth 0 this is a no-op.
+fn indent_lines(content: &str, depth: usize) -> String {
+    if depth == 0 {
+        return content.to_string();
+    }
+    let prefix = "|".repeat(depth);
+    let suffix = "|".repeat(depth);
+    content
+        .lines()
+        .map(|line| format!("{}{}{}", prefix, line, suffix))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Format a top-level object. The AWS CLI renders an operation name title at
+/// depth 0 (e.g., "DescribeVpcs") with each top-level key's content at depth 1.
+/// Scalar-only objects become a vertical key-value table with the title.
 fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&str>) -> String {
     if map.is_empty() {
         return String::new();
@@ -51,7 +71,7 @@ fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&
         .copied()
         .collect();
 
-    // Check if all values are scalar -> vertical table
+    // Check if all values are scalar -> vertical table (with title, no depth indentation)
     if non_scalar_keys.is_empty() {
         let pairs: Vec<(String, String)> = scalar_keys
             .iter()
@@ -60,70 +80,124 @@ fn format_top_level_object(map: &serde_json::Map<String, Value>, title: Option<&
         return render_vertical_table(title, &pairs);
     }
 
-    // Mixed: render scalar pairs as vertical table, then each non-scalar key
-    // as its own section
-    let mut sections: Vec<String> = Vec::new();
+    // When there's a title (operation name), render it at depth 0 and content at depth 1.
+    // When there's no title, render content at depth 0 (no wrapping).
+    let base_depth: usize = if title.is_some() { 1 } else { 0 };
 
+    // Compute the total width needed for all content
+    let total_width = compute_top_level_width(map, title);
+    let content_width = if base_depth > 0 {
+        total_width.saturating_sub(2)
+    } else {
+        total_width
+    };
+
+    let mut out = String::new();
+
+    // Render the operation name title at depth 0
+    if let Some(t) = title {
+        out.push_str(&dash_line(total_width));
+        out.push('\n');
+        out.push_str(&title_line(t, total_width));
+        out.push('\n');
+    }
+
+    // Render scalar pairs
     if !scalar_keys.is_empty() {
         let scalar_pairs: Vec<(String, String)> = scalar_keys
             .iter()
             .map(|k| ((*k).clone(), scalar_to_string(&map[k.as_str()])))
             .collect();
-        sections.push(render_vertical_table(None, &scalar_pairs));
+        let inner = render_vertical_table_constrained(None, &scalar_pairs, Some(content_width));
+        out.push_str(&indent_lines(&inner, base_depth));
     }
 
+    // Render each non-scalar section
     for key in &non_scalar_keys {
         let val = &map[key.as_str()];
-        match val {
+        let section = match val {
             Value::Array(arr) => {
                 if arr.is_empty() {
                     continue;
                 }
-                sections.push(format_array_section(key, arr));
+                render_array_at_depth(key, arr, base_depth, content_width)
             }
             Value::Object(inner) => {
                 if inner.is_empty() {
                     continue;
                 }
-                // Nested object: render as vertical table with title
-                let mut inner_keys: Vec<&String> = inner.keys().collect();
-                inner_keys.sort();
-                let pairs: Vec<(String, String)> = inner_keys
-                    .iter()
-                    .map(|k| ((*k).clone(), value_to_string(&inner[k.as_str()])))
-                    .collect();
-                sections.push(render_vertical_table(Some(key), &pairs));
+                render_object_at_depth(inner, Some(key), base_depth, content_width)
             }
-            _ => {}
+            _ => continue,
+        };
+        if !section.is_empty() {
+            if !out.is_empty() {
+                out.push('\n');
+            }
+            out.push_str(&section);
         }
     }
 
-    sections.join("\n")
+    out
 }
 
-/// Format an array that appears under a named key in the top-level object.
-fn format_array_section(title: &str, arr: &[Value]) -> String {
-    if arr.is_empty() {
-        return String::new();
-    }
+/// Compute the total width for the top-level table including all nested sections.
+/// When `title` is Some, content is at depth 1 (+2 for pipe wrapping).
+/// When `title` is None, content is at depth 0 (no wrapping).
+fn compute_top_level_width(
+    map: &serde_json::Map<String, Value>,
+    title: Option<&str>,
+) -> usize {
+    let indent = if title.is_some() { 2 } else { 0 };
 
-    // Check if all elements are scalars
-    let all_scalars = arr.iter().all(is_scalar);
-    if all_scalars {
-        let values: Vec<String> = arr.iter().map(scalar_to_string).collect();
-        return render_scalar_list_table(title, &values);
-    }
+    let mut keys: Vec<&String> = map.keys().collect();
+    keys.sort();
 
-    // Check if all elements are objects
-    let all_objects = arr.iter().all(|v| v.is_object());
-    if all_objects {
-        return render_object_list_table(title, arr);
-    }
+    let scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
+    let non_scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| !is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
 
-    // Fallback: stringify each element in a single-column table
-    let values: Vec<String> = arr.iter().map(value_to_string).collect();
-    render_scalar_list_table(title, &values)
+    // Width from scalar fields (+ indent for pipe wrapping if titled)
+    let scalar_width = if !scalar_keys.is_empty() {
+        let max_key_len = scalar_keys.iter().map(|k| k.len()).max().unwrap_or(0);
+        let max_val_len = scalar_keys
+            .iter()
+            .map(|k| scalar_to_string(&map[k.as_str()]).len())
+            .max()
+            .unwrap_or(0);
+        let (w, _) = calculate_widths(&[max_key_len, max_val_len], None);
+        w + indent
+    } else {
+        0
+    };
+
+    // Width from non-scalar sections (+ indent for pipe wrapping if titled)
+    let section_width = non_scalar_keys
+        .iter()
+        .map(|k| {
+            let val = &map[k.as_str()];
+            match val {
+                Value::Array(arr) => compute_array_width(k, arr) + indent,
+                Value::Object(inner) => compute_object_width(inner, Some(k)) + indent,
+                _ => 0,
+            }
+        })
+        .max()
+        .unwrap_or(0);
+
+    // Title width
+    let title_width = title.map_or(0, |t| t.len() + 2);
+
+    std::cmp::max(title_width, std::cmp::max(scalar_width, section_width))
 }
+
 
 /// Format a top-level array (bare array, not under a key).
 fn format_top_level_array(arr: &[Value]) -> String {
@@ -145,6 +219,339 @@ fn format_top_level_array(arr: &[Value]) -> String {
     // Fallback
     let values: Vec<String> = arr.iter().map(value_to_string).collect();
     render_scalar_list_table_no_title(&values)
+}
+
+// ---------------------------------------------------------------------------
+// Width computation (bottom-up pass)
+// ---------------------------------------------------------------------------
+
+/// Compute the minimum width needed to render an object at depth 0.
+/// This accounts for scalar fields, title, and any nested sub-sections.
+/// Children at depth+1 contribute their width + 2 to the parent.
+fn compute_object_width(
+    map: &serde_json::Map<String, Value>,
+    title: Option<&str>,
+) -> usize {
+    let mut keys: Vec<&String> = map.keys().collect();
+    keys.sort();
+
+    let scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
+    let non_scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| !is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
+
+    // Width from scalar key-value pairs
+    let scalar_width = if !scalar_keys.is_empty() {
+        let max_key_len = scalar_keys.iter().map(|k| k.len()).max().unwrap_or(0);
+        let max_val_len = scalar_keys
+            .iter()
+            .map(|k| scalar_to_string(&map[k.as_str()]).len())
+            .max()
+            .unwrap_or(0);
+        let (w, _) = calculate_widths(&[max_key_len, max_val_len], title);
+        w
+    } else {
+        title.map_or(0, |t| t.len() + 2)
+    };
+
+    // Width from non-scalar children (each adds 2 for the pipe wrapping)
+    let child_width = non_scalar_keys
+        .iter()
+        .map(|k| {
+            let val = &map[k.as_str()];
+            match val {
+                Value::Array(arr) => compute_array_width(k, arr) + 2,
+                Value::Object(inner) => compute_object_width(inner, Some(k)) + 2,
+                _ => 0,
+            }
+        })
+        .max()
+        .unwrap_or(0);
+
+    std::cmp::max(scalar_width, child_width)
+}
+
+/// Compute the minimum width needed to render an array section.
+fn compute_array_width(title: &str, arr: &[Value]) -> usize {
+    if arr.is_empty() {
+        return 0;
+    }
+
+    let all_scalars = arr.iter().all(is_scalar);
+    if all_scalars {
+        let max_val = arr.iter().map(|v| scalar_to_string(v).len()).max().unwrap_or(0);
+        let (w, _) = calculate_widths(&[max_val], Some(title));
+        return w;
+    }
+
+    let all_objects = arr.iter().all(|v| v.is_object());
+    if all_objects {
+        return compute_object_list_width(title, arr);
+    }
+
+    // Fallback: stringify
+    let max_val = arr.iter().map(|v| value_to_string(v).len()).max().unwrap_or(0);
+    let (w, _) = calculate_widths(&[max_val], Some(title));
+    w
+}
+
+/// Compute the minimum width for a list of objects rendered as a table.
+fn compute_object_list_width(title: &str, items: &[Value]) -> usize {
+    // Check if any has non-scalar fields
+    let has_non_scalar = items.iter().any(|item| {
+        if let Value::Object(map) = item {
+            map.values().any(|v| !is_scalar(v))
+        } else {
+            false
+        }
+    });
+
+    if !has_non_scalar {
+        // Pure scalar: horizontal table
+        let (headers, rows) = extract_headers_and_rows(items);
+        let max_content: Vec<usize> = headers
+            .iter()
+            .enumerate()
+            .map(|(i, h)| {
+                let max_data = rows.iter().map(|r| r.get(i).map_or(0, |c| c.len())).max().unwrap_or(0);
+                std::cmp::max(h.len(), max_data)
+            })
+            .collect();
+        let (w, _) = calculate_widths(&max_content, Some(title));
+        return w;
+    }
+
+    // Mixed: scalar columns in horizontal table + non-scalar sub-sections
+    let mut all_scalar_headers = std::collections::BTreeSet::new();
+    let mut all_non_scalar_keys = std::collections::BTreeSet::new();
+
+    for item in items {
+        if let Value::Object(map) = item {
+            for (k, v) in map {
+                if is_scalar(v) {
+                    all_scalar_headers.insert(k.clone());
+                } else {
+                    all_non_scalar_keys.insert(k.clone());
+                }
+            }
+        }
+    }
+
+    let scalar_headers: Vec<String> = all_scalar_headers.into_iter().collect();
+
+    // Width from scalar horizontal table
+    let scalar_width = if !scalar_headers.is_empty() {
+        let mut max_content: Vec<usize> = scalar_headers.iter().map(|h| h.len()).collect();
+        for item in items {
+            for (i, h) in scalar_headers.iter().enumerate() {
+                let val_len = item.get(h).map(|v| scalar_to_string(v).len()).unwrap_or(0);
+                if i < max_content.len() {
+                    max_content[i] = std::cmp::max(max_content[i], val_len);
+                }
+            }
+        }
+        let (w, _) = calculate_widths(&max_content, Some(title));
+        w
+    } else {
+        title.len() + 2
+    };
+
+    // Width from non-scalar children
+    let child_width: usize = items
+        .iter()
+        .filter_map(|item| {
+            if let Value::Object(map) = item {
+                let w = all_non_scalar_keys
+                    .iter()
+                    .filter_map(|nsk| {
+                        map.get(nsk.as_str()).map(|val| match val {
+                            Value::Array(arr) => compute_array_width(nsk, arr) + 2,
+                            Value::Object(inner) => compute_object_width(inner, Some(nsk)) + 2,
+                            _ => 0,
+                        })
+                    })
+                    .max()
+                    .unwrap_or(0);
+                Some(w)
+            } else {
+                None
+            }
+        })
+        .max()
+        .unwrap_or(0);
+
+    std::cmp::max(scalar_width, child_width)
+}
+
+// ---------------------------------------------------------------------------
+// Depth-aware object rendering (recursive, top-down pass)
+// ---------------------------------------------------------------------------
+
+/// Render an object at a given nesting depth with a fixed width.
+///
+/// - Scalar fields become key-value rows in a vertical table
+/// - Non-scalar fields become sub-sections rendered at depth+1
+/// - `width` is the total width for this depth level's content (before indentation)
+///
+/// The resulting content is indented by `depth` pipe characters on each side.
+fn render_object_at_depth(
+    map: &serde_json::Map<String, Value>,
+    title: Option<&str>,
+    depth: usize,
+    width: usize,
+) -> String {
+    if map.is_empty() {
+        return String::new();
+    }
+
+    let mut keys: Vec<&String> = map.keys().collect();
+    keys.sort();
+
+    let scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
+    let non_scalar_keys: Vec<&String> = keys
+        .iter()
+        .filter(|k| !is_scalar(&map[k.as_str()]))
+        .copied()
+        .collect();
+
+    let pairs: Vec<(String, String)> = scalar_keys
+        .iter()
+        .map(|k| ((*k).clone(), scalar_to_string(&map[k.as_str()])))
+        .collect();
+
+    let mut out = String::new();
+
+    // Render scalar pairs as a vertical table
+    if !pairs.is_empty() {
+        let inner = render_vertical_table_constrained(title, &pairs, Some(width));
+        out.push_str(&indent_lines(&inner, depth));
+    } else if title.is_some() {
+        // No scalar fields but we have a title and sub-sections.
+        // Nothing to render at this level for the title-only case.
+    }
+
+    // Render non-scalar fields as sub-sections
+    let inner_width = width.saturating_sub(2);
+    for key in &non_scalar_keys {
+        let val = &map[key.as_str()];
+
+        let sub_content = match val {
+            Value::Array(arr) => {
+                if arr.is_empty() {
+                    continue;
+                }
+                render_array_at_depth(key, arr, depth + 1, inner_width)
+            }
+            Value::Object(inner_map) => {
+                if inner_map.is_empty() {
+                    continue;
+                }
+                render_object_at_depth(inner_map, Some(key), depth + 1, inner_width)
+            }
+            _ => continue,
+        };
+
+        if !sub_content.is_empty() {
+            if !out.is_empty() {
+                out.push('\n');
+            }
+            out.push_str(&sub_content);
+        }
+    }
+
+    out
+}
+
+/// Render an array at a given depth with a title and fixed width.
+/// The content is indented by `depth` pipe chars on each side.
+fn render_array_at_depth(
+    title: &str,
+    arr: &[Value],
+    depth: usize,
+    width: usize,
+) -> String {
+    if arr.is_empty() {
+        return String::new();
+    }
+
+    let all_scalars = arr.iter().all(is_scalar);
+    if all_scalars {
+        let values: Vec<String> = arr.iter().map(scalar_to_string).collect();
+        let inner = render_scalar_list_table_constrained(title, &values, Some(width));
+        return indent_lines(&inner, depth);
+    }
+
+    let all_objects = arr.iter().all(|v| v.is_object());
+    if all_objects {
+        return render_object_list_at_depth(title, arr, depth, width);
+    }
+
+    // Fallback
+    let values: Vec<String> = arr.iter().map(value_to_string).collect();
+    let inner = render_scalar_list_table_constrained(title, &values, Some(width));
+    indent_lines(&inner, depth)
+}
+
+/// Render a list of objects at a given depth with a fixed width.
+///
+/// AWS CLI behavior:
+/// - If all objects have only scalar fields → horizontal table (column headers + rows)
+/// - If any object has non-scalar fields → each object as vertical key-value table,
+///   with non-scalar fields as sub-sections at depth+1
+fn render_object_list_at_depth(
+    title: &str,
+    items: &[Value],
+    depth: usize,
+    width: usize,
+) -> String {
+    if items.is_empty() {
+        return String::new();
+    }
+
+    // Check if any object has non-scalar fields
+    let has_non_scalar = items.iter().any(|item| {
+        if let Value::Object(map) = item {
+            map.values().any(|v| !is_scalar(v))
+        } else {
+            false
+        }
+    });
+
+    if !has_non_scalar {
+        // Pure scalar objects: render as horizontal table
+        let (headers, rows) = extract_headers_and_rows(items);
+        let inner = render_horizontal_table_constrained(Some(title), &headers, &rows, Some(width));
+        return indent_lines(&inner, depth);
+    }
+
+    // Objects with nested fields: render each item as a vertical table
+    // with sub-sections for non-scalar fields, matching AWS CLI behavior
+    let mut out = String::new();
+
+    for item in items {
+        if let Value::Object(map) = item {
+            // Render this object at the current depth with the title
+            let section = render_object_at_depth(map, Some(title), depth, width);
+            if !section.is_empty() {
+                if !out.is_empty() {
+                    out.push('\n');
+                }
+                out.push_str(&section);
+            }
+        }
+    }
+
+    out
 }
 
 // ---------------------------------------------------------------------------
@@ -403,34 +810,6 @@ fn render_horizontal_table(
     out
 }
 
-/// Render a single-column table for a list of scalars, with title.
-fn render_scalar_list_table(title: &str, values: &[String]) -> String {
-    if values.is_empty() {
-        return String::new();
-    }
-
-    let max_val = values.iter().map(|v| v.len()).max().unwrap_or(0);
-    let (total_width, widths) = calculate_widths(&[max_val], Some(title));
-
-    let mut out = String::new();
-
-    out.push_str(&dash_line(total_width));
-    out.push('\n');
-    out.push_str(&title_line(title, total_width));
-    out.push('\n');
-    out.push_str(&line_break(&widths));
-    out.push('\n');
-
-    for val in values {
-        out.push_str(&data_row(&widths, &[val.as_str()]));
-        out.push('\n');
-    }
-
-    out.push_str(&line_break(&widths));
-
-    out
-}
-
 /// Render a single-column table for a list of scalars without a title.
 fn render_scalar_list_table_no_title(values: &[String]) -> String {
     if values.is_empty() {
@@ -453,12 +832,6 @@ fn render_scalar_list_table_no_title(values: &[String]) -> String {
     out.push_str(&line_break(&widths));
 
     out
-}
-
-/// Render a list of objects as a horizontal table with a title.
-fn render_object_list_table(title: &str, items: &[Value]) -> String {
-    let (headers, rows) = extract_headers_and_rows(items);
-    render_horizontal_table(Some(title), &headers, &rows)
 }
 
 /// Render a list of objects as a horizontal table without a title.
@@ -495,6 +868,160 @@ fn extract_headers_and_rows(items: &[Value]) -> (Vec<String>, Vec<Vec<String>>) 
         .collect();
 
     (headers, rows)
+}
+
+// ---------------------------------------------------------------------------
+// Constrained-width rendering helpers (for nested sub-tables)
+// ---------------------------------------------------------------------------
+
+/// Render a vertical key-value table with an optional title, constrained to a max width.
+fn render_vertical_table_constrained(
+    title: Option<&str>,
+    pairs: &[(String, String)],
+    max_width: Option<usize>,
+) -> String {
+    if pairs.is_empty() {
+        return String::new();
+    }
+
+    let max_key_len = pairs.iter().map(|(k, _)| k.len()).max().unwrap_or(0);
+    let max_val_len = pairs.iter().map(|(_, v)| v.len()).max().unwrap_or(0);
+
+    let (mut total_width, mut widths) = calculate_widths(&[max_key_len, max_val_len], title);
+
+    // If we have a max_width constraint and our natural width is smaller, expand
+    if let Some(mw) = max_width {
+        if total_width < mw {
+            // Recalculate with the wider width (add extra to the value column)
+            let extra = mw - total_width;
+            total_width = mw;
+            if let Some(last) = widths.last_mut() {
+                *last += extra;
+            }
+        }
+    }
+
+    let mut out = String::new();
+
+    if let Some(t) = title {
+        out.push_str(&dash_line(total_width));
+        out.push('\n');
+        out.push_str(&title_line(t, total_width));
+        out.push('\n');
+    }
+
+    out.push_str(&line_break(&widths));
+    out.push('\n');
+
+    for (key, val) in pairs {
+        out.push_str(&data_row(&widths, &[key, val]));
+        out.push('\n');
+    }
+
+    out.push_str(&line_break(&widths));
+
+    out
+}
+
+/// Render a horizontal table constrained to a max width.
+fn render_horizontal_table_constrained(
+    title: Option<&str>,
+    headers: &[String],
+    rows: &[Vec<String>],
+    max_width: Option<usize>,
+) -> String {
+    let col_count = headers.len();
+
+    let mut max_content: Vec<usize> = headers.iter().map(|h| h.len()).collect();
+    for row in rows {
+        for (i, cell) in row.iter().enumerate() {
+            if i < col_count {
+                max_content[i] = std::cmp::max(max_content[i], cell.len());
+            }
+        }
+    }
+
+    let (mut total_width, mut widths) = calculate_widths(&max_content, title);
+
+    if let Some(mw) = max_width {
+        if total_width < mw {
+            let extra = mw - total_width;
+            total_width = mw;
+            if let Some(last) = widths.last_mut() {
+                *last += extra;
+            }
+        }
+    }
+
+    let mut out = String::new();
+
+    if let Some(t) = title {
+        out.push_str(&dash_line(total_width));
+        out.push('\n');
+        out.push_str(&title_line(t, total_width));
+        out.push('\n');
+    }
+
+    out.push_str(&line_break(&widths));
+    out.push('\n');
+
+    out.push_str(&header_row(&widths, headers));
+    out.push('\n');
+
+    out.push_str(&line_break(&widths));
+    out.push('\n');
+
+    for row in rows {
+        let cells: Vec<&str> = row.iter().map(|s| s.as_str()).collect();
+        out.push_str(&data_row(&widths, &cells));
+        out.push('\n');
+    }
+
+    out.push_str(&line_break(&widths));
+
+    out
+}
+
+/// Render a single-column scalar list table constrained to a max width.
+fn render_scalar_list_table_constrained(
+    title: &str,
+    values: &[String],
+    max_width: Option<usize>,
+) -> String {
+    if values.is_empty() {
+        return String::new();
+    }
+
+    let max_val = values.iter().map(|v| v.len()).max().unwrap_or(0);
+    let (mut total_width, mut widths) = calculate_widths(&[max_val], Some(title));
+
+    if let Some(mw) = max_width {
+        if total_width < mw {
+            let extra = mw - total_width;
+            total_width = mw;
+            if let Some(last) = widths.last_mut() {
+                *last += extra;
+            }
+        }
+    }
+
+    let mut out = String::new();
+
+    out.push_str(&dash_line(total_width));
+    out.push('\n');
+    out.push_str(&title_line(title, total_width));
+    out.push('\n');
+    out.push_str(&line_break(&widths));
+    out.push('\n');
+
+    for val in values {
+        out.push_str(&data_row(&widths, &[val.as_str()]));
+        out.push('\n');
+    }
+
+    out.push_str(&line_break(&widths));
+
+    out
 }
 
 // ---------------------------------------------------------------------------
@@ -969,5 +1496,290 @@ mod tests {
         assert_eq!(total_width, 23);
         // Single column takes full width
         assert_eq!(widths[0], 23);
+    }
+
+    // -----------------------------------------------------------------------
+    // Nested sub-table rendering tests
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_indent_lines_depth_0() {
+        let content = "+---+\n| a |\n+---+";
+        let result = indent_lines(content, 0);
+        assert_eq!(result, content, "depth 0 should be identity");
+    }
+
+    #[test]
+    fn test_indent_lines_depth_1() {
+        let content = "+---+\n| a |\n+---+";
+        let result = indent_lines(content, 1);
+        let lines: Vec<&str> = result.lines().collect();
+        assert_eq!(lines[0], "|+---+|");
+        assert_eq!(lines[1], "|| a ||");
+        assert_eq!(lines[2], "|+---+|");
+    }
+
+    #[test]
+    fn test_indent_lines_depth_2() {
+        let content = "+--+\n|ab|\n+--+";
+        let result = indent_lines(content, 2);
+        let lines: Vec<&str> = result.lines().collect();
+        assert_eq!(lines[0], "||+--+||");
+        assert_eq!(lines[1], "|||ab|||");
+        assert_eq!(lines[2], "||+--+||");
+    }
+
+    #[test]
+    fn test_nested_object_renders_sub_table() {
+        // Object with a nested object field
+        let value = json!({
+            "Name": "test-vpc",
+            "Config": {
+                "Mode": "enabled",
+                "Type": "standard"
+            }
+        });
+        let result = format_table(&value).unwrap();
+
+        // Scalar field should be in the output
+        assert!(result.contains("Name"), "should contain scalar key Name");
+        assert!(result.contains("test-vpc"), "should contain scalar value");
+
+        // Nested object should be rendered as sub-table, not JSON
+        assert!(
+            !result.contains('{'),
+            "should not contain JSON braces - nested object should be a sub-table"
+        );
+        assert!(result.contains("Config"), "should contain sub-section title Config");
+        assert!(result.contains("Mode"), "should contain nested key Mode");
+        assert!(result.contains("enabled"), "should contain nested value enabled");
+        assert!(result.contains("Type"), "should contain nested key Type");
+        assert!(result.contains("standard"), "should contain nested value standard");
+    }
+
+    #[test]
+    fn test_nested_object_in_list_renders_sub_table() {
+        // List of objects where each object has non-scalar fields
+        // (like ec2 describe-vpcs)
+        let value = json!({
+            "Vpcs": [
+                {
+                    "CidrBlock": "172.31.0.0/16",
+                    "State": "available",
+                    "BlockPublicAccessStates": {
+                        "InternetGatewayBlockMode": "off"
+                    }
+                }
+            ]
+        });
+        let result = format_table(&value).unwrap();
+
+        // Scalar columns should appear
+        assert!(result.contains("CidrBlock"), "should contain CidrBlock");
+        assert!(result.contains("172.31.0.0/16"), "should contain CIDR value");
+        assert!(result.contains("State"), "should contain State");
+        assert!(result.contains("available"), "should contain state value");
+
+        // Non-scalar field should render as a sub-section, not JSON
+        assert!(
+            !result.contains('{'),
+            "should not contain JSON braces - nested objects should be sub-tables"
+        );
+        assert!(
+            result.contains("BlockPublicAccessStates"),
+            "should contain nested section title"
+        );
+        assert!(
+            result.contains("InternetGatewayBlockMode"),
+            "should contain nested key"
+        );
+        assert!(result.contains("off"), "should contain nested value");
+    }
+
+    #[test]
+    fn test_nested_depth_1_has_double_pipes() {
+        // Verify that depth-1 sub-tables have || borders
+        let value = json!({
+            "Vpcs": [
+                {
+                    "CidrBlock": "172.31.0.0/16",
+                    "BlockPublicAccessStates": {
+                        "InternetGatewayBlockMode": "off"
+                    }
+                }
+            ]
+        });
+        let result = format_table(&value).unwrap();
+
+        // Find lines that contain "InternetGatewayBlockMode" - they should have || borders
+        let nested_lines: Vec<&str> = result
+            .lines()
+            .filter(|l| l.contains("InternetGatewayBlockMode"))
+            .collect();
+        assert!(
+            !nested_lines.is_empty(),
+            "should have lines with InternetGatewayBlockMode"
+        );
+
+        for line in &nested_lines {
+            // At depth 2 (nested within Vpcs at depth 1), should have || on each side
+            // The line should start with || and end with ||
+            assert!(
+                line.starts_with("||"),
+                "nested data line should start with || (depth 2): '{}'",
+                line
+            );
+            assert!(
+                line.ends_with("||"),
+                "nested data line should end with || (depth 2): '{}'",
+                line
+            );
+        }
+    }
+
+    #[test]
+    fn test_nested_array_of_scalars_at_depth() {
+        // Object with a nested array of scalars
+        let value = json!({
+            "Name": "test",
+            "Tags": ["tag1", "tag2", "tag3"]
+        });
+        let result = format_table(&value).unwrap();
+
+        assert!(result.contains("Name"), "should contain Name key");
+        assert!(result.contains("test"), "should contain Name value");
+        assert!(result.contains("Tags"), "should contain Tags title");
+        assert!(result.contains("tag1"), "should contain tag1");
+        assert!(result.contains("tag2"), "should contain tag2");
+        assert!(result.contains("tag3"), "should contain tag3");
+    }
+
+    #[test]
+    fn test_nested_multiple_sub_sections() {
+        // Object with multiple non-scalar fields
+        let value = json!({
+            "Id": "vpc-123",
+            "CidrBlockAssociations": [
+                {"AssociationId": "assoc-1", "CidrBlock": "172.31.0.0/16"}
+            ],
+            "Tags": [
+                {"Key": "Name", "Value": "default"}
+            ]
+        });
+        let result = format_table(&value).unwrap();
+
+        assert!(result.contains("Id"), "should contain Id");
+        assert!(result.contains("vpc-123"), "should contain Id value");
+        assert!(result.contains("CidrBlockAssociations"), "should contain first sub-section");
+        assert!(result.contains("AssociationId"), "should contain AssociationId");
+        assert!(result.contains("assoc-1"), "should contain association value");
+        assert!(result.contains("Tags"), "should contain Tags sub-section");
+        assert!(result.contains("Name"), "should contain tag key");
+        assert!(result.contains("default"), "should contain tag value");
+    }
+
+    #[test]
+    fn test_nested_all_lines_consistent_width() {
+        // Each depth level should have consistent line widths
+        let value = json!({
+            "Vpcs": [
+                {
+                    "CidrBlock": "172.31.0.0/16",
+                    "State": "available",
+                    "BlockPublicAccessStates": {
+                        "InternetGatewayBlockMode": "off"
+                    }
+                }
+            ]
+        });
+        let result = format_table(&value).unwrap();
+
+        // Group lines by their depth (number of leading | chars before first non-| char)
+        let mut depth_widths: std::collections::HashMap<usize, Vec<(usize, String)>> =
+            std::collections::HashMap::new();
+        for (i, line) in result.lines().enumerate() {
+            if line.is_empty() {
+                continue;
+            }
+            let depth = line
+                .chars()
+                .take_while(|c| *c == '|')
+                .count()
+                .min(
+                    line.chars()
+                        .rev()
+                        .take_while(|c| *c == '|')
+                        .count(),
+                );
+            depth_widths
+                .entry(depth)
+                .or_default()
+                .push((i, line.to_string()));
+        }
+
+        // At each depth, all lines should have the same width
+        for (depth, lines) in &depth_widths {
+            if lines.len() > 1 {
+                let expected_len = lines[0].1.len();
+                for (line_num, line) in lines {
+                    assert_eq!(
+                        line.len(),
+                        expected_len,
+                        "at depth {}, line {} should have width {} but has {}: '{}'",
+                        depth,
+                        line_num,
+                        expected_len,
+                        line.len(),
+                        line
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_nested_object_field_in_top_level_object() {
+        // Top-level object with a direct nested object (not in an array)
+        let value = json!({
+            "Status": "active",
+            "Metadata": {
+                "CreatedBy": "admin",
+                "Version": "1.0"
+            }
+        });
+        let result = format_table(&value).unwrap();
+
+        // Should not contain JSON
+        assert!(!result.contains('{'), "should not contain JSON braces");
+
+        // Should have Metadata as a sub-section title
+        assert!(result.contains("Metadata"), "should contain Metadata section");
+        assert!(result.contains("CreatedBy"), "should contain CreatedBy");
+        assert!(result.contains("admin"), "should contain admin value");
+        assert!(result.contains("Version"), "should contain Version");
+        assert!(result.contains("1.0"), "should contain version value");
+    }
+
+    #[test]
+    fn test_deeply_nested_object() {
+        // Test 3 levels of nesting
+        let value = json!({
+            "Level1Key": "level1val",
+            "Nested": {
+                "Level2Key": "level2val",
+                "DeepNested": {
+                    "Level3Key": "level3val"
+                }
+            }
+        });
+        let result = format_table(&value).unwrap();
+
+        assert!(result.contains("Level1Key"), "should contain level 1 key");
+        assert!(result.contains("level1val"), "should contain level 1 value");
+        assert!(result.contains("Level2Key"), "should contain level 2 key");
+        assert!(result.contains("level2val"), "should contain level 2 value");
+        assert!(result.contains("Level3Key"), "should contain level 3 key");
+        assert!(result.contains("level3val"), "should contain level 3 value");
+        assert!(!result.contains('{'), "no JSON braces in output");
     }
 }
