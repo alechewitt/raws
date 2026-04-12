@@ -32,10 +32,21 @@ fn parse_metadata(raw: &Value) -> Result<ServiceMetadata> {
         .get("metadata")
         .ok_or_else(|| anyhow::anyhow!("Missing 'metadata' in service model"))?;
 
+    let protocols = meta
+        .get("protocols")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect()
+        })
+        .unwrap_or_default();
+
     Ok(ServiceMetadata {
         api_version: get_str(meta, "apiVersion")?.to_string(),
         endpoint_prefix: get_str(meta, "endpointPrefix")?.to_string(),
         protocol: get_str(meta, "protocol")?.to_string(),
+        protocols,
         service_id: meta
             .get("serviceId")
             .and_then(|v| v.as_str())
@@ -724,6 +735,33 @@ mod tests {
         assert!(model.metadata.json_version.is_none());
         assert!(model.metadata.global_endpoint.is_none());
         assert!(model.metadata.signing_name.is_none());
+        assert!(model.metadata.protocols.is_empty());
+    }
+
+    #[test]
+    fn test_metadata_parsing_protocols_array() {
+        let json = r#"{
+            "version": "2.0",
+            "metadata": {
+                "apiVersion": "2024-01-01",
+                "endpointPrefix": "monitoring",
+                "protocol": "smithy-rpc-v2-cbor",
+                "protocols": ["smithy-rpc-v2-cbor", "json", "query"],
+                "serviceId": "CloudWatch",
+                "signatureVersion": "v4"
+            },
+            "operations": {},
+            "shapes": {}
+        }"#;
+        let model = parse_service_model(json).unwrap();
+
+        assert_eq!(model.metadata.protocol, "smithy-rpc-v2-cbor");
+        assert_eq!(
+            model.metadata.protocols,
+            vec!["smithy-rpc-v2-cbor", "json", "query"]
+        );
+        // effective_protocol should fall back to "json"
+        assert_eq!(model.metadata.effective_protocol(), "json");
     }
 
     #[test]

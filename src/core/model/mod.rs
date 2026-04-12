@@ -21,6 +21,7 @@ pub struct ServiceMetadata {
     pub api_version: String,
     pub endpoint_prefix: String,
     pub protocol: String,
+    pub protocols: Vec<String>,
     #[allow(dead_code)]
     pub service_id: String,
     #[allow(dead_code)]
@@ -31,6 +32,9 @@ pub struct ServiceMetadata {
     pub signing_name: Option<String>,
 }
 
+/// Protocols that raws knows how to serialize/parse.
+const SUPPORTED_PROTOCOLS: &[&str] = &["query", "ec2", "json", "rest-json", "rest-xml"];
+
 impl ServiceMetadata {
     /// Returns the service name to use for SigV4 signing.
     ///
@@ -39,6 +43,25 @@ impl ServiceMetadata {
     /// endpoint prefix is "api.ecr" but the signing service must be "ecr".
     pub fn signing_service(&self) -> &str {
         self.signing_name.as_deref().unwrap_or(&self.endpoint_prefix)
+    }
+
+    /// Returns the protocol to actually use for this service.
+    ///
+    /// If the primary `protocol` field is supported, it is returned directly.
+    /// Otherwise, the `protocols` array (present in newer models) is scanned
+    /// for the first supported protocol.  If no fallback is found, the primary
+    /// `protocol` value is returned so that the caller can produce a clear
+    /// error message.
+    pub fn effective_protocol(&self) -> &str {
+        if SUPPORTED_PROTOCOLS.contains(&self.protocol.as_str()) {
+            return &self.protocol;
+        }
+        for p in &self.protocols {
+            if SUPPORTED_PROTOCOLS.contains(&p.as_str()) {
+                return p;
+            }
+        }
+        &self.protocol
     }
 }
 
@@ -196,6 +219,7 @@ mod tests {
             api_version: "2023-01-01".to_string(),
             endpoint_prefix: endpoint_prefix.to_string(),
             protocol: "json".to_string(),
+            protocols: vec![],
             service_id: "Test".to_string(),
             signature_version: "v4".to_string(),
             target_prefix: None,
@@ -224,5 +248,82 @@ mod tests {
         // When signingName equals endpointPrefix, either is fine
         let meta = make_metadata("dynamodb", Some("dynamodb"));
         assert_eq!(meta.signing_service(), "dynamodb");
+    }
+
+    // ---------------------------------------------------------------
+    // effective_protocol — protocol fallback for unsupported protocols
+    // ---------------------------------------------------------------
+
+    fn make_metadata_with_protocols(
+        protocol: &str,
+        protocols: Vec<&str>,
+    ) -> ServiceMetadata {
+        ServiceMetadata {
+            api_version: "2023-01-01".to_string(),
+            endpoint_prefix: "test".to_string(),
+            protocol: protocol.to_string(),
+            protocols: protocols.into_iter().map(|s| s.to_string()).collect(),
+            service_id: "Test".to_string(),
+            signature_version: "v4".to_string(),
+            target_prefix: None,
+            json_version: None,
+            global_endpoint: None,
+            signing_name: None,
+        }
+    }
+
+    #[test]
+    fn test_effective_protocol_returns_primary_when_supported() {
+        for proto in &["query", "ec2", "json", "rest-json", "rest-xml"] {
+            let meta = make_metadata_with_protocols(proto, vec![]);
+            assert_eq!(meta.effective_protocol(), *proto);
+        }
+    }
+
+    #[test]
+    fn test_effective_protocol_falls_back_to_first_supported() {
+        // CloudWatch-like: primary is unsupported, but json is in fallback list
+        let meta = make_metadata_with_protocols(
+            "smithy-rpc-v2-cbor",
+            vec!["smithy-rpc-v2-cbor", "json", "query"],
+        );
+        assert_eq!(meta.effective_protocol(), "json");
+    }
+
+    #[test]
+    fn test_effective_protocol_skips_unsupported_in_fallback_list() {
+        // All entries before "rest-json" are unsupported
+        let meta = make_metadata_with_protocols(
+            "smithy-rpc-v2-cbor",
+            vec!["smithy-rpc-v2-cbor", "some-future-proto", "rest-json"],
+        );
+        assert_eq!(meta.effective_protocol(), "rest-json");
+    }
+
+    #[test]
+    fn test_effective_protocol_returns_primary_when_no_fallback() {
+        // No protocols array, unsupported primary -> returns primary for error propagation
+        let meta = make_metadata_with_protocols("smithy-rpc-v2-cbor", vec![]);
+        assert_eq!(meta.effective_protocol(), "smithy-rpc-v2-cbor");
+    }
+
+    #[test]
+    fn test_effective_protocol_returns_primary_when_all_unsupported() {
+        // protocols array exists but nothing is supported
+        let meta = make_metadata_with_protocols(
+            "smithy-rpc-v2-cbor",
+            vec!["smithy-rpc-v2-cbor", "some-other-unsupported"],
+        );
+        assert_eq!(meta.effective_protocol(), "smithy-rpc-v2-cbor");
+    }
+
+    #[test]
+    fn test_effective_protocol_supported_primary_ignores_fallback() {
+        // Even if protocols array has different entries, supported primary wins
+        let meta = make_metadata_with_protocols(
+            "json",
+            vec!["rest-xml", "query"],
+        );
+        assert_eq!(meta.effective_protocol(), "json");
     }
 }

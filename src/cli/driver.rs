@@ -207,7 +207,7 @@ pub async fn run() -> Result<()> {
     }
 
     if args.debug {
-        eprintln!("[debug] protocol={} api_version={}", service_model.metadata.protocol, service_model.metadata.api_version);
+        eprintln!("[debug] protocol={} api_version={}", service_model.metadata.effective_protocol(), service_model.metadata.api_version);
     }
 
     if args.debug {
@@ -319,7 +319,7 @@ pub async fn run() -> Result<()> {
     }
 
     // 9. Build and send the request based on protocol, with auto-pagination and retry
-    let protocol = service_model.metadata.protocol.as_str();
+    let protocol = service_model.metadata.effective_protocol();
     let response_value = if let Some(ref pc) = paginator_config {
         // Auto-pagination: collect all pages
         let mut pages = Vec::new();
@@ -527,7 +527,7 @@ async fn handle_wait_command(
         )?,
     };
 
-    let protocol = service_model.metadata.protocol.as_str();
+    let protocol = service_model.metadata.effective_protocol();
     let http_config = build_http_config(args);
 
     // Parse operation-specific arguments (model-aware for list/map params)

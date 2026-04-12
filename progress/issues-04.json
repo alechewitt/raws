@@ -6,9 +6,9 @@
     "verify": [
       { "run": "raws cloudwatch list-metrics --region us-east-1 2>&1", "expect": "Should return metrics list, not protocol error" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent. Known limitation. Adding smithy-rpc-v2-cbor support would unblock all 43 CloudWatch commands at once."]
+    "passes": true,
+    "affected_files": ["src/core/model/mod.rs", "src/core/model/loader.rs", "src/cli/driver.rs"],
+    "notes": ["Found by validation agent. Known limitation. Adding smithy-rpc-v2-cbor support would unblock all 43 CloudWatch commands at once.", "Fixed: Added protocol fallback - ServiceMetadata now parses the 'protocols' array and effective_protocol() selects the first supported protocol. CloudWatch falls back from smithy-rpc-v2-cbor to json protocol, which it also supports."]
   },
   {
     "id": "validation-json-protocol-params-not-serialized",
