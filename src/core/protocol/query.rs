@@ -10,6 +10,9 @@ use quick_xml::Reader;
 use serde_json::Value;
 use std::collections::HashMap;
 
+/// (error_code, message, additional_detail_pairs)
+pub type QueryErrorDetails = (String, String, Vec<(String, String)>);
+
 // ---------------------------------------------------------------------------
 // Serializer
 // ---------------------------------------------------------------------------
@@ -426,7 +429,7 @@ pub fn parse_query_error(xml_body: &str) -> Result<(String, String)> {
 
 /// Parse a query-protocol XML error response, including any additional fields
 /// beyond Code and Message (e.g. Type: Sender).
-pub fn parse_query_error_with_details(xml_body: &str) -> Result<(String, String, Vec<(String, String)>)> {
+pub fn parse_query_error_with_details(xml_body: &str) -> Result<QueryErrorDetails> {
     let root = parse_xml_to_tree(xml_body)?;
 
     // Navigate to <Error> child

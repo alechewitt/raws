@@ -195,8 +195,8 @@
     "verify": [
       { "run": "raws s3 website 2>&1", "expect": "Should show usage/help for s3 website command" }
     ],
-    "passes": false,
-    "affected_files": [],
-    "notes": ["Found by validation agent."]
+    "passes": true,
+    "affected_files": ["src/cli/customizations/s3/website.rs", "src/cli/customizations/s3/mod.rs"],
+    "notes": ["Found by validation agent.", "Fixed: Implemented s3 website subcommand. Takes s3://bucket URL, optional --index-document and --error-document flags. Calls PutBucketWebsite API with WebsiteConfiguration XML. No output on success, matching AWS CLI behavior. 17 unit tests."]
   }
 ]

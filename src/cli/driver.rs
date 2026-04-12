@@ -472,7 +472,7 @@ pub async fn run() -> Result<()> {
     // 10. Format and print output
     // Suppress output for empty objects (matches AWS CLI behavior, e.g., empty paginated results).
     // An object is "effectively empty" if all its values are null (strip_nulls would remove them).
-    if final_value.as_object().map_or(false, |m| {
+    if final_value.as_object().is_some_and(|m| {
         m.is_empty() || m.values().all(|v| v.is_null())
     }) {
         return Ok(());
