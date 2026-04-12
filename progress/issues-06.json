@@ -33,5 +33,49 @@
     "passes": true,
     "affected_files": ["src/cli/driver.rs"],
     "notes": ["Found during Session 12 parity testing. Root cause: op.uses_s3_express_control_endpoint() returned true for all bucket-level S3 ops, routing them all to s3express-control. Fix: Added bucket name check - only route to Express when bucket is absent or ends with --x-s3. Also fixed signing service to check endpoint URL instead of model flag. Extracted triplicated endpoint routing logic into resolve_s3_endpoint_style() helper. Added S3_DIRECTORY_BUCKET_SUFFIX constant."]
+  },
+  {
+    "id": "paginator-limit-key-not-stripped",
+    "description": "Auto-pagination did not strip limit_key (e.g. MaxItems) from output. Route53 list-hosted-zones showed MaxItems: 100 while AWS CLI didn't. Both single-page and multi-page paths affected.",
+    "severity": "medium",
+    "verify": [
+      { "run": "diff <(raws route53 list-hosted-zones --output json 2>&1) <(aws route53 list-hosted-zones --output json 2>&1)", "expect": "Only key ordering differences, no MaxItems field" }
+    ],
+    "passes": true,
+    "affected_files": ["src/core/paginate.rs"],
+    "notes": ["Found during Session 12 parity testing. Fix: Added limit_key filtering to both single-page fast path and multi-page merge path in merge_pages()."]
+  },
+  {
+    "id": "jmespath-list-wildcard-broken",
+    "description": "JMESPath [*] list wildcard was parsed as multi-select containing *, causing Buckets[*].Name and similar queries to return null. Also, [*] on empty arrays returned null instead of [].",
+    "severity": "critical",
+    "verify": [
+      { "run": "raws s3api list-buckets --query 'Buckets[*].Name' --output json 2>&1", "expect": "Should return array of bucket names, not null" }
+    ],
+    "passes": true,
+    "affected_files": ["src/cli/jmespath.rs"],
+    "notes": ["Found during Session 12 parity testing. Fix: Added ListWildcard token type that projects without flattening (unlike Flatten []). Tokenizer recognizes [*] before multi-select fallthrough."]
+  },
+  {
+    "id": "text-output-empty-line-and-array-format",
+    "description": "Text output had two issues: (1) empty results printed a blank line instead of nothing, (2) top-level scalar arrays from --query were printed one per line instead of tab-separated on one line.",
+    "severity": "medium",
+    "verify": [
+      { "run": "raws s3api list-buckets --query 'Buckets[*].Name' --output text 2>&1", "expect": "Bucket names tab-separated on one line" }
+    ],
+    "passes": true,
+    "affected_files": ["src/cli/driver.rs", "src/cli/formatter/text.rs"],
+    "notes": ["Found during Session 12 parity testing. Fix: (1) Added !formatted.is_empty() guard before println in driver.rs. (2) Top-level scalar arrays now join with tab instead of newline."]
+  },
+  {
+    "id": "yaml-excessive-quoting",
+    "description": "YAML output unnecessarily quoted strings containing colons, hyphens, etc. ARNs, instance IDs, timestamps, and regions were all single-quoted while AWS CLI left them unquoted.",
+    "severity": "low",
+    "verify": [
+      { "run": "raws sts get-caller-identity --output yaml 2>&1 | grep Arn", "expect": "Arn line should not have single quotes around the value" }
+    ],
+    "passes": true,
+    "affected_files": ["src/cli/formatter/yaml.rs"],
+    "notes": ["Found during Session 12 parity testing. Fix: Changed quoting rules to only quote colons followed by space, dashes at start followed by space, and actual YAML flow indicators. Removed colon and dash from always-quote char list."]
   }
 ]

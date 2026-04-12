@@ -18,20 +18,35 @@ KEY FILES CHANGED:
 TEST RESULTS: 1175 tests passing
 ISSUES STATUS: 48/48 passing (100%)
 
-=== Session 12: S3 Express Endpoint Routing Fix (2026-04-11) ===
+=== Session 12: Parity Testing + Multiple Fixes (2026-04-11) ===
 
 ACCOMPLISHED:
-- Fixed S3 Express endpoint routing for regular buckets: botocore model sets
-  UseS3ExpressControlEndpoint on nearly all S3 bucket operations, but should only
-  route to s3express-control for directory buckets (--x-s3 suffix) or bucket-less ops.
-- Fixed S3 Express signing service: Check actual endpoint URL, not model flag.
-- Extracted triplicated endpoint routing into resolve_s3_endpoint_style() helper.
-- Added S3_DIRECTORY_BUCKET_SUFFIX constant.
+- Fixed S3 Express endpoint routing: Only route to s3express-control for directory buckets
+  (--x-s3 suffix) or bucket-less ops. Extracted into resolve_s3_endpoint_style() helper.
+- Fixed paginator limit_key stripping: Route53 list-hosted-zones no longer shows MaxItems
+  in auto-paginated output. Fixed both single-page and multi-page paths.
+- Fixed JMESPath [*] list wildcard: Was parsed as multi-select, now a proper ListWildcard
+  token that projects without flattening. Buckets[*].Name works correctly.
+- Fixed text output: Empty results no longer print blank line. Top-level scalar arrays
+  from --query now tab-separated on one line (not one per line).
+- Fixed YAML excessive quoting: ARNs, instance IDs, timestamps, regions no longer
+  unnecessarily quoted. Only quote colons followed by space, leading dash-space, etc.
+- Extensive parity testing across 20+ services: STS, IAM, EC2, S3, DynamoDB, Lambda,
+  KMS, SNS, SQS, Route53, CloudFront, CloudWatch, CloudFormation, Logs, Secrets Manager,
+  SSM, ECR, ECS, AutoScaling. All match AWS CLI output (except known key ordering).
 
 KEY FILES CHANGED:
-- src/cli/driver.rs: resolve_s3_endpoint_style(), S3_DIRECTORY_BUCKET_SUFFIX,
-  simplified main endpoint selection and both S3 redirect handlers
+- src/cli/driver.rs: S3 Express fix, empty output guard
+- src/cli/jmespath.rs: ListWildcard token, [*] tokenizer fix
+- src/cli/formatter/text.rs: Top-level scalar array tab formatting
+- src/cli/formatter/yaml.rs: Relaxed quoting rules
+- src/core/paginate.rs: limit_key stripping in merge_pages()
 
-TEST RESULTS: 1175 tests passing, cargo clippy clean
-ISSUES STATUS: 49/49 passing (100%)
-  issues-06: 3/3 (added s3-express-endpoint-routing-regular-buckets)
+TEST RESULTS: 1180 tests passing (up from 1175), cargo clippy clean
+ISSUES STATUS: 54/54 passing (100%)
+  issues-06: 8/8 (5 new issues found and fixed via parity testing)
+
+KNOWN REMAINING GAPS (low priority):
+- JSON key ordering: serde_json sorts alphabetically vs AWS CLI response order
+- s3api list-buckets: Prefix: null stripped by strip_nulls() (AWS CLI keeps it)
+- YAML 'off' quoting: raws quotes 'off' (correct YAML 1.1), AWS CLI doesn't

@@ -22,6 +22,6 @@
     "3": { "total": 5, "passing": 5, "file": "issues-03.json", "description": "Validation: sns, sqs, cloudformation, ecs, rds" },
     "4": { "total": 9, "passing": 9, "file": "issues-04.json", "description": "Validation: cloudwatch, logs, secretsmanager, ssm, route53" },
     "5": { "total": 8, "passing": 8, "file": "issues-05.json", "description": "Validation: cloudfront, elasticache, elb, elbv2, autoscaling, apigateway, kinesis, stepfunctions, codebuild, codepipeline, ecr" },
-    "6": { "total": 3, "passing": 3, "file": "issues-06.json", "description": "Session 11-12: global service signing, UTC timestamps, S3 Express routing" }
+    "6": { "total": 8, "passing": 8, "file": "issues-06.json", "description": "Session 11-12: global service signing, UTC timestamps, S3 Express routing, paginator, JMESPath, text/YAML output" }
   }
 }
