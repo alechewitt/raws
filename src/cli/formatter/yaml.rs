@@ -23,9 +23,9 @@ pub fn format_yaml_stream(value: &Value) -> Result<String> {
     Ok(output)
 }
 
-/// Characters that force a string to be quoted in YAML.
-const SPECIAL_CHARS: &[char] = &[
-    ':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|', '-', '<', '>', '=', '!', '%', '@',
+/// Characters that always force a string to be quoted in YAML regardless of position.
+const ALWAYS_SPECIAL: &[char] = &[
+    '{', '}', '[', ']', ',', '&', '*', '#', '?', '|', '<', '>', '=', '!', '%', '@',
     '`', '\'', '"', '\n',
 ];
 
@@ -253,13 +253,23 @@ fn write_yaml_string(s: &str, output: &mut String) {
 
 /// Determine whether a string needs quoting in YAML.
 fn needs_quoting(s: &str) -> bool {
-    // Empty strings always need quoting (handled before this is called, but be safe)
+    // Empty strings always need quoting
     if s.is_empty() {
         return true;
     }
 
-    // Contains special YAML characters
-    if s.chars().any(|c| SPECIAL_CHARS.contains(&c)) {
+    // Contains always-special YAML characters
+    if s.chars().any(|c| ALWAYS_SPECIAL.contains(&c)) {
+        return true;
+    }
+
+    // Colon followed by space is a mapping indicator; colon at end is ambiguous
+    if s.contains(": ") || s.ends_with(':') {
+        return true;
+    }
+
+    // Leading dash followed by space is a list indicator
+    if s.starts_with("- ") {
         return true;
     }
 
@@ -324,7 +334,7 @@ mod tests {
         });
         let output = format_yaml(&value).unwrap();
         assert!(output.contains("Instance:\n"));
-        assert!(output.contains("  InstanceId: 'i-abc123'\n"));
+        assert!(output.contains("  InstanceId: i-abc123\n"));
         assert!(output.contains("  State:\n"));
         assert!(output.contains("    Code: 16\n"));
         assert!(output.contains("    Name: running"));
@@ -338,9 +348,9 @@ mod tests {
         let output = format_yaml(&value).unwrap();
         // Strings with hyphens need quoting
         assert!(output.contains("TableNames:\n"));
-        assert!(output.contains("- 'my-table1'\n"));
-        assert!(output.contains("- 'my-table2'\n"));
-        assert!(output.contains("- 'my-table3'"));
+        assert!(output.contains("- my-table1\n"));
+        assert!(output.contains("- my-table2\n"));
+        assert!(output.contains("- my-table3"));
     }
 
     #[test]
@@ -361,10 +371,10 @@ mod tests {
         let output = format_yaml(&value).unwrap();
         assert!(output.contains("Buckets:\n"));
         // With preserve_order, json! macro preserves insertion order: Name before CreationDate
-        assert!(output.contains("- Name: 'my-bucket-1'\n"));
-        assert!(output.contains("  CreationDate: '2023-01-01T00:00:00+00:00'\n"));
-        assert!(output.contains("- Name: 'my-bucket-2'\n"));
-        assert!(output.contains("  CreationDate: '2023-06-15T00:00:00+00:00'"));
+        assert!(output.contains("- Name: my-bucket-1\n"));
+        assert!(output.contains("  CreationDate: 2023-01-01T00:00:00+00:00\n"));
+        assert!(output.contains("- Name: my-bucket-2\n"));
+        assert!(output.contains("  CreationDate: 2023-06-15T00:00:00+00:00"));
     }
 
     #[test]
@@ -410,15 +420,28 @@ mod tests {
     }
 
     #[test]
-    fn test_yaml_strings_needing_quoting_colon() {
+    fn test_yaml_arn_not_quoted() {
         let value = json!({
             "Arn": "arn:aws:iam::123456789012:root"
         });
         let output = format_yaml(&value).unwrap();
-        // Contains colons, so must be quoted
+        // Colons not followed by space don't need quoting (matches AWS CLI)
         assert!(
-            output.contains("Arn: 'arn:aws:iam::123456789012:root'"),
-            "Expected quoted ARN, got: {output}"
+            output.contains("Arn: arn:aws:iam::123456789012:root"),
+            "Expected unquoted ARN, got: {output}"
+        );
+    }
+
+    #[test]
+    fn test_yaml_colon_space_needs_quoting() {
+        let value = json!({
+            "Message": "key: value"
+        });
+        let output = format_yaml(&value).unwrap();
+        // Colon followed by space requires quoting
+        assert!(
+            output.contains("Message: 'key: value'"),
+            "Expected quoted colon-space, got: {output}"
         );
     }
 
@@ -506,15 +529,15 @@ mod tests {
         let output = format_yaml(&value).unwrap();
         // With preserve_order, json! preserves insertion order: ReservationId before Instances
         assert!(output.contains("Reservations:\n"));
-        assert!(output.contains("- ReservationId: 'r-0123456789abcdef0'\n"));
+        assert!(output.contains("- ReservationId: r-0123456789abcdef0\n"));
         assert!(output.contains("  Instances:\n"));
-        assert!(output.contains("  - InstanceId: 'i-abc123'\n"));
+        assert!(output.contains("  - InstanceId: i-abc123\n"));
         assert!(output.contains("    State:\n"));
         assert!(output.contains("      Code: 16\n"));
         assert!(output.contains("      Name: running\n"));
         assert!(output.contains("    Tags:\n"));
         assert!(output.contains("    - Key: Name\n"));
-        assert!(output.contains("      Value: 'web-server'"));
+        assert!(output.contains("      Value: web-server"));
     }
 
     #[test]
@@ -532,8 +555,8 @@ mod tests {
         });
         let output = format_yaml(&value).unwrap();
         // Scalars are inline
-        assert!(output.contains("Name: 'my-resource'\n"));
-        assert!(output.contains("Id: 'abc-123'\n"));
+        assert!(output.contains("Name: my-resource\n"));
+        assert!(output.contains("Id: abc-123\n"));
         // Non-scalars are nested
         assert!(output.contains("Tags:\n"));
         assert!(output.contains("- Key: env\n"));
@@ -586,7 +609,6 @@ mod tests {
     #[test]
     fn test_yaml_needs_quoting_detection() {
         // Strings that need quoting
-        assert!(needs_quoting("arn:aws:iam::123:root")); // colon
         assert!(needs_quoting("{key}")); // braces
         assert!(needs_quoting("[item]")); // brackets
         assert!(needs_quoting("a,b")); // comma
@@ -600,12 +622,19 @@ mod tests {
         assert!(needs_quoting(" leading")); // leading space
         assert!(needs_quoting("trailing ")); // trailing space
         assert!(needs_quoting("line\nbreak")); // newline
+        assert!(needs_quoting("key: value")); // colon followed by space
+        assert!(needs_quoting("trailing:")); // colon at end
+        assert!(needs_quoting("- list item")); // leading dash-space
 
         // Strings that don't need quoting
         assert!(!needs_quoting("simple"));
         assert!(!needs_quoting("InstanceId"));
         assert!(!needs_quoting("running"));
         assert!(!needs_quoting("my_resource"));
+        assert!(!needs_quoting("arn:aws:iam::123:root")); // colons not followed by space
+        assert!(!needs_quoting("vpc-0bf9b8e0bf91b3067")); // hyphens in middle
+        assert!(!needs_quoting("2026-03-17T21:03:13+00:00")); // timestamps
+        assert!(!needs_quoting("us-east-1")); // regions
     }
 
     #[test]
