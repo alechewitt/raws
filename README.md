@@ -1,10 +1,26 @@
+```
+                                          ,%%%%%%%%,
+    ____  ___ _       _______           ,%%/\%%%%/\%%
+   / __ \/   | |     / / ___/          ,%%%\c "" J/%%%
+  / /_/ / /| | | /| / /\__ \  %.       %%%%/ o  o \%%%
+ / _, _/ ___ | |/ |/ /___/ /  `%%.     %%%%    _  |%%%
+/_/ |_/_/  |_|__/|__//____/    `%%     `%%%%(__Y__)%%'
+                               //       ;%%%%`\-/%%%'
+       Rust AWS CLI           ((       /  `%%%%%%%'
+                               \\    .'          |
+                                \\  /       \  | |
+                                 \\/         ) | |
+                                  \         /_ | |__
+                                  (___________))))))) 
+```
+
 # raws
 
-A Rust reimplementation of the AWS CLI, built entirely by Claude Code running autonomously in a loop.
+A Rust reimplementation of the [AWS CLI](https://github.com/aws/aws-cli), built entirely by Claude Code running autonomously in a loop.
 
 ## What is this?
 
-`raws` is a drop-in replacement for the [`aws` CLI](https://github.com/aws/aws-cli), supporting the full ~416 services covered by [botocore](https://github.com/boto/botocore) in a single binary.
+`raws` is a drop-in replacement for the `aws` CLI, supporting the full ~416 services covered by [botocore](https://github.com/boto/botocore) in a single binary.
 
 ```
 $ raws s3 ls
