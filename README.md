@@ -4,7 +4,7 @@ A Rust reimplementation of the AWS CLI, built entirely by Claude Code running au
 
 ## What is this?
 
-`raws` is a drop-in replacement for the `aws` CLI, supporting the full ~416 services covered by [botocore](https://github.com/boto/botocore) in a single binary.
+`raws` is a drop-in replacement for the [`aws` CLI](https://github.com/aws/aws-cli), supporting the full ~416 services covered by [botocore](https://github.com/boto/botocore) in a single binary.
 
 ```
 $ raws sts get-caller-identity
