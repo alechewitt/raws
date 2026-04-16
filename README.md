@@ -14,8 +14,6 @@
                                   (___________))))))) 
 ```
 
-# raws
-
 A Rust reimplementation of the [AWS CLI](https://github.com/aws/aws-cli), built entirely by Claude Code running autonomously in a loop.
 
 ## What is this?
