@@ -7,6 +7,11 @@ A Rust reimplementation of the AWS CLI, built entirely by Claude Code running au
 `raws` is a drop-in replacement for the [`aws` CLI](https://github.com/aws/aws-cli), supporting the full ~416 services covered by [botocore](https://github.com/boto/botocore) in a single binary.
 
 ```
+$ raws s3 ls
+2024-01-15 09:23:45 my-app-logs
+2024-03-22 14:07:12 my-data-bucket
+2024-06-01 11:30:00 my-static-assets
+
 $ raws sts get-caller-identity
 {
     "UserId": "AIDACKCEVSQ6C2EXAMPLE",
@@ -51,6 +56,20 @@ All prompts live in [`prompt/`](prompt/):
 
 Each session reads and updates JSON files in `progress/` to know what's done and what to work on next. Features are defined upfront per milestone, and each one is marked `passes: true` only after implementation *and* review by a separate sub-agent.
 
+## Installation
+
+If you just want to use the tool, install it with Homebrew:
+
+```bash
+brew install alechewitt/tap/raws
+```
+
+## Building from source
+
+```bash
+cargo build --release
+```
+
 ## Architecture
 
 Single crate, single binary. The key modules:
@@ -61,9 +80,3 @@ Single crate, single binary. The key modules:
 - **`core/protocol/`** — Serializers/parsers for all four AWS protocols (query, json, rest-json, rest-xml, ec2)
 - **`core/endpoint/`** — Endpoint resolution with partition/region/FIPS/dualstack support
 - **`cli/`** — Argument parsing, output formatting (json/text/table), pagination, waiters
-
-## Building
-
-```bash
-cargo build --release
-```
